@@ -5,7 +5,7 @@
 
 const MAX_UNDO: usize = 64;
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, specta::Type)]
 pub struct Word {
     pub text: String,
     /// Start timestamp in microseconds.

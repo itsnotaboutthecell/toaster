@@ -608,5 +608,16 @@
   "overlay": {
     "transcribing": "Transcribing...",
     "processing": "Processing..."
+  },
+  "editor": {
+    "deleteWord": "Delete Word",
+    "restoreWord": "Restore Word",
+    "silenceWord": "Silence Word",
+    "splitWord": "Split Word",
+    "undo": "Undo",
+    "redo": "Redo",
+    "restoreAll": "Restore All",
+    "deleteRange": "Delete Range",
+    "noTranscript": "No transcript loaded"
   }
 }

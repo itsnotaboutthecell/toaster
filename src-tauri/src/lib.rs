@@ -26,8 +26,11 @@ use specta_typescript::{BigIntExportBehavior, Typescript};
 use tauri_specta::{collect_commands, collect_events, Builder};
 
 use env_filter::Builder as EnvFilterBuilder;
+use commands::editor::EditorStore;
 use managers::audio::AudioRecordingManager;
+use managers::editor::EditorState;
 use managers::history::HistoryManager;
+use managers::media::{MediaState, MediaStore};
 use managers::model::ModelManager;
 use managers::transcription::TranscriptionManager;
 #[cfg(unix)]
@@ -35,7 +38,7 @@ use signal_hook::consts::{SIGUSR1, SIGUSR2};
 #[cfg(unix)]
 use signal_hook::iterator::Signals;
 use std::sync::atomic::{AtomicU8, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use tauri::image::Image;
 pub use transcription_coordinator::TranscriptionCoordinator;
 
@@ -164,6 +167,8 @@ fn initialize_core_logic(app_handle: &AppHandle) {
     app_handle.manage(model_manager.clone());
     app_handle.manage(transcription_manager.clone());
     app_handle.manage(history_manager.clone());
+    app_handle.manage(EditorStore(Mutex::new(EditorState::new())));
+    app_handle.manage(MediaStore(Mutex::new(MediaState::new())));
 
     // Note: Shortcuts are NOT initialized here.
     // The frontend is responsible for calling the `initialize_shortcuts` command
@@ -415,6 +420,21 @@ pub fn run(cli_args: CliArgs) {
             commands::audio::set_clamshell_microphone,
             commands::audio::get_clamshell_microphone,
             commands::audio::is_recording,
+            commands::editor::editor_set_words,
+            commands::editor::editor_get_words,
+            commands::editor::editor_delete_word,
+            commands::editor::editor_restore_word,
+            commands::editor::editor_delete_range,
+            commands::editor::editor_restore_all,
+            commands::editor::editor_split_word,
+            commands::editor::editor_silence_word,
+            commands::editor::editor_undo,
+            commands::editor::editor_redo,
+            commands::editor::editor_get_keep_segments,
+            commands::media::media_import,
+            commands::media::media_get_current,
+            commands::media::media_get_asset_url,
+            commands::media::media_clear,
             commands::transcription::set_model_unload_timeout,
             commands::transcription::get_model_load_status,
             commands::transcription::unload_model_manually,
