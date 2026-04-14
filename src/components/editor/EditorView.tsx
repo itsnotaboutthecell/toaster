@@ -57,11 +57,36 @@ const EditorView: React.FC = () => {
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
 
       const { setPlaying, isPlaying } = usePlayerStore.getState();
-      const { selectedIndex: selIdx, selectionRange: selRange } = useEditorStore.getState();
+      const { selectedIndex: selIdx, selectionRange: selRange, highlightedIndices: hlIndices, highlightType: hlType } = useEditorStore.getState();
 
       if (e.key === " " && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         setPlaying(!isPlaying);
+      } else if ((e.key === "Delete" || e.key === "Backspace") && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        if (hlIndices.length > 0) {
+          // Bulk-delete highlighted words (fillers or pause-adjacent)
+          if (hlType === "filler") {
+            invoke<number>("delete_fillers", {}).then(async (count) => {
+              if (count > 0) {
+                const updated = await invoke<typeof words>("editor_get_words", {});
+                await setWords(updated);
+              }
+              clearHighlights();
+            });
+          } else {
+            (async () => {
+              for (const idx of hlIndices) {
+                await deleteWord(idx);
+              }
+              clearHighlights();
+            })();
+          }
+        } else if (selRange) {
+          deleteRange(selRange[0], selRange[1]);
+        } else if (selIdx !== null) {
+          deleteWord(selIdx);
+        }
       } else if (e.key === "ArrowLeft" && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         const store = usePlayerStore.getState();
@@ -112,7 +137,7 @@ const EditorView: React.FC = () => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [deleteWord, deleteRange, silenceWord, splitWord, undo, redo, selectWord, setSelectionRange, clearHighlights]);
+  }, [deleteWord, deleteRange, silenceWord, splitWord, undo, redo, selectWord, setSelectionRange, clearHighlights, setWords, words]);
 
   const handleTranscribe = useCallback(async () => {
     if (!mediaInfo) return;
