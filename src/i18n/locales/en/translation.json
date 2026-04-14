@@ -636,7 +636,12 @@
     "noMedia": "No media loaded",
     "previewEdits": "Preview Edits",
     "preview": "Preview",
-    "previewCached": "Using cached preview"
+    "previewCached": "Using cached preview",
+    "previewEditsOn": "Preview edits: On",
+    "previewEditsOff": "Preview edits: Off",
+    "cacheModeBuilding": "Cache: building",
+    "cacheModeReady": "Cache: ready",
+    "cacheModeFallback": "Cache: fallback"
   },
   "editor": {
     "sections": {
