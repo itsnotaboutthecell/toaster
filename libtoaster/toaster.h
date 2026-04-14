@@ -119,6 +119,11 @@ TOASTER_API void toaster_transcript_clear_history(toaster_transcript_t *transcri
 TOASTER_API bool toaster_transcript_split_word(toaster_transcript_t *transcript, size_t index,
                                                int64_t split_us);
 
+TOASTER_API bool toaster_transcript_ripple_delete(toaster_transcript_t *transcript,
+                                                  size_t start_index, size_t end_index);
+TOASTER_API bool toaster_transcript_roll_boundary(toaster_transcript_t *transcript, size_t left_index,
+                                                  int64_t new_boundary_us);
+
 TOASTER_API toaster_project_t *toaster_project_create(void);
 TOASTER_API void toaster_project_destroy(toaster_project_t *project);
 TOASTER_API toaster_transcript_t *toaster_project_get_transcript(toaster_project_t *project);

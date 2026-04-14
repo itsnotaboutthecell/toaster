@@ -6,6 +6,7 @@
 #include <QApplication>
 #include <QAudioOutput>
 #include <QCloseEvent>
+#include <QComboBox>
 #include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QDateTime>
@@ -41,6 +42,7 @@
 #include <QSettings>
 #include <QSignalBlocker>
 #include <QSlider>
+#include <QSpinBox>
 #include <QStandardPaths>
 #include <QStatusBar>
 #include <QTableWidget>
@@ -565,11 +567,49 @@ void MainWindow::createDocks()
   auto *suggestedEditsWidget = new QWidget(this);
   auto *suggestedEditsLayout = new QVBoxLayout(suggestedEditsWidget);
   auto *analyzeButton = new QPushButton("Analyze Transcript", suggestedEditsWidget);
+
+  auto *fillerActionLayout = new QHBoxLayout();
+  fillerActionLayout->addWidget(new QLabel("Fillers:", suggestedEditsWidget));
+  m_fillerActionCombo = new QComboBox(suggestedEditsWidget);
+  m_fillerActionCombo->addItem("Delete", static_cast<int>(TOASTER_SUGGESTION_DELETE_FILLER));
+  m_fillerActionCombo->addItem("Silence", static_cast<int>(TOASTER_SUGGESTION_SILENCE_FILLER));
+  fillerActionLayout->addWidget(m_fillerActionCombo, 1);
+
+  auto *pauseParamsLayout = new QHBoxLayout();
+  pauseParamsLayout->addWidget(new QLabel("Min gap:", suggestedEditsWidget));
+  m_pauseMinGapSpin = new QSpinBox(suggestedEditsWidget);
+  m_pauseMinGapSpin->setRange(50, 5000);
+  m_pauseMinGapSpin->setValue(400);
+  m_pauseMinGapSpin->setSuffix(" ms");
+  pauseParamsLayout->addWidget(m_pauseMinGapSpin);
+  pauseParamsLayout->addWidget(new QLabel("Shorten to:", suggestedEditsWidget));
+  m_pauseShortenToSpin = new QSpinBox(suggestedEditsWidget);
+  m_pauseShortenToSpin->setRange(0, 5000);
+  m_pauseShortenToSpin->setValue(150);
+  m_pauseShortenToSpin->setSuffix(" ms");
+  pauseParamsLayout->addWidget(m_pauseShortenToSpin);
+
+  auto *checkButtonsLayout = new QHBoxLayout();
+  auto *checkAllButton = new QPushButton("All", suggestedEditsWidget);
+  auto *uncheckAllButton = new QPushButton("None", suggestedEditsWidget);
+  auto *checkFillersButton = new QPushButton("Fillers", suggestedEditsWidget);
+  auto *checkPausesButton = new QPushButton("Pauses", suggestedEditsWidget);
+  checkButtonsLayout->addWidget(new QLabel("Check:", suggestedEditsWidget));
+  checkButtonsLayout->addWidget(checkAllButton);
+  checkButtonsLayout->addWidget(uncheckAllButton);
+  checkButtonsLayout->addWidget(checkFillersButton);
+  checkButtonsLayout->addWidget(checkPausesButton);
+
   auto *applySelectedButton = new QPushButton("Apply Selected", suggestedEditsWidget);
+  auto *applyCheckedButton = new QPushButton("Apply Checked", suggestedEditsWidget);
   auto *applyAllButton = new QPushButton("Apply All", suggestedEditsWidget);
   m_suggestionList = new QListWidget(suggestedEditsWidget);
   suggestedEditsLayout->addWidget(analyzeButton);
+  suggestedEditsLayout->addLayout(fillerActionLayout);
+  suggestedEditsLayout->addLayout(pauseParamsLayout);
+  suggestedEditsLayout->addLayout(checkButtonsLayout);
   suggestedEditsLayout->addWidget(applySelectedButton);
+  suggestedEditsLayout->addWidget(applyCheckedButton);
   suggestedEditsLayout->addWidget(applyAllButton);
   suggestedEditsLayout->addWidget(m_suggestionList, 1);
   m_suggestedEditsDock =
@@ -635,7 +675,14 @@ void MainWindow::createDocks()
 
   connect(analyzeButton, &QPushButton::clicked, this, &MainWindow::analyzeCleanup);
   connect(applySelectedButton, &QPushButton::clicked, this, &MainWindow::applySelectedSuggestion);
+  connect(applyCheckedButton, &QPushButton::clicked, this, &MainWindow::applyCheckedSuggestions);
   connect(applyAllButton, &QPushButton::clicked, this, &MainWindow::applyAllSuggestions);
+  connect(checkAllButton, &QPushButton::clicked, this, &MainWindow::checkAllSuggestions);
+  connect(uncheckAllButton, &QPushButton::clicked, this, &MainWindow::uncheckAllSuggestions);
+  connect(checkFillersButton, &QPushButton::clicked, this,
+          [this]() { checkSuggestionsByKind(true, false); });
+  connect(checkPausesButton, &QPushButton::clicked, this,
+          [this]() { checkSuggestionsByKind(false, true); });
   connect(m_transcriptTable, &QTableWidget::cellChanged, this, &MainWindow::onTranscriptCellChanged);
   connect(m_transcriptTable->selectionModel(), &QItemSelectionModel::selectionChanged, this,
           [this]() { onTranscriptSelectionChanged(); });
@@ -648,6 +695,9 @@ void MainWindow::createDocks()
   connect(m_suggestionList, &QListWidget::itemDoubleClicked, this,
           [this]() { onSuggestionActivated(); });
   connect(m_waveformView, &WaveformView::seekRequested, this, &MainWindow::onWaveformSeekRequested);
+  connect(m_waveformView, &WaveformView::boundaryDragFinished, this,
+          &MainWindow::onBoundaryDragFinished);
+  connect(m_waveformView, &WaveformView::rollDragFinished, this, &MainWindow::onRollDragFinished);
 }
 
 void MainWindow::createMenus()
@@ -781,6 +831,115 @@ void MainWindow::createMenus()
       "transcription, transcript search/navigation, plain-text transcript import, FFmpeg "
       "media export, sidecar caption/script export, and deterministic cleanup analysis.");
   });
+
+  /* ---- Global keyboard shortcuts ---- */
+
+  auto *playPauseAction = new QAction("Play/Pause", this);
+  playPauseAction->setShortcut(Qt::Key_Space);
+  connect(playPauseAction, &QAction::triggered, this, [this]() {
+    if (!m_player)
+      return;
+    if (m_player->playbackState() == QMediaPlayer::PlayingState)
+      m_player->pause();
+    else
+      m_player->play();
+  });
+  addAction(playPauseAction);
+
+  auto *deleteAction = new QAction("Delete Selection (Key)", this);
+  deleteAction->setShortcut(QKeySequence::Delete);
+  connect(deleteAction, &QAction::triggered, this, &MainWindow::deleteSelection);
+  addAction(deleteAction);
+
+  auto *silenceAction = new QAction("Silence Selection (Key)", this);
+  silenceAction->setShortcut(QKeySequence("Ctrl+Delete"));
+  connect(silenceAction, &QAction::triggered, this, &MainWindow::silenceSelection);
+  addAction(silenceAction);
+
+  auto *splitAction = new QAction("Split at Playhead", this);
+  splitAction->setShortcut(QKeySequence("Ctrl+T"));
+  connect(splitAction, &QAction::triggered, this, &MainWindow::splitWordAtPlayhead);
+  addAction(splitAction);
+
+  auto *exportAction = new QAction("Export Media (Key)", this);
+  exportAction->setShortcut(QKeySequence("Ctrl+E"));
+  connect(exportAction, &QAction::triggered, this, &MainWindow::exportMedia);
+  addAction(exportAction);
+
+  auto *seekBackSmallAction = new QAction("Seek Back Small", this);
+  seekBackSmallAction->setShortcut(Qt::Key_Left);
+  connect(seekBackSmallAction, &QAction::triggered, this, [this]() {
+    if (m_player)
+      m_player->setPosition(qMax(qint64(0), m_player->position() - 1000));
+  });
+  addAction(seekBackSmallAction);
+
+  auto *seekForwardSmallAction = new QAction("Seek Forward Small", this);
+  seekForwardSmallAction->setShortcut(Qt::Key_Right);
+  connect(seekForwardSmallAction, &QAction::triggered, this, [this]() {
+    if (m_player)
+      m_player->setPosition(qMin(m_player->duration(), m_player->position() + 1000));
+  });
+  addAction(seekForwardSmallAction);
+
+  auto *seekBackLargeAction = new QAction("Seek Back Large", this);
+  seekBackLargeAction->setShortcut(QKeySequence("Shift+Left"));
+  connect(seekBackLargeAction, &QAction::triggered, this, [this]() {
+    if (m_player)
+      m_player->setPosition(qMax(qint64(0), m_player->position() - 5000));
+  });
+  addAction(seekBackLargeAction);
+
+  auto *seekForwardLargeAction = new QAction("Seek Forward Large", this);
+  seekForwardLargeAction->setShortcut(QKeySequence("Shift+Right"));
+  connect(seekForwardLargeAction, &QAction::triggered, this, [this]() {
+    if (m_player)
+      m_player->setPosition(qMin(m_player->duration(), m_player->position() + 5000));
+  });
+  addAction(seekForwardLargeAction);
+
+  auto *shuttleBackAction = new QAction("Shuttle Backward", this);
+  shuttleBackAction->setShortcut(Qt::Key_J);
+  connect(shuttleBackAction, &QAction::triggered, this, [this]() {
+    if (!m_player)
+      return;
+    m_player->setPosition(qMax(qint64(0), m_player->position() - 2000));
+    m_player->play();
+  });
+  addAction(shuttleBackAction);
+
+  auto *shuttlePauseAction = new QAction("Shuttle Pause", this);
+  shuttlePauseAction->setShortcut(Qt::Key_K);
+  connect(shuttlePauseAction, &QAction::triggered, this, [this]() {
+    if (m_player)
+      m_player->pause();
+  });
+  addAction(shuttlePauseAction);
+
+  auto *shuttleForwardAction = new QAction("Shuttle Forward", this);
+  shuttleForwardAction->setShortcut(Qt::Key_L);
+  connect(shuttleForwardAction, &QAction::triggered, this, [this]() {
+    if (!m_player)
+      return;
+    m_player->setPosition(qMin(m_player->duration(), m_player->position() + 2000));
+    m_player->play();
+  });
+  addAction(shuttleForwardAction);
+
+  auto *nudgeEarlierAction = new QAction("Nudge Boundary Earlier", this);
+  nudgeEarlierAction->setShortcut(QKeySequence("Alt+["));
+  connect(nudgeEarlierAction, &QAction::triggered, this, [this]() { nudgeBoundary(-10000); });
+  addAction(nudgeEarlierAction);
+
+  auto *nudgeLaterAction = new QAction("Nudge Boundary Later", this);
+  nudgeLaterAction->setShortcut(QKeySequence("Alt+]"));
+  connect(nudgeLaterAction, &QAction::triggered, this, [this]() { nudgeBoundary(10000); });
+  addAction(nudgeLaterAction);
+
+  auto *rippleDeleteAction = new QAction("Ripple Delete", this);
+  rippleDeleteAction->setShortcut(QKeySequence("Ctrl+Shift+Delete"));
+  connect(rippleDeleteAction, &QAction::triggered, this, &MainWindow::rippleDeleteSelection);
+  addAction(rippleDeleteAction);
 }
 
 void MainWindow::wirePlayer()
@@ -806,16 +965,18 @@ void MainWindow::wirePlayer()
 
 void MainWindow::restoreWindowState()
 {
+  static const int kStateVersion = 2;
   QSettings settings("Toaster", "Toaster");
   QByteArray geometry = settings.value("mainWindow/geometry").toByteArray();
   QByteArray state = settings.value("mainWindow/state").toByteArray();
+  int savedVersion = settings.value("mainWindow/stateVersion", 0).toInt();
   bool docksLocked = settings.value("mainWindow/docksLocked", false).toBool();
   bool alwaysOnTop = settings.value("mainWindow/alwaysOnTop", false).toBool();
 
   if (!geometry.isEmpty())
     restoreGeometry(geometry);
 
-  if (state.isEmpty() || !restoreState(state))
+  if (savedVersion != kStateVersion || state.isEmpty() || !restoreState(state))
     resetDocks();
 
   if (m_lockDocksAction) {
@@ -835,9 +996,11 @@ void MainWindow::restoreWindowState()
 
 void MainWindow::saveWindowState()
 {
+  static const int kStateVersion = 2;
   QSettings settings("Toaster", "Toaster");
   settings.setValue("mainWindow/geometry", saveGeometry());
   settings.setValue("mainWindow/state", saveState());
+  settings.setValue("mainWindow/stateVersion", kStateVersion);
   settings.setValue("mainWindow/docksLocked",
                     m_lockDocksAction ? m_lockDocksAction->isChecked() : false);
   settings.setValue("mainWindow/alwaysOnTop",
@@ -1954,15 +2117,38 @@ bool MainWindow::exportMediaToPath(const QString &outputPath, QString *errorMess
     if (!toaster_transcript_get_keep_segment(transcript, static_cast<size_t>(segmentIndex), &segment))
       continue;
 
+    double segStart = static_cast<double>(segment.start_us) / 1000000.0;
+    double segEnd = static_cast<double>(segment.end_us) / 1000000.0;
+    double segDur = segEnd - segStart;
+    double fadeDur = 0.005; /* 5ms fade for seam smoothing */
+
     filterComplex += QString("[0:v]trim=start=%1:end=%2,setpts=PTS-STARTPTS[v%3];")
-                       .arg(static_cast<double>(segment.start_us) / 1000000.0, 0, 'f', 6)
-                       .arg(static_cast<double>(segment.end_us) / 1000000.0, 0, 'f', 6)
+                       .arg(segStart, 0, 'f', 6)
+                       .arg(segEnd, 0, 'f', 6)
                        .arg(segmentIndex);
-    filterComplex += QString("%1atrim=start=%2:end=%3,asetpts=PTS-STARTPTS[a%4];")
-                       .arg(audioLabel)
-                       .arg(static_cast<double>(segment.start_us) / 1000000.0, 0, 'f', 6)
-                       .arg(static_cast<double>(segment.end_us) / 1000000.0, 0, 'f', 6)
-                       .arg(segmentIndex);
+
+    /* Apply short fade-in/fade-out to smooth edit seams */
+    if (segmentCount > 1 && segDur > fadeDur * 2) {
+      QStringList fadeFilters;
+      if (segmentIndex > 0)
+        fadeFilters << QString("afade=t=in:st=0:d=%1").arg(fadeDur, 0, 'f', 4);
+      if (segmentIndex < static_cast<int>(segmentCount) - 1)
+        fadeFilters << QString("afade=t=out:st=%1:d=%2")
+                         .arg(segDur - fadeDur, 0, 'f', 6)
+                         .arg(fadeDur, 0, 'f', 4);
+      filterComplex += QString("%1atrim=start=%2:end=%3,asetpts=PTS-STARTPTS,%4[a%5];")
+                         .arg(audioLabel)
+                         .arg(segStart, 0, 'f', 6)
+                         .arg(segEnd, 0, 'f', 6)
+                         .arg(fadeFilters.join(","))
+                         .arg(segmentIndex);
+    } else {
+      filterComplex += QString("%1atrim=start=%2:end=%3,asetpts=PTS-STARTPTS[a%4];")
+                         .arg(audioLabel)
+                         .arg(segStart, 0, 'f', 6)
+                         .arg(segEnd, 0, 'f', 6)
+                         .arg(segmentIndex);
+    }
     concatInputs += QString("[v%1][a%1]").arg(segmentIndex);
   }
 
@@ -2090,9 +2276,12 @@ void MainWindow::analyzeCleanup()
     return;
   }
 
+  int64_t minGapUs = static_cast<int64_t>(m_pauseMinGapSpin->value()) * 1000;
+  int64_t shortenToUs = static_cast<int64_t>(m_pauseShortenToSpin->value()) * 1000;
+
   toaster_suggestion_list_clear(m_suggestions);
   toaster_detect_fillers(transcript, m_suggestions);
-  toaster_detect_pauses(transcript, m_suggestions, 400000, 150000);
+  toaster_detect_pauses(transcript, m_suggestions, minGapUs, shortenToUs);
 
   rebuildSuggestionList();
   updateInspector();
@@ -2104,21 +2293,90 @@ void MainWindow::applySelectedSuggestion()
 {
   QListWidgetItem *item = m_suggestionList->currentItem();
 
-  if (!item)
+  if (!item || !m_project)
     return;
 
-  if (applySuggestion(item->data(Qt::UserRole).toULongLong()))
+  toaster_transcript_t *transcript = toaster_project_get_transcript(m_project);
+  toaster_transcript_save_snapshot(transcript);
+
+  if (applySuggestion(item->data(Qt::UserRole).toULongLong())) {
     analyzeCleanup();
+    updateUndoRedoState();
+  }
 }
 
 void MainWindow::applyAllSuggestions()
 {
+  toaster_transcript_t *transcript;
   size_t count = toaster_suggestion_list_count(m_suggestions);
+
+  if (!m_project || count == 0)
+    return;
+
+  transcript = toaster_project_get_transcript(m_project);
+  toaster_transcript_save_snapshot(transcript);
 
   for (size_t index = 0; index < count; ++index)
     applySuggestion(index);
 
   analyzeCleanup();
+  updateUndoRedoState();
+}
+
+void MainWindow::applyCheckedSuggestions()
+{
+  toaster_transcript_t *transcript;
+
+  if (!m_project)
+    return;
+
+  transcript = toaster_project_get_transcript(m_project);
+  toaster_transcript_save_snapshot(transcript);
+
+  int applied = 0;
+  for (int row = m_suggestionList->count() - 1; row >= 0; --row) {
+    QListWidgetItem *item = m_suggestionList->item(row);
+    if (item && item->checkState() == Qt::Checked) {
+      applySuggestion(item->data(Qt::UserRole).toULongLong());
+      ++applied;
+    }
+  }
+
+  if (applied > 0) {
+    analyzeCleanup();
+    updateUndoRedoState();
+    appendLogLine(QString("Applied %1 checked suggestions.").arg(applied));
+  }
+}
+
+void MainWindow::checkAllSuggestions()
+{
+  for (int row = 0; row < m_suggestionList->count(); ++row)
+    m_suggestionList->item(row)->setCheckState(Qt::Checked);
+}
+
+void MainWindow::uncheckAllSuggestions()
+{
+  for (int row = 0; row < m_suggestionList->count(); ++row)
+    m_suggestionList->item(row)->setCheckState(Qt::Unchecked);
+}
+
+void MainWindow::checkSuggestionsByKind(bool fillers, bool pauses)
+{
+  for (int row = 0; row < m_suggestionList->count(); ++row) {
+    QListWidgetItem *item = m_suggestionList->item(row);
+    toaster_suggestion_t suggestion;
+    size_t index = item->data(Qt::UserRole).toULongLong();
+
+    if (!toaster_suggestion_list_get(m_suggestions, index, &suggestion))
+      continue;
+
+    bool isFiller = (suggestion.kind == TOASTER_SUGGESTION_DELETE_FILLER ||
+                     suggestion.kind == TOASTER_SUGGESTION_SILENCE_FILLER);
+    bool isPause = (suggestion.kind == TOASTER_SUGGESTION_SHORTEN_PAUSE);
+    bool check = (fillers && isFiller) || (pauses && isPause);
+    item->setCheckState(check ? Qt::Checked : Qt::Unchecked);
+  }
 }
 
 bool MainWindow::applySuggestion(size_t suggestionIndex)
@@ -2130,7 +2388,16 @@ bool MainWindow::applySuggestion(size_t suggestionIndex)
     return false;
 
   transcript = toaster_project_get_transcript(m_project);
-  switch (suggestion.kind) {
+
+  /* Override filler action based on user selection in combo box */
+  toaster_suggestion_kind_t effectiveKind = suggestion.kind;
+  if (effectiveKind == TOASTER_SUGGESTION_DELETE_FILLER ||
+      effectiveKind == TOASTER_SUGGESTION_SILENCE_FILLER) {
+    effectiveKind = static_cast<toaster_suggestion_kind_t>(
+      m_fillerActionCombo->currentData().toInt());
+  }
+
+  switch (effectiveKind) {
   case TOASTER_SUGGESTION_DELETE_FILLER:
     toaster_transcript_delete_range(transcript, suggestion.start_index, suggestion.end_index);
     break;
@@ -2555,6 +2822,115 @@ void MainWindow::onWaveformSeekRequested(qint64 positionUs)
                               static_cast<int>(suggestion.end_index), false);
 }
 
+void MainWindow::onBoundaryDragFinished(int wordIndex, qint64 newStartUs, qint64 newEndUs)
+{
+  if (!m_project || wordIndex < 0)
+    return;
+
+  toaster_transcript_t *transcript = toaster_project_get_transcript(m_project);
+
+  /* Map visual word index (non-deleted only) to actual transcript index */
+  size_t actualIndex = 0;
+  int nonDeletedCount = 0;
+  size_t wordCount = toaster_transcript_word_count(transcript);
+  for (size_t i = 0; i < wordCount; ++i) {
+    toaster_word_t word;
+    if (toaster_transcript_get_word(transcript, i, &word) && !word.deleted) {
+      if (nonDeletedCount == wordIndex) {
+        actualIndex = i;
+        break;
+      }
+      ++nonDeletedCount;
+    }
+  }
+
+  toaster_transcript_save_snapshot(transcript);
+  toaster_transcript_set_word_times(transcript, actualIndex, newStartUs, newEndUs);
+  rebuildAllViews();
+  updateUndoRedoState();
+  appendLogLine(QString("Adjusted boundary for word %1").arg(wordIndex));
+}
+
+void MainWindow::onRollDragFinished(int leftWordIndex, qint64 newBoundaryUs)
+{
+  if (!m_project || leftWordIndex < 0)
+    return;
+
+  toaster_transcript_t *transcript = toaster_project_get_transcript(m_project);
+
+  /* Map visual index to actual transcript index */
+  size_t actualLeft = 0;
+  int nonDeletedCount = 0;
+  size_t wordCount = toaster_transcript_word_count(transcript);
+  for (size_t i = 0; i < wordCount; ++i) {
+    toaster_word_t word;
+    if (toaster_transcript_get_word(transcript, i, &word) && !word.deleted) {
+      if (nonDeletedCount == leftWordIndex) {
+        actualLeft = i;
+        break;
+      }
+      ++nonDeletedCount;
+    }
+  }
+
+  /* Find the next non-deleted word for the roll */
+  size_t actualRight = actualLeft + 1;
+  while (actualRight < wordCount) {
+    toaster_word_t word;
+    if (toaster_transcript_get_word(transcript, actualRight, &word) && !word.deleted)
+      break;
+    ++actualRight;
+  }
+
+  if (actualRight >= wordCount)
+    return;
+
+  toaster_transcript_save_snapshot(transcript);
+  toaster_transcript_roll_boundary(transcript, actualLeft, newBoundaryUs);
+  rebuildAllViews();
+  updateUndoRedoState();
+  appendLogLine(QString("Rolled boundary between words %1 and %2")
+                  .arg(leftWordIndex).arg(leftWordIndex + 1));
+}
+
+void MainWindow::nudgeBoundary(int deltaUs)
+{
+  if (!m_project)
+    return;
+
+  QList<int> rows = selectedRows();
+  if (rows.isEmpty())
+    return;
+
+  toaster_transcript_t *transcript = toaster_project_get_transcript(m_project);
+  int row = rows.last();
+  toaster_word_t word;
+  if (!toaster_transcript_get_word(transcript, static_cast<size_t>(row), &word))
+    return;
+
+  toaster_transcript_save_snapshot(transcript);
+  toaster_transcript_set_word_times(transcript, static_cast<size_t>(row),
+                                    word.start_us, word.end_us + deltaUs);
+  rebuildAllViews();
+  updateUndoRedoState();
+}
+
+void MainWindow::rippleDeleteSelection()
+{
+  QList<int> rows = selectedRows();
+
+  if (!m_project || rows.isEmpty())
+    return;
+
+  toaster_transcript_t *transcript = toaster_project_get_transcript(m_project);
+  toaster_transcript_save_snapshot(transcript);
+  toaster_transcript_ripple_delete(transcript, static_cast<size_t>(rows.first()),
+                                   static_cast<size_t>(rows.last()));
+  rebuildAllViews();
+  updateUndoRedoState();
+  appendLogLine(QString("Ripple-deleted %1 words.").arg(rows.size()));
+}
+
 void MainWindow::rebuildAllViews()
 {
   rebuildTranscriptTable();
@@ -2603,6 +2979,7 @@ void MainWindow::rebuildWaveformView()
   QVector<toaster_time_range_t> cutRanges;
   QVector<toaster_time_range_t> deletedRanges;
   QVector<toaster_time_range_t> silencedRanges;
+  QVector<toaster_time_range_t> wordRanges;
   size_t cutCount = 0;
   size_t deletedCount = 0;
   size_t silencedCount = 0;
@@ -2613,6 +2990,8 @@ void MainWindow::rebuildWaveformView()
 
   if (m_project) {
     toaster_transcript_t *transcript = toaster_project_get_transcript(m_project);
+    size_t wordCount = toaster_transcript_word_count(transcript);
+
     deletedCount = toaster_transcript_deleted_span_count(transcript);
     cutCount = toaster_transcript_cut_span_count(transcript);
     silencedCount = toaster_transcript_silenced_span_count(transcript);
@@ -2634,6 +3013,14 @@ void MainWindow::rebuildWaveformView()
         silencedRanges.append(range);
     }
 
+    for (size_t index = 0; index < wordCount; ++index) {
+      toaster_word_t word;
+      if (toaster_transcript_get_word(transcript, index, &word) && !word.deleted) {
+        toaster_time_range_t range{word.start_us, word.end_us};
+        wordRanges.append(range);
+      }
+    }
+
     if (m_mediaDurationUs <= 0 && toaster_transcript_get_bounds(transcript, &bounds))
       m_waveformView->setDurationUs(bounds.end_us);
     else
@@ -2646,6 +3033,7 @@ void MainWindow::rebuildWaveformView()
   m_waveformView->setDeletedRanges(deletedRanges);
   m_waveformView->setCutRanges(cutRanges);
   m_waveformView->setSilencedRanges(silencedRanges);
+  m_waveformView->setWordBoundaries(wordRanges);
   syncWaveformSelectionFromContext();
 }
 
@@ -2668,6 +3056,8 @@ void MainWindow::rebuildSuggestionList()
                     .arg(formatMicros(suggestion.start_us))
                     .arg(formatMicros(suggestion.end_us)));
     item->setData(Qt::UserRole, QVariant::fromValue<qulonglong>(index));
+    item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+    item->setCheckState(Qt::Checked);
     m_suggestionList->addItem(item);
   }
 

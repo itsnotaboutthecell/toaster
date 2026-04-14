@@ -1256,3 +1256,46 @@ bool toaster_transcript_split_word(toaster_transcript_t *transcript, size_t inde
 
   return true;
 }
+
+bool toaster_transcript_ripple_delete(toaster_transcript_t *transcript, size_t start_index,
+                                      size_t end_index)
+{
+  int64_t shift_us;
+
+  if (!transcript || start_index >= transcript->word_count || end_index >= transcript->word_count ||
+      start_index > end_index)
+    return false;
+
+  shift_us = transcript->words[end_index].end_us - transcript->words[start_index].start_us;
+  if (shift_us <= 0)
+    return false;
+
+  for (size_t i = start_index; i <= end_index; ++i)
+    transcript->words[i].deleted = true;
+
+  for (size_t i = end_index + 1; i < transcript->word_count; ++i) {
+    transcript->words[i].start_us -= shift_us;
+    transcript->words[i].end_us -= shift_us;
+  }
+
+  return true;
+}
+
+bool toaster_transcript_roll_boundary(toaster_transcript_t *transcript, size_t left_index,
+                                      int64_t new_boundary_us)
+{
+  size_t right_index;
+
+  if (!transcript || left_index + 1 >= transcript->word_count)
+    return false;
+
+  right_index = left_index + 1;
+
+  if (new_boundary_us <= transcript->words[left_index].start_us ||
+      new_boundary_us >= transcript->words[right_index].end_us)
+    return false;
+
+  transcript->words[left_index].end_us = new_boundary_us;
+  transcript->words[right_index].start_us = new_boundary_us;
+  return true;
+}

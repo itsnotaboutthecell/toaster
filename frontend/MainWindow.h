@@ -12,6 +12,7 @@ extern "C" {
 class QAction;
 class QAudioOutput;
 class QCloseEvent;
+class QComboBox;
 class QDockWidget;
 class QLabel;
 class QLineEdit;
@@ -20,6 +21,7 @@ class QMediaPlayer;
 class QPlainTextEdit;
 class QPushButton;
 class QSlider;
+class QSpinBox;
 class QTableWidget;
 class QToolButton;
 class QVideoWidget;
@@ -62,6 +64,10 @@ private:
   void analyzeCleanup();
   void applySelectedSuggestion();
   void applyAllSuggestions();
+  void applyCheckedSuggestions();
+  void checkAllSuggestions();
+  void uncheckAllSuggestions();
+  void checkSuggestionsByKind(bool fillers, bool pauses);
   void deleteSelection();
   void restoreSelection();
   void silenceSelection();
@@ -86,6 +92,10 @@ private:
   void onPositionChanged(qint64 position_ms);
   void onSliderMoved(int value);
   void onWaveformSeekRequested(qint64 positionUs);
+  void onBoundaryDragFinished(int wordIndex, qint64 newStartUs, qint64 newEndUs);
+  void onRollDragFinished(int leftWordIndex, qint64 newBoundaryUs);
+  void nudgeBoundary(int deltaUs);
+  void rippleDeleteSelection();
 
   bool ensureProject();
   void clearProject();
@@ -193,6 +203,9 @@ private:
   QToolButton *m_exportScriptButton = nullptr;
   WaveformView *m_waveformView = nullptr;
   QListWidget *m_suggestionList = nullptr;
+  QComboBox *m_fillerActionCombo = nullptr;
+  QSpinBox *m_pauseMinGapSpin = nullptr;
+  QSpinBox *m_pauseShortenToSpin = nullptr;
   QPlainTextEdit *m_logView = nullptr;
 
   QLabel *m_projectLabel = nullptr;

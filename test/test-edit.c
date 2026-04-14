@@ -181,6 +181,85 @@ int main(void)
 
   toaster_transcript_destroy(transcript);
 
+  /* --- Roll boundary tests --- */
+  transcript = toaster_transcript_create();
+  toaster_transcript_add_word(transcript, "alpha", 0, 500000);
+  toaster_transcript_add_word(transcript, "beta", 500000, 1000000);
+  toaster_transcript_add_word(transcript, "gamma", 1000000, 1500000);
+
+  expect_true("roll — succeeds",
+              toaster_transcript_roll_boundary(transcript, 0, 600000),
+              "roll should succeed for valid boundary");
+
+  toaster_transcript_get_word(transcript, 0, &word);
+  expect_true("roll — left end moved",
+              word.end_us == 600000,
+              "left word end should be new boundary");
+
+  toaster_transcript_get_word(transcript, 1, &word);
+  expect_true("roll — right start moved",
+              word.start_us == 600000,
+              "right word start should be new boundary");
+
+  expect_true("roll — out of range fails",
+              !toaster_transcript_roll_boundary(transcript, 2, 1200000),
+              "roll at last index should fail (no right neighbor)");
+
+  expect_true("roll — past left start fails",
+              !toaster_transcript_roll_boundary(transcript, 0, -100),
+              "roll before left word start should fail");
+
+  expect_true("roll — past right end fails",
+              !toaster_transcript_roll_boundary(transcript, 0, 1100000),
+              "roll past right word end should fail");
+
+  toaster_transcript_destroy(transcript);
+
+  /* --- Ripple delete tests --- */
+  transcript = toaster_transcript_create();
+  toaster_transcript_add_word(transcript, "one", 0, 200000);
+  toaster_transcript_add_word(transcript, "two", 200000, 400000);
+  toaster_transcript_add_word(transcript, "three", 400000, 600000);
+  toaster_transcript_add_word(transcript, "four", 600000, 800000);
+  toaster_transcript_add_word(transcript, "five", 800000, 1000000);
+
+  expect_true("ripple — succeeds",
+              toaster_transcript_ripple_delete(transcript, 1, 2),
+              "ripple delete should succeed");
+
+  toaster_transcript_get_word(transcript, 1, &word);
+  expect_true("ripple — word 1 deleted",
+              word.deleted,
+              "word 'two' should be marked deleted");
+
+  toaster_transcript_get_word(transcript, 2, &word);
+  expect_true("ripple — word 2 deleted",
+              word.deleted,
+              "word 'three' should be marked deleted");
+
+  toaster_transcript_get_word(transcript, 3, &word);
+  expect_true("ripple — shifted start",
+              word.start_us == 200000,
+              "word 'four' start should shift left by deleted duration (400000)");
+  expect_true("ripple — shifted end",
+              word.end_us == 400000,
+              "word 'four' end should shift left by deleted duration");
+
+  toaster_transcript_get_word(transcript, 4, &word);
+  expect_true("ripple — last shifted start",
+              word.start_us == 400000,
+              "word 'five' start should shift left by deleted duration");
+  expect_true("ripple — last shifted end",
+              word.end_us == 600000,
+              "word 'five' end should shift left by deleted duration");
+
+  toaster_transcript_get_word(transcript, 0, &word);
+  expect_true("ripple — first unaffected",
+              word.start_us == 0 && word.end_us == 200000,
+              "word before deletion should be unaffected");
+
+  toaster_transcript_destroy(transcript);
+
   toaster_shutdown();
 
   return failures ? 1 : 0;
