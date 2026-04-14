@@ -75,12 +75,27 @@ const EditorView: React.FC = () => {
     if (!mediaInfo) return;
     setIsTranscribing(true);
     try {
-      // Use Handy's existing transcription infrastructure
-      // For now, create placeholder words from the file name
-      // This will be connected to the real transcription pipeline
+      // Transcribe the media file using the backend engine
+      const words = await invoke<
+        Array<{
+          text: string;
+          start_us: number;
+          end_us: number;
+          deleted: boolean;
+          silenced: boolean;
+          confidence: number;
+          speaker_id: number;
+        }>
+      >("transcribe_media_file", { path: mediaInfo.path });
+      // The backend already populated the editor store,
+      // but we also update the frontend store
+      await setWords(words);
+    } catch (err) {
+      console.error("Transcription failed:", err);
+      // Fall back to a placeholder if transcription fails
       const placeholderWords = [
         {
-          text: t("editor.transcriptionPlaceholder"),
+          text: String(err),
           start_us: 0,
           end_us: 1000000,
           deleted: false,
@@ -90,12 +105,10 @@ const EditorView: React.FC = () => {
         },
       ];
       await setWords(placeholderWords);
-    } catch (err) {
-      console.error("Transcription failed:", err);
     } finally {
       setIsTranscribing(false);
     }
-  }, [mediaInfo, setWords, t]);
+  }, [mediaInfo, setWords]);
 
   const handleExport = useCallback(
     async (format: string) => {
