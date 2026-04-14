@@ -367,12 +367,22 @@ const EditorView: React.FC = () => {
                       : ""}
                   </span>
                 </div>
-                <button
-                  onClick={handleImportMedia}
-                  className="text-xs text-mid-gray hover:text-foreground transition-colors px-2 py-1"
-                >
-                  {t("editor.changeFile")}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleSaveProject}
+                    className="text-xs text-mid-gray hover:text-foreground transition-colors px-2 py-1"
+                    title={t("editor.saveProject")}
+                  >
+                    {t("editor.save")}
+                  </button>
+                  <button
+                    onClick={handleClose}
+                    className="text-xs text-mid-gray hover:text-foreground transition-colors px-2 py-1"
+                    title={t("editor.close")}
+                  >
+                    {t("editor.close")}
+                  </button>
+                </div>
               </div>
 
               {/* Player */}
@@ -495,28 +505,6 @@ const EditorView: React.FC = () => {
             </div>
           </div>
         </SettingsGroup>
-      )}
-
-      {/* Bottom action bar — Save & Close */}
-      {words.length > 0 && (
-        <div className="flex items-center gap-2 justify-end">
-          <button
-            onClick={handleSaveProject}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-background border border-mid-gray/20 rounded-lg text-xs hover:bg-mid-gray/10 transition-colors"
-            title={t("editor.saveProject")}
-          >
-            <Save size={14} />
-            {t("editor.save")}
-          </button>
-          <button
-            onClick={handleClose}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-background border border-mid-gray/20 rounded-lg text-xs hover:bg-mid-gray/10 transition-colors"
-            title={t("editor.close")}
-          >
-            <X size={14} />
-            {t("editor.close")}
-          </button>
-        </div>
       )}
     </div>
   );
