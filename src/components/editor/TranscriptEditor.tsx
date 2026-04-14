@@ -366,7 +366,7 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
           disabled={isDetecting}
           className={`flex items-center gap-1 px-2 py-1 rounded text-[11px] border transition-colors disabled:opacity-50 ${
             highlightType === "filler"
-              ? "bg-red-900/30 border-red-500/30 text-red-400"
+              ? "border-[#E8A838]/50 text-[#E8A838] bg-[#E8A838]/10"
               : "bg-background border-mid-gray/20 text-mid-gray hover:bg-mid-gray/10"
           }`}
         >
@@ -378,7 +378,7 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
           disabled={isDetecting}
           className={`flex items-center gap-1 px-2 py-1 rounded text-[11px] border transition-colors disabled:opacity-50 ${
             highlightType === "pause"
-              ? "bg-yellow-900/30 border-yellow-500/30 text-yellow-400"
+              ? "border-[#E8A838]/50 text-[#E8A838] bg-[#E8A838]/10"
               : "bg-background border-mid-gray/20 text-mid-gray hover:bg-mid-gray/10"
           }`}
         >
@@ -502,8 +502,8 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
                   "cursor-pointer rounded px-1 py-0.5 transition-colors",
                   word.deleted && "line-through opacity-40",
                   word.silenced && !word.deleted && "opacity-60 italic",
-                  isHighlighted && highlightType === "filler" && "ring-2 ring-red-500 bg-red-900/30 text-red-300",
-                  isHighlighted && highlightType === "pause" && "ring-2 ring-yellow-500 bg-yellow-900/30 text-yellow-300",
+                  isHighlighted && highlightType === "filler" && "border-b-2 border-b-orange-400 bg-orange-400/10",
+                  isHighlighted && highlightType === "pause" && "border-b-2 border-b-sky-400 bg-sky-400/10",
                   isCurrentFindMatch && !isHighlighted && "ring-2 ring-[#E8A838] bg-[#E8A838]/30",
                   isFindMatch && !isCurrentFindMatch && !isHighlighted && "bg-[#E8A838]/15",
                   isSelected && !isFindMatch && !isHighlighted && "bg-[#E8A838] text-[#1E1E1E]",
