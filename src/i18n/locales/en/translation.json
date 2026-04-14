@@ -357,6 +357,22 @@
         "add": "Add",
         "remove": "Remove {{word}}",
         "duplicate": "\"{{word}}\" already exists"
+      },
+      "discardWords": {
+        "title": "Discard Words",
+        "description": "Words and phrases that will be automatically removed during transcription cleanup (filler words, verbal tics).",
+        "placeholder": "Add word or phrase",
+        "add": "Add",
+        "remove": "Remove {{word}}",
+        "duplicate": "\"{{word}}\" is already in the discard list"
+      },
+      "allowWords": {
+        "title": "Allow Words",
+        "description": "Brand names, technical terms, or unusual words to preserve exactly as-is during transcription.",
+        "placeholder": "Add word or phrase",
+        "add": "Add",
+        "remove": "Remove {{word}}",
+        "duplicate": "\"{{word}}\" is already in the allow list"
       }
     },
     "postProcessing": {
@@ -525,13 +541,14 @@
         "description": "View source code and contribute",
         "button": "View on GitHub"
       },
-      "supportDevelopment": {
-        "title": "Support Development",
-        "description": "Help us continue building Toaster",
-        "button": "Donate"
-      },
       "acknowledgments": {
         "title": "Acknowledgments",
+        "handy": {
+          "title": "Handy",
+          "description": "Toaster is built on the foundation of Handy by cjpais",
+          "details": "Handy is an open-source, local-first speech-to-text application. Toaster extends Handy's transcription engine with transcript-first video and audio editing capabilities. Thank you to cjpais and all Handy contributors.",
+          "button": "View Handy on GitHub"
+        },
         "whisper": {
           "title": "Whisper.cpp",
           "description": "High-performance inference of OpenAI's Whisper automatic speech recognition model",

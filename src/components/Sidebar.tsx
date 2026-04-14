@@ -1,16 +1,11 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Cog, FlaskConical, History, Info, Sparkles, Cpu, Scissors } from "lucide-react";
-import HandyHand from "./icons/HandyHand";
+import { Cog, History, Info, Cpu, Scissors } from "lucide-react";
 import toasterLogo from "../../toaster_text.svg";
-import { useSettings } from "../hooks/useSettings";
 import {
-  GeneralSettings,
   AdvancedSettings,
   HistorySettings,
-  DebugSettings,
   AboutSettings,
-  PostProcessingSettings,
   ModelsSettings,
 } from "./settings";
 import EditorView from "./editor/EditorView";
@@ -29,7 +24,7 @@ interface SectionConfig {
   labelKey: string;
   icon: React.ComponentType<IconProps>;
   component: React.ComponentType;
-  enabled: (settings: any) => boolean;
+  enabled: () => boolean;
 }
 
 export const SECTIONS_CONFIG = {
@@ -37,12 +32,6 @@ export const SECTIONS_CONFIG = {
     labelKey: "sidebar.editor",
     icon: Scissors,
     component: EditorView,
-    enabled: () => true,
-  },
-  general: {
-    labelKey: "sidebar.general",
-    icon: HandyHand,
-    component: GeneralSettings,
     enabled: () => true,
   },
   models: {
@@ -63,18 +52,6 @@ export const SECTIONS_CONFIG = {
     component: HistorySettings,
     enabled: () => true,
   },
-  postprocessing: {
-    labelKey: "sidebar.postProcessing",
-    icon: Sparkles,
-    component: PostProcessingSettings,
-    enabled: (settings) => settings?.post_process_enabled ?? false,
-  },
-  debug: {
-    labelKey: "sidebar.debug",
-    icon: FlaskConical,
-    component: DebugSettings,
-    enabled: (settings) => settings?.debug_mode ?? false,
-  },
   about: {
     labelKey: "sidebar.about",
     icon: Info,
@@ -93,10 +70,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSectionChange,
 }) => {
   const { t } = useTranslation();
-  const { settings } = useSettings();
 
-  const availableSections = Object.entries(SECTIONS_CONFIG)
-    .filter(([_, config]) => config.enabled(settings))
+  const availableSections= Object.entries(SECTIONS_CONFIG)
+    .filter(([_, config]) => config.enabled())
     .map(([id, config]) => ({ id: id as SidebarSection, ...config }));
 
   return (
