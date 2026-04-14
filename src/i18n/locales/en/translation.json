@@ -636,6 +636,12 @@
     "noMedia": "No media loaded"
   },
   "editor": {
+    "sections": {
+      "project": "Project",
+      "media": "Media",
+      "transcription": "Transcription",
+      "exportTools": "Export & Tools"
+    },
     "deleteWord": "Delete Word",
     "restoreWord": "Restore Word",
     "silenceWord": "Silence Word",
@@ -644,13 +650,14 @@
     "redo": "Redo",
     "restoreAll": "Restore All",
     "deleteRange": "Delete Range",
-    "noTranscript": "No transcript loaded",
+    "noTranscript": "Import a media file to begin",
     "importMedia": "Click to import a video or audio file",
     "supportedFormats": "MP4, MKV, WebM, AVI, MOV, MP3, WAV, FLAC, OGG, and more",
     "mediaFiles": "Media Files",
     "changeFile": "Change file",
     "transcribe": "Transcribe",
     "transcribing": "Transcribing...",
+    "modelNotLoaded": "No transcription model loaded. Go to the Models tab to download and select one.",
     "transcriptionPlaceholder": "Import a media file and click Transcribe to begin editing",
     "script": "Script",
     "fillers": "Fillers",

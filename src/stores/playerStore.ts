@@ -1,8 +1,17 @@
 import { create } from "zustand";
 
+export interface MediaInfo {
+  path: string;
+  file_name: string;
+  file_size: number;
+  media_type: "Video" | "Audio";
+  extension: string;
+}
+
 interface PlayerStore {
   mediaUrl: string | null;
   mediaType: "video" | "audio" | null;
+  mediaInfo: MediaInfo | null;
   isPlaying: boolean;
   currentTime: number;
   duration: number;
@@ -14,6 +23,7 @@ interface PlayerStore {
   seekTarget: number;
 
   setMedia: (url: string, type: "video" | "audio") => void;
+  setMediaInfo: (info: MediaInfo | null) => void;
   clearMedia: () => void;
   setPlaying: (playing: boolean) => void;
   setCurrentTime: (time: number) => void;
@@ -26,6 +36,7 @@ interface PlayerStore {
 export const usePlayerStore = create<PlayerStore>()((set) => ({
   mediaUrl: null,
   mediaType: null,
+  mediaInfo: null,
   isPlaying: false,
   currentTime: 0,
   duration: 0,
@@ -43,10 +54,13 @@ export const usePlayerStore = create<PlayerStore>()((set) => ({
       duration: 0,
     }),
 
+  setMediaInfo: (info) => set({ mediaInfo: info }),
+
   clearMedia: () =>
     set({
       mediaUrl: null,
       mediaType: null,
+      mediaInfo: null,
       isPlaying: false,
       currentTime: 0,
       duration: 0,

@@ -42,7 +42,7 @@ const Waveform: React.FC<WaveformProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [peaks, setPeaks] = useState<number[]>([]);
   const [canvasWidth, setCanvasWidth] = useState(0);
-  const canvasHeight = 80;
+  const canvasHeight = 64;
 
   // Decode audio and extract waveform peaks
   useEffect(() => {
