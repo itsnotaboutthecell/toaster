@@ -216,9 +216,73 @@ static void test_word_confidence_speaker(void)
   toaster_transcript_destroy(t);
 }
 
+static void test_model_path(void)
+{
+  const char *path;
+
+  /* Model not downloaded, so get_path should return NULL */
+  toaster_model_set_directory("C:\\nonexistent\\models");
+  path = toaster_model_get_path("tiny.en");
+  if (path == NULL)
+    PASS("get_path returns NULL when not downloaded");
+  else
+    FAIL("get_path", "should be NULL for missing model");
+
+  path = toaster_model_get_path("nonexistent");
+  if (path == NULL)
+    PASS("get_path(nonexistent) returns NULL");
+  else
+    FAIL("get_path(nonexistent)", "should be NULL");
+
+  path = toaster_model_get_path(NULL);
+  if (path == NULL)
+    PASS("get_path(NULL) returns NULL");
+  else
+    FAIL("get_path(NULL)", "should be NULL");
+}
+
+static void test_download_api(void)
+{
+  /* Can't test actual download without network, but test API surface */
+  if (!toaster_model_download(NULL, NULL, NULL))
+    PASS("download(NULL) fails");
+  else
+    FAIL("download(NULL)", "should fail");
+
+  if (!toaster_model_download("nonexistent", NULL, NULL))
+    PASS("download(nonexistent) fails");
+  else
+    FAIL("download(nonexistent)", "should fail");
+
+  if (toaster_model_cancel_download())
+    PASS("cancel_download returns true");
+  else
+    FAIL("cancel_download", "should succeed");
+}
+
+static void test_model_delete(void)
+{
+  /* Delete on non-existent model file is okay (idempotent) */
+  toaster_model_set_directory("C:\\nonexistent\\models");
+  if (toaster_model_delete("tiny.en"))
+    PASS("delete non-downloaded model succeeds");
+  else
+    FAIL("delete non-downloaded", "should succeed (no-op)");
+
+  if (!toaster_model_delete("nonexistent"))
+    PASS("delete unknown model fails");
+  else
+    FAIL("delete unknown", "should fail");
+
+  if (!toaster_model_delete(NULL))
+    PASS("delete(NULL) fails");
+  else
+    FAIL("delete(NULL)", "should fail");
+}
+
 int main(void)
 {
-  printf("test-model: model catalog and word extensions\n");
+  printf("test-model: model catalog, download API, and word extensions\n");
   toaster_startup();
 
   test_catalog_count();
@@ -228,6 +292,9 @@ int main(void)
   test_model_directory();
   test_recommended_models();
   test_word_confidence_speaker();
+  test_model_path();
+  test_download_api();
+  test_model_delete();
 
   toaster_shutdown();
   printf("test-model: %s (%d failure%s)\n", failures ? "FAILED" : "ALL PASSED", failures,

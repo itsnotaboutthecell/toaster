@@ -226,3 +226,239 @@ bool toaster_model_refresh_status(void)
      This function exists so the frontend can force a re-check after a download. */
   return ensure_models_dir();
 }
+
+static char model_path_buf[2048];
+
+const char *toaster_model_get_path(const char *model_id)
+{
+  size_t i;
+
+  if (!model_id || !ensure_models_dir())
+    return NULL;
+
+  for (i = 0; i < CATALOG_COUNT; i++) {
+    if (strcmp(catalog[i].id, model_id) == 0) {
+      snprintf(model_path_buf, sizeof(model_path_buf), "%s%c%s", models_directory,
+#ifdef _WIN32
+               '\\',
+#else
+               '/',
+#endif
+               catalog[i].filename);
+      if (file_exists(model_path_buf))
+        return model_path_buf;
+      return NULL;
+    }
+  }
+  return NULL;
+}
+
+static volatile bool download_cancel_flag = false;
+
+#ifdef _WIN32
+#include <winhttp.h>
+
+static bool ensure_directory_exists(const char *dir)
+{
+  DWORD attrs = GetFileAttributesA(dir);
+  if (attrs != INVALID_FILE_ATTRIBUTES && (attrs & FILE_ATTRIBUTE_DIRECTORY))
+    return true;
+  return CreateDirectoryA(dir, NULL) != 0;
+}
+
+static bool download_file_winhttp(const char *url, const char *dest_path, const char *model_id,
+                                  toaster_download_progress_cb progress_cb, void *user_data)
+{
+  HINTERNET session = NULL, connect = NULL, request = NULL;
+  URL_COMPONENTSW uc;
+  wchar_t host[256] = {0};
+  wchar_t path[1024] = {0};
+  wchar_t wurl[1024] = {0};
+  FILE *fp = NULL;
+  char partial_path[2048];
+  DWORD bytes_read;
+  uint64_t total_size = 0, downloaded = 0;
+  char buf[65536];
+  bool success = false;
+  int url_len;
+
+  url_len = MultiByteToWideChar(CP_UTF8, 0, url, -1, wurl, 1024);
+  if (url_len == 0)
+    return false;
+
+  memset(&uc, 0, sizeof(uc));
+  uc.dwStructSize = sizeof(uc);
+  uc.lpszHostName = host;
+  uc.dwHostNameLength = 256;
+  uc.lpszUrlPath = path;
+  uc.dwUrlPathLength = 1024;
+
+  if (!WinHttpCrackUrl(wurl, 0, 0, &uc))
+    return false;
+
+  session = WinHttpOpen(L"Toaster/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME,
+                        WINHTTP_NO_PROXY_BYPASS, 0);
+  if (!session)
+    return false;
+
+  connect = WinHttpConnect(session, host, uc.nPort, 0);
+  if (!connect)
+    goto cleanup;
+
+  request = WinHttpOpenRequest(connect, L"GET", path, NULL, WINHTTP_NO_REFERER,
+                               WINHTTP_DEFAULT_ACCEPT_TYPES,
+                               (uc.nScheme == INTERNET_SCHEME_HTTPS) ? WINHTTP_FLAG_SECURE : 0);
+  if (!request)
+    goto cleanup;
+
+  if (!WinHttpSendRequest(request, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0))
+    goto cleanup;
+
+  if (!WinHttpReceiveResponse(request, NULL))
+    goto cleanup;
+
+  /* Get content length */
+  {
+    DWORD size_buf_len = sizeof(buf);
+    wchar_t size_str[64];
+    DWORD size_str_len = sizeof(size_str) / sizeof(wchar_t);
+    if (WinHttpQueryHeaders(request, WINHTTP_QUERY_CONTENT_LENGTH, WINHTTP_HEADER_NAME_BY_INDEX, size_str,
+                            &size_str_len, WINHTTP_NO_HEADER_INDEX)) {
+      total_size = (uint64_t)_wtoi64(size_str);
+    }
+  }
+
+  /* Write to .partial file first */
+  snprintf(partial_path, sizeof(partial_path), "%s.partial", dest_path);
+  fp = fopen(partial_path, "wb");
+  if (!fp)
+    goto cleanup;
+
+  download_cancel_flag = false;
+
+  while (WinHttpReadData(request, buf, sizeof(buf), &bytes_read) && bytes_read > 0) {
+    if (download_cancel_flag) {
+      fclose(fp);
+      fp = NULL;
+      remove(partial_path);
+      goto cleanup;
+    }
+
+    if (fwrite(buf, 1, bytes_read, fp) != bytes_read) {
+      fclose(fp);
+      fp = NULL;
+      remove(partial_path);
+      goto cleanup;
+    }
+
+    downloaded += bytes_read;
+
+    if (progress_cb)
+      progress_cb(model_id, downloaded, total_size, user_data);
+  }
+
+  fclose(fp);
+  fp = NULL;
+
+  /* Rename .partial to final */
+  remove(dest_path);
+  if (rename(partial_path, dest_path) != 0) {
+    remove(partial_path);
+    goto cleanup;
+  }
+
+  success = true;
+
+cleanup:
+  if (fp)
+    fclose(fp);
+  if (request)
+    WinHttpCloseHandle(request);
+  if (connect)
+    WinHttpCloseHandle(connect);
+  if (session)
+    WinHttpCloseHandle(session);
+  return success;
+}
+
+#else
+/* POSIX stub — download not yet implemented on non-Windows */
+static bool ensure_directory_exists(const char *dir)
+{
+  return mkdir(dir, 0755) == 0 || errno == EEXIST;
+}
+#endif
+
+bool toaster_model_download(const char *model_id, toaster_download_progress_cb progress_cb,
+                            void *user_data)
+{
+  size_t i;
+  char url[512];
+  char dest[2048];
+
+  if (!model_id || !ensure_models_dir())
+    return false;
+
+  for (i = 0; i < CATALOG_COUNT; i++) {
+    if (strcmp(catalog[i].id, model_id) == 0) {
+      /* Ensure models directory exists */
+      if (!ensure_directory_exists(models_directory))
+        return false;
+
+      snprintf(url, sizeof(url), "%s%s", TOASTER_HF_BASE_URL, catalog[i].filename);
+      snprintf(dest, sizeof(dest), "%s%c%s", models_directory,
+#ifdef _WIN32
+               '\\',
+#else
+               '/',
+#endif
+               catalog[i].filename);
+
+      /* Already downloaded? */
+      if (file_exists(dest))
+        return true;
+
+#ifdef _WIN32
+      return download_file_winhttp(url, dest, model_id, progress_cb, user_data);
+#else
+      (void)progress_cb;
+      (void)user_data;
+      return false;
+#endif
+    }
+  }
+  return false;
+}
+
+bool toaster_model_cancel_download(void)
+{
+  download_cancel_flag = true;
+  return true;
+}
+
+bool toaster_model_delete(const char *model_id)
+{
+  size_t i;
+  char path[2048];
+
+  if (!model_id || !ensure_models_dir())
+    return false;
+
+  for (i = 0; i < CATALOG_COUNT; i++) {
+    if (strcmp(catalog[i].id, model_id) == 0) {
+      snprintf(path, sizeof(path), "%s%c%s", models_directory,
+#ifdef _WIN32
+               '\\',
+#else
+               '/',
+#endif
+               catalog[i].filename);
+
+      if (!file_exists(path))
+        return true;
+
+      return remove(path) == 0;
+    }
+  }
+  return false;
+}

@@ -207,6 +207,11 @@ TOASTER_API bool toaster_model_set_active(const char *model_id);
 TOASTER_API const char *toaster_model_get_directory(void);
 TOASTER_API bool toaster_model_set_directory(const char *dir);
 TOASTER_API bool toaster_model_refresh_status(void);
+TOASTER_API const char *toaster_model_get_path(const char *model_id);
+TOASTER_API bool toaster_model_download(const char *model_id, toaster_download_progress_cb progress_cb,
+                                        void *user_data);
+TOASTER_API bool toaster_model_cancel_download(void);
+TOASTER_API bool toaster_model_delete(const char *model_id);
 
 #ifdef __cplusplus
 }

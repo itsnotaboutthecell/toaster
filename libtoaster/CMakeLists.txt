@@ -14,5 +14,5 @@ target_include_directories(toaster
 )
 
 if(WIN32)
-  target_link_libraries(toaster PRIVATE shell32)
+  target_link_libraries(toaster PRIVATE shell32 winhttp)
 endif()
