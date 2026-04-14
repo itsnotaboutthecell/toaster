@@ -3,6 +3,8 @@ name: ffmpeg-debugging
 description: 'Debug FFmpeg-related issues in the Toaster decoder and exporter plugins. Use for: ffmpeg crash, decode error, av_read_frame, packet interleaving, AVFrame corruption, audio video sync, sws swr context, avformat avcodec, seek issue, timestamp mapping, pts dts, AV_TIME_BASE, export failure, encoder muxer.'
 ---
 
+> **⚠️ FORWARD-LOOKING**: FFmpeg integration has **not been implemented yet**. No `plugins/` directory or FFmpeg code exists in the current codebase. This skill documents the *intended* patterns for when FFmpeg decoder/exporter plugins are built (see PRD.md Phase 3–4). Do not reference these files as if they exist today.
+
 # FFmpeg Debugging
 
 Diagnose and fix FFmpeg issues in Toaster's decoder and exporter plugins.

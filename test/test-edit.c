@@ -84,6 +84,103 @@ int main(void)
               "restore should recover one continuous segment");
 
   toaster_transcript_destroy(transcript);
+
+  /* ---- Undo/Redo tests ---- */
+  transcript = toaster_transcript_create();
+  toaster_transcript_add_word(transcript, "alpha", 0, 100000);
+  toaster_transcript_add_word(transcript, "beta", 100000, 200000);
+  toaster_transcript_add_word(transcript, "gamma", 200000, 300000);
+
+  expect_true("undo — no history",
+              !toaster_transcript_can_undo(transcript),
+              "fresh transcript should have nothing to undo");
+
+  toaster_transcript_save_snapshot(transcript);
+  toaster_transcript_delete_range(transcript, 1, 1);
+  toaster_transcript_get_word(transcript, 1, &word);
+  expect_true("undo — deleted before undo", word.deleted,
+              "beta should be deleted");
+  expect_true("undo — can undo after edit",
+              toaster_transcript_can_undo(transcript),
+              "should be able to undo after snapshot+edit");
+
+  expect_true("undo — undo succeeds",
+              toaster_transcript_undo(transcript),
+              "undo should succeed");
+  toaster_transcript_get_word(transcript, 1, &word);
+  expect_true("undo — restored after undo", !word.deleted,
+              "beta should be restored after undo");
+  expect_true("undo — can redo after undo",
+              toaster_transcript_can_redo(transcript),
+              "should be able to redo after undo");
+
+  expect_true("redo — redo succeeds",
+              toaster_transcript_redo(transcript),
+              "redo should succeed");
+  toaster_transcript_get_word(transcript, 1, &word);
+  expect_true("redo — deleted after redo", word.deleted,
+              "beta should be deleted again after redo");
+
+  /* Undo again, then make a new edit to discard redo stack */
+  toaster_transcript_undo(transcript);
+  toaster_transcript_save_snapshot(transcript);
+  toaster_transcript_silence_range(transcript, 0, 0);
+  expect_true("undo — no redo after new edit",
+              !toaster_transcript_can_redo(transcript),
+              "new edit after undo should clear redo stack");
+
+  toaster_transcript_destroy(transcript);
+
+  /* ---- Split word tests ---- */
+  transcript = toaster_transcript_create();
+  toaster_transcript_add_word(transcript, "together", 0, 1000000);
+  toaster_transcript_add_word(transcript, "again", 1000000, 2000000);
+
+  expect_true("split — initial word count",
+              toaster_transcript_word_count(transcript) == 2,
+              "should start with 2 words");
+
+  expect_true("split — split succeeds",
+              toaster_transcript_split_word(transcript, 0, 500000),
+              "split at midpoint should succeed");
+  expect_true("split — word count after split",
+              toaster_transcript_word_count(transcript) == 3,
+              "should have 3 words after split");
+
+  toaster_transcript_get_word(transcript, 0, &word);
+  expect_true("split — first half text",
+              strcmp(word.text, "toge") == 0,
+              "first half should get first half of text");
+  expect_true("split — first half end",
+              word.end_us == 500000,
+              "first half should end at split point");
+
+  toaster_transcript_get_word(transcript, 1, &word);
+  expect_true("split — second half text",
+              strcmp(word.text, "ther") == 0,
+              "second half should get second half of text");
+  expect_true("split — second half start",
+              word.start_us == 500000,
+              "second half should start at split point");
+  expect_true("split — second half end",
+              word.end_us == 1000000,
+              "second half should end at original end");
+
+  toaster_transcript_get_word(transcript, 2, &word);
+  expect_true("split — shifted word text",
+              strcmp(word.text, "again") == 0,
+              "third word should be 'again' shifted from index 1 to 2");
+
+  /* Edge case: split outside word boundaries should fail */
+  expect_true("split — before word fails",
+              !toaster_transcript_split_word(transcript, 2, 500000),
+              "split before word start should fail");
+  expect_true("split — at word start fails",
+              !toaster_transcript_split_word(transcript, 2, 1000000),
+              "split at exact start should fail");
+
+  toaster_transcript_destroy(transcript);
+
   toaster_shutdown();
 
   return failures ? 1 : 0;

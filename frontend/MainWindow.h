@@ -67,8 +67,15 @@ private:
   void silenceSelection();
   void unsilenceSelection();
   void focusTranscriptSearch();
+  void focusTranscriptReplace();
   void findNextTranscriptMatch();
   void findPreviousTranscriptMatch();
+  void replaceCurrentMatch();
+  void replaceAllMatches();
+  void undoEdit();
+  void redoEdit();
+  void splitWordAtPlayhead();
+  void updateUndoRedoState();
   void onTranscriptSearchChanged(const QString &text);
 
   void onTranscriptCellChanged(int row, int column);
@@ -151,6 +158,9 @@ private:
   QAction *m_focusTranscriptSearchAction = nullptr;
   QAction *m_findNextAction = nullptr;
   QAction *m_findPreviousAction = nullptr;
+  QAction *m_findAndReplaceAction = nullptr;
+  QAction *m_undoAction = nullptr;
+  QAction *m_redoAction = nullptr;
 
   toaster_project_t *m_project = nullptr;
   toaster_suggestion_list_t *m_suggestions = nullptr;
@@ -170,11 +180,14 @@ private:
 
   QTableWidget *m_transcriptTable = nullptr;
   QLineEdit *m_transcriptSearchEdit = nullptr;
+  QLineEdit *m_transcriptReplaceEdit = nullptr;
   QLabel *m_transcriptSearchStatusLabel = nullptr;
   QToolButton *m_transcriptTranscribeButton = nullptr;
   QToolButton *m_transcriptImportButton = nullptr;
   QToolButton *m_transcriptSearchPreviousButton = nullptr;
   QToolButton *m_transcriptSearchNextButton = nullptr;
+  QToolButton *m_transcriptReplaceButton = nullptr;
+  QToolButton *m_transcriptReplaceAllButton = nullptr;
   QToolButton *m_exportMediaButton = nullptr;
   QToolButton *m_exportCaptionsButton = nullptr;
   QToolButton *m_exportScriptButton = nullptr;

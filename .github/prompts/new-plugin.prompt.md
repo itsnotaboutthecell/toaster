@@ -3,9 +3,12 @@ description: "Scaffold a new Toaster plugin (filter, decoder, exporter, or encod
 argument-hint: "plugin-name type (filter|decoder|exporter|encoder)"
 agent: "agent"
 ---
+
+> **⚠️ FORWARD-LOOKING**: The `plugins/` directory and plugin registration system **do not exist yet**. This prompt describes the *intended* scaffolding pattern for when plugins are implemented (see PRD.md Phase 3–4). Before using this prompt, verify that `plugins/CMakeLists.txt` and the `toaster_register_{type}()` API exist.
+
 Create a new Toaster plugin with the given name and type. Generate:
 
-1. `plugins/{name}/CMakeLists.txt` following the pattern in `plugins/filler-filter/CMakeLists.txt`
+1. `plugins/{name}/CMakeLists.txt` following the pattern described below
 2. `plugins/{name}/{name}.c` with:
    - Header comment describing the plugin
    - `#include "toaster.h"` and necessary standard headers

@@ -1,5 +1,7 @@
 # Audio Engineering Skill
 
+> **⚠️ FORWARD-LOOKING**: The implementation targets referenced below (`plugins/whisper-transcribe/`, `frontend/PlaybackEngine.cpp`) **do not exist yet**. This skill documents the *intended* approach for when sample-level boundary refinement is built (see PRD.md Phase 3). Do not reference these files as if they exist today.
+
 Use this skill when transcript word boundaries, deletion joins, or perceived cut quality are not accurate enough.
 
 ## What this skill does
@@ -51,10 +53,10 @@ Use this template:
 - Code action: exact file and function to update
 - Verification: tests and manual playback case
 
-## Reference implementation targets in Toaster
-- Boundary generation: plugins/whisper-transcribe/whisper-transcribe.c
-- Runtime join behavior: frontend/PlaybackEngine.cpp
-- Timeline mapping: libtoaster/toaster-edit.c
+## Reference implementation targets in Toaster (planned, not yet created)
+- Boundary generation: plugins/whisper-transcribe/whisper-transcribe.c (Phase 3)
+- Runtime join behavior: frontend/PlaybackEngine.cpp (Phase 3)
+- Timeline mapping: libtoaster/toaster.c (existing — undo/redo and split word)
 
 ## Synthesis recipes (controlled test assets)
 

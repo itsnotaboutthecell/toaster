@@ -1,7 +1,6 @@
 build/
 cmake-build-*/
 CMakeUserPresets.json
-PRD.md
 
 .vs/
 .idea/
@@ -11,3 +10,5 @@ PRD.md
 *.opendb
 *.VC.db
 *.VC.VC.opendb
+
+PRD.md

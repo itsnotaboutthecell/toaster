@@ -109,6 +109,16 @@ TOASTER_API bool toaster_transcript_export_captions(const toaster_transcript_t *
                                                     const char *path,
                                                     toaster_caption_format_t format);
 
+TOASTER_API bool toaster_transcript_save_snapshot(toaster_transcript_t *transcript);
+TOASTER_API bool toaster_transcript_undo(toaster_transcript_t *transcript);
+TOASTER_API bool toaster_transcript_redo(toaster_transcript_t *transcript);
+TOASTER_API bool toaster_transcript_can_undo(const toaster_transcript_t *transcript);
+TOASTER_API bool toaster_transcript_can_redo(const toaster_transcript_t *transcript);
+TOASTER_API void toaster_transcript_clear_history(toaster_transcript_t *transcript);
+
+TOASTER_API bool toaster_transcript_split_word(toaster_transcript_t *transcript, size_t index,
+                                               int64_t split_us);
+
 TOASTER_API toaster_project_t *toaster_project_create(void);
 TOASTER_API void toaster_project_destroy(toaster_project_t *project);
 TOASTER_API toaster_transcript_t *toaster_project_get_transcript(toaster_project_t *project);
@@ -129,6 +139,12 @@ TOASTER_API bool toaster_suggestion_list_get(const toaster_suggestion_list_t *li
                                              toaster_suggestion_t *out_suggestion);
 TOASTER_API bool toaster_detect_fillers(const toaster_transcript_t *transcript,
                                         toaster_suggestion_list_t *list);
+TOASTER_API bool toaster_detect_fillers_custom(const toaster_transcript_t *transcript,
+                                               toaster_suggestion_list_t *list,
+                                               const char *const *extra_fillers,
+                                               size_t extra_filler_count,
+                                               const char *const *ignore_words,
+                                               size_t ignore_count);
 TOASTER_API bool toaster_detect_pauses(const toaster_transcript_t *transcript,
                                        toaster_suggestion_list_t *list, int64_t min_gap_us,
                                        int64_t shorten_to_us);

@@ -96,6 +96,34 @@ static bool is_single_filler(const char *word)
   return false;
 }
 
+static bool is_in_word_list(const char *word, const char *const *list, size_t count)
+{
+  size_t index;
+
+  if (!word || !list)
+    return false;
+
+  for (index = 0; index < count; ++index) {
+    if (list[index] && text_equals_ci(word, list[index]))
+      return true;
+  }
+
+  return false;
+}
+
+static bool is_single_filler_custom(const char *word, const char *const *extra_fillers,
+                                    size_t extra_count, const char *const *ignore_words,
+                                    size_t ignore_count)
+{
+  if (is_in_word_list(word, ignore_words, ignore_count))
+    return false;
+
+  if (is_single_filler(word))
+    return true;
+
+  return is_in_word_list(word, extra_fillers, extra_count);
+}
+
 static bool is_phrase_filler(const char *first, const char *second)
 {
   static const char *phrases[][2] = {
@@ -267,6 +295,81 @@ bool toaster_detect_fillers(const toaster_transcript_t *transcript, toaster_sugg
     }
 
     if (is_single_filler(current.text)) {
+      if (!suggestion_list_push(list, TOASTER_SUGGESTION_DELETE_FILLER, index, index,
+                                current.start_us, current.end_us, 0, "Single-word filler")) {
+        return false;
+      }
+    }
+
+    ++index;
+  }
+
+  return true;
+}
+
+bool toaster_detect_fillers_custom(const toaster_transcript_t *transcript,
+                                   toaster_suggestion_list_t *list,
+                                   const char *const *extra_fillers, size_t extra_filler_count,
+                                   const char *const *ignore_words, size_t ignore_count)
+{
+  size_t word_count;
+  size_t index = 0;
+
+  if (!transcript || !list)
+    return false;
+
+  word_count = toaster_transcript_word_count(transcript);
+  while (index < word_count) {
+    toaster_word_t current;
+
+    if (!toaster_transcript_get_word(transcript, index, &current))
+      return false;
+
+    if (current.deleted) {
+      ++index;
+      continue;
+    }
+
+    if (is_in_word_list(current.text, ignore_words, ignore_count)) {
+      ++index;
+      continue;
+    }
+
+    if (index + 1 < word_count) {
+      toaster_word_t next;
+
+      if (!toaster_transcript_get_word(transcript, index + 1, &next))
+        return false;
+
+      if (!next.deleted && !is_in_word_list(next.text, ignore_words, ignore_count) &&
+          is_phrase_filler(current.text, next.text)) {
+        if (!suggestion_list_push(list, TOASTER_SUGGESTION_DELETE_FILLER, index, index + 1,
+                                  current.start_us, next.end_us, 0, "Phrase filler")) {
+          return false;
+        }
+        index += 2;
+        continue;
+      }
+    }
+
+    if (index > 0) {
+      toaster_word_t previous;
+
+      if (!toaster_transcript_get_word(transcript, index - 1, &previous))
+        return false;
+
+      if (!previous.deleted && text_equals_ci(previous.text, current.text)) {
+        if (!suggestion_list_push(list, TOASTER_SUGGESTION_DELETE_FILLER, index - 1, index,
+                                  previous.start_us, current.end_us, 0, "Repeated word")) {
+          return false;
+        }
+        ++index;
+        continue;
+      }
+    }
+
+    if (is_single_filler_custom(current.text, extra_fillers, extra_filler_count,
+                                ignore_words, ignore_count)) {
       if (!suggestion_list_push(list, TOASTER_SUGGESTION_DELETE_FILLER, index, index,
                                 current.start_us, current.end_us, 0, "Single-word filler")) {
         return false;

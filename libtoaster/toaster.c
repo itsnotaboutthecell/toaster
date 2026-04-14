@@ -19,6 +19,15 @@ typedef enum toaster_word_state_kind {
   TOASTER_WORD_STATE_SILENCED = 1
 } toaster_word_state_kind_t;
 
+#define TOASTER_MAX_UNDO 64
+
+typedef struct toaster_snapshot {
+  toaster_word_storage_t *words;
+  size_t word_count;
+  toaster_time_range_t *cut_spans;
+  size_t cut_count;
+} toaster_snapshot_t;
+
 struct toaster_transcript {
   toaster_word_storage_t *words;
   size_t word_count;
@@ -26,6 +35,9 @@ struct toaster_transcript {
   toaster_time_range_t *cut_spans;
   size_t cut_count;
   size_t cut_capacity;
+  toaster_snapshot_t undo_stack[TOASTER_MAX_UNDO];
+  size_t undo_count;
+  size_t redo_count;
 };
 
 static int g_startup_depth = 0;
@@ -470,6 +482,8 @@ void toaster_transcript_destroy(toaster_transcript_t *transcript)
 
   if (!transcript)
     return;
+
+  toaster_transcript_clear_history(transcript);
 
   for (index = 0; index < transcript->word_count; ++index)
     free(transcript->words[index].text);
@@ -949,4 +963,296 @@ bool toaster_transcript_export_captions(const toaster_transcript_t *transcript, 
     success = false;
 
   return success;
+}
+
+/* ---- Undo / Redo ---- */
+
+static void free_snapshot(toaster_snapshot_t *snap)
+{
+  size_t index;
+
+  if (!snap)
+    return;
+
+  for (index = 0; index < snap->word_count; ++index)
+    free(snap->words[index].text);
+
+  free(snap->words);
+  free(snap->cut_spans);
+  snap->words = NULL;
+  snap->cut_spans = NULL;
+  snap->word_count = 0;
+  snap->cut_count = 0;
+}
+
+static bool capture_snapshot(const toaster_transcript_t *transcript, toaster_snapshot_t *snap)
+{
+  size_t index;
+
+  if (!transcript || !snap)
+    return false;
+
+  memset(snap, 0, sizeof(*snap));
+
+  if (transcript->word_count > 0) {
+    snap->words = (toaster_word_storage_t *)calloc(transcript->word_count,
+                                                    sizeof(toaster_word_storage_t));
+    if (!snap->words)
+      return false;
+
+    for (index = 0; index < transcript->word_count; ++index) {
+      snap->words[index].text = toaster_strdup(transcript->words[index].text);
+      if (!snap->words[index].text) {
+        snap->word_count = index;
+        free_snapshot(snap);
+        return false;
+      }
+      snap->words[index].start_us = transcript->words[index].start_us;
+      snap->words[index].end_us = transcript->words[index].end_us;
+      snap->words[index].deleted = transcript->words[index].deleted;
+      snap->words[index].silenced = transcript->words[index].silenced;
+    }
+    snap->word_count = transcript->word_count;
+  }
+
+  if (transcript->cut_count > 0) {
+    snap->cut_spans = (toaster_time_range_t *)calloc(transcript->cut_count,
+                                                      sizeof(toaster_time_range_t));
+    if (!snap->cut_spans) {
+      free_snapshot(snap);
+      return false;
+    }
+    memcpy(snap->cut_spans, transcript->cut_spans,
+           transcript->cut_count * sizeof(toaster_time_range_t));
+    snap->cut_count = transcript->cut_count;
+  }
+
+  return true;
+}
+
+static bool restore_snapshot(toaster_transcript_t *transcript, const toaster_snapshot_t *snap)
+{
+  toaster_word_storage_t *new_words = NULL;
+  toaster_time_range_t *new_cuts = NULL;
+  size_t index;
+
+  if (!transcript || !snap)
+    return false;
+
+  if (snap->word_count > 0) {
+    new_words = (toaster_word_storage_t *)calloc(snap->word_count,
+                                                  sizeof(toaster_word_storage_t));
+    if (!new_words)
+      return false;
+
+    for (index = 0; index < snap->word_count; ++index) {
+      new_words[index].text = toaster_strdup(snap->words[index].text);
+      if (!new_words[index].text) {
+        size_t cleanup;
+        for (cleanup = 0; cleanup < index; ++cleanup)
+          free(new_words[cleanup].text);
+        free(new_words);
+        return false;
+      }
+      new_words[index].start_us = snap->words[index].start_us;
+      new_words[index].end_us = snap->words[index].end_us;
+      new_words[index].deleted = snap->words[index].deleted;
+      new_words[index].silenced = snap->words[index].silenced;
+    }
+  }
+
+  if (snap->cut_count > 0) {
+    new_cuts = (toaster_time_range_t *)calloc(snap->cut_count, sizeof(toaster_time_range_t));
+    if (!new_cuts) {
+      if (new_words) {
+        for (index = 0; index < snap->word_count; ++index)
+          free(new_words[index].text);
+        free(new_words);
+      }
+      return false;
+    }
+    memcpy(new_cuts, snap->cut_spans, snap->cut_count * sizeof(toaster_time_range_t));
+  }
+
+  for (index = 0; index < transcript->word_count; ++index)
+    free(transcript->words[index].text);
+  free(transcript->words);
+  free(transcript->cut_spans);
+
+  transcript->words = new_words;
+  transcript->word_count = snap->word_count;
+  transcript->word_capacity = snap->word_count;
+  transcript->cut_spans = new_cuts;
+  transcript->cut_count = snap->cut_count;
+  transcript->cut_capacity = snap->cut_count;
+  return true;
+}
+
+bool toaster_transcript_save_snapshot(toaster_transcript_t *transcript)
+{
+  size_t index;
+
+  if (!transcript)
+    return false;
+
+  for (index = transcript->undo_count;
+       index < transcript->undo_count + transcript->redo_count && index < TOASTER_MAX_UNDO;
+       ++index) {
+    free_snapshot(&transcript->undo_stack[index]);
+  }
+  transcript->redo_count = 0;
+
+  if (transcript->undo_count >= TOASTER_MAX_UNDO) {
+    free_snapshot(&transcript->undo_stack[0]);
+    memmove(&transcript->undo_stack[0], &transcript->undo_stack[1],
+            (TOASTER_MAX_UNDO - 1) * sizeof(toaster_snapshot_t));
+    --transcript->undo_count;
+  }
+
+  if (!capture_snapshot(transcript, &transcript->undo_stack[transcript->undo_count]))
+    return false;
+
+  ++transcript->undo_count;
+  return true;
+}
+
+bool toaster_transcript_undo(toaster_transcript_t *transcript)
+{
+  toaster_snapshot_t current_state;
+
+  if (!transcript || transcript->undo_count == 0)
+    return false;
+
+  memset(&current_state, 0, sizeof(current_state));
+  if (!capture_snapshot(transcript, &current_state))
+    return false;
+
+  --transcript->undo_count;
+  if (!restore_snapshot(transcript, &transcript->undo_stack[transcript->undo_count])) {
+    free_snapshot(&current_state);
+    ++transcript->undo_count;
+    return false;
+  }
+
+  free_snapshot(&transcript->undo_stack[transcript->undo_count]);
+  transcript->undo_stack[transcript->undo_count] = current_state;
+  ++transcript->redo_count;
+  return true;
+}
+
+bool toaster_transcript_redo(toaster_transcript_t *transcript)
+{
+  toaster_snapshot_t current_state;
+  size_t redo_index;
+
+  if (!transcript || transcript->redo_count == 0)
+    return false;
+
+  redo_index = transcript->undo_count;
+
+  memset(&current_state, 0, sizeof(current_state));
+  if (!capture_snapshot(transcript, &current_state))
+    return false;
+
+  if (!restore_snapshot(transcript, &transcript->undo_stack[redo_index])) {
+    free_snapshot(&current_state);
+    return false;
+  }
+
+  free_snapshot(&transcript->undo_stack[redo_index]);
+  transcript->undo_stack[redo_index] = current_state;
+  ++transcript->undo_count;
+  --transcript->redo_count;
+  return true;
+}
+
+bool toaster_transcript_can_undo(const toaster_transcript_t *transcript)
+{
+  return transcript && transcript->undo_count > 0;
+}
+
+bool toaster_transcript_can_redo(const toaster_transcript_t *transcript)
+{
+  return transcript && transcript->redo_count > 0;
+}
+
+void toaster_transcript_clear_history(toaster_transcript_t *transcript)
+{
+  size_t index;
+  size_t total;
+
+  if (!transcript)
+    return;
+
+  total = transcript->undo_count + transcript->redo_count;
+  if (total > TOASTER_MAX_UNDO)
+    total = TOASTER_MAX_UNDO;
+
+  for (index = 0; index < total; ++index)
+    free_snapshot(&transcript->undo_stack[index]);
+
+  transcript->undo_count = 0;
+  transcript->redo_count = 0;
+}
+
+/* ---- Split Word ---- */
+
+bool toaster_transcript_split_word(toaster_transcript_t *transcript, size_t index, int64_t split_us)
+{
+  toaster_word_storage_t original;
+  char *first_half;
+  char *second_half;
+  size_t text_len;
+  size_t half;
+
+  if (!transcript || index >= transcript->word_count)
+    return false;
+
+  if (split_us <= transcript->words[index].start_us || split_us >= transcript->words[index].end_us)
+    return false;
+
+  text_len = strlen(transcript->words[index].text);
+  if (text_len < 2)
+    return false;
+
+  half = text_len / 2;
+  first_half = (char *)malloc(half + 1);
+  second_half = (char *)malloc(text_len - half + 1);
+  if (!first_half || !second_half) {
+    free(first_half);
+    free(second_half);
+    return false;
+  }
+
+  memcpy(first_half, transcript->words[index].text, half);
+  first_half[half] = '\0';
+  memcpy(second_half, transcript->words[index].text + half, text_len - half);
+  second_half[text_len - half] = '\0';
+
+  original = transcript->words[index];
+
+  if (!ensure_word_capacity(transcript, transcript->word_count + 1)) {
+    free(first_half);
+    free(second_half);
+    return false;
+  }
+
+  memmove(&transcript->words[index + 2], &transcript->words[index + 1],
+          (transcript->word_count - index - 1) * sizeof(toaster_word_storage_t));
+  ++transcript->word_count;
+
+  free(transcript->words[index].text);
+  transcript->words[index].text = first_half;
+  transcript->words[index].start_us = original.start_us;
+  transcript->words[index].end_us = split_us;
+  transcript->words[index].deleted = original.deleted;
+  transcript->words[index].silenced = original.silenced;
+
+  transcript->words[index + 1].text = second_half;
+  transcript->words[index + 1].start_us = split_us;
+  transcript->words[index + 1].end_us = original.end_us;
+  transcript->words[index + 1].deleted = original.deleted;
+  transcript->words[index + 1].silenced = original.silenced;
+
+  return true;
 }

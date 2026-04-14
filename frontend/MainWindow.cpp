@@ -526,10 +526,19 @@ void MainWindow::createDocks()
   m_transcriptSearchEdit = new QLineEdit(transcriptWidget);
   m_transcriptSearchEdit->setClearButtonEnabled(true);
   m_transcriptSearchEdit->setPlaceholderText("Search transcript (Ctrl+F)");
+  m_transcriptReplaceEdit = new QLineEdit(transcriptWidget);
+  m_transcriptReplaceEdit->setClearButtonEnabled(true);
+  m_transcriptReplaceEdit->setPlaceholderText("Replace with...");
   m_transcriptSearchPreviousButton = new QToolButton(transcriptWidget);
   m_transcriptSearchPreviousButton->setToolButtonStyle(Qt::ToolButtonTextOnly);
   m_transcriptSearchNextButton = new QToolButton(transcriptWidget);
   m_transcriptSearchNextButton->setToolButtonStyle(Qt::ToolButtonTextOnly);
+  m_transcriptReplaceButton = new QToolButton(transcriptWidget);
+  m_transcriptReplaceButton->setToolButtonStyle(Qt::ToolButtonTextOnly);
+  m_transcriptReplaceButton->setText("Replace");
+  m_transcriptReplaceAllButton = new QToolButton(transcriptWidget);
+  m_transcriptReplaceAllButton->setToolButtonStyle(Qt::ToolButtonTextOnly);
+  m_transcriptReplaceAllButton->setText("All");
   m_transcriptSearchStatusLabel = new QLabel("No transcript", transcriptWidget);
   m_transcriptSearchStatusLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
 
@@ -538,8 +547,15 @@ void MainWindow::createDocks()
   transcriptSearchLayout->addWidget(m_transcriptSearchNextButton);
   transcriptSearchLayout->addWidget(m_transcriptSearchStatusLabel);
 
+  auto *transcriptReplaceLayout = new QHBoxLayout();
+  transcriptReplaceLayout->setContentsMargins(0, 0, 0, 0);
+  transcriptReplaceLayout->addWidget(m_transcriptReplaceEdit, 1);
+  transcriptReplaceLayout->addWidget(m_transcriptReplaceButton);
+  transcriptReplaceLayout->addWidget(m_transcriptReplaceAllButton);
+
   transcriptLayout->addLayout(transcriptWorkflowLayout);
   transcriptLayout->addLayout(transcriptSearchLayout);
+  transcriptLayout->addLayout(transcriptReplaceLayout);
   transcriptLayout->addWidget(m_transcriptTable, 1);
   m_transcriptDock = createDock(this, "Transcript", "transcriptDock", transcriptWidget);
 
@@ -625,6 +641,8 @@ void MainWindow::createDocks()
           [this]() { onTranscriptSelectionChanged(); });
   connect(m_transcriptSearchEdit, &QLineEdit::textChanged, this, &MainWindow::onTranscriptSearchChanged);
   connect(m_transcriptSearchEdit, &QLineEdit::returnPressed, this, &MainWindow::findNextTranscriptMatch);
+  connect(m_transcriptReplaceButton, &QToolButton::clicked, this, &MainWindow::replaceCurrentMatch);
+  connect(m_transcriptReplaceAllButton, &QToolButton::clicked, this, &MainWindow::replaceAllMatches);
   connect(m_suggestionList, &QListWidget::currentItemChanged, this,
           [this]() { onSuggestionSelectionChanged(); });
   connect(m_suggestionList, &QListWidget::itemDoubleClicked, this,
@@ -657,7 +675,18 @@ void MainWindow::createMenus()
   fileMenu->addAction("Exit", this, &QWidget::close);
 
   auto *editMenu = menuBar()->addMenu("&Edit");
-  m_focusTranscriptSearchAction = new QAction("Find Transcript", this);
+  m_undoAction = new QAction("Undo", this);
+  m_undoAction->setShortcut(QKeySequence::Undo);
+  m_undoAction->setEnabled(false);
+  connect(m_undoAction, &QAction::triggered, this, &MainWindow::undoEdit);
+  m_redoAction = new QAction("Redo", this);
+  m_redoAction->setShortcut(QKeySequence("Ctrl+Shift+Z"));
+  m_redoAction->setEnabled(false);
+  connect(m_redoAction, &QAction::triggered, this, &MainWindow::redoEdit);
+  editMenu->addAction(m_undoAction);
+  editMenu->addAction(m_redoAction);
+  editMenu->addSeparator();
+  m_focusTranscriptSearchAction = new QAction("Find", this);
   m_focusTranscriptSearchAction->setShortcut(QKeySequence::Find);
   connect(m_focusTranscriptSearchAction, &QAction::triggered, this, &MainWindow::focusTranscriptSearch);
   m_findNextAction = new QAction("Find Next", this);
@@ -666,12 +695,19 @@ void MainWindow::createMenus()
   m_findPreviousAction = new QAction("Find Previous", this);
   m_findPreviousAction->setShortcut(QKeySequence::FindPrevious);
   connect(m_findPreviousAction, &QAction::triggered, this, &MainWindow::findPreviousTranscriptMatch);
+  m_findAndReplaceAction = new QAction("Find and Replace", this);
+  m_findAndReplaceAction->setShortcut(QKeySequence("Ctrl+H"));
+  connect(m_findAndReplaceAction, &QAction::triggered, this, &MainWindow::focusTranscriptReplace);
+  addAction(m_undoAction);
+  addAction(m_redoAction);
   addAction(m_focusTranscriptSearchAction);
   addAction(m_findNextAction);
   addAction(m_findPreviousAction);
+  addAction(m_findAndReplaceAction);
   editMenu->addAction(m_focusTranscriptSearchAction);
   editMenu->addAction(m_findNextAction);
   editMenu->addAction(m_findPreviousAction);
+  editMenu->addAction(m_findAndReplaceAction);
   editMenu->addSeparator();
   editMenu->addAction("Delete Selection", this, &MainWindow::deleteSelection);
   editMenu->addAction("Silence Selection", this, &MainWindow::silenceSelection);
@@ -2123,10 +2159,12 @@ void MainWindow::deleteSelection()
     return;
 
   transcript = toaster_project_get_transcript(m_project);
+  toaster_transcript_save_snapshot(transcript);
   for (int row : rows)
     toaster_transcript_delete_range(transcript, static_cast<size_t>(row), static_cast<size_t>(row));
 
   rebuildAllViews();
+  updateUndoRedoState();
   appendLogLine(QString("Deleted %1 selected words.").arg(rows.size()));
 }
 
@@ -2139,10 +2177,12 @@ void MainWindow::restoreSelection()
     return;
 
   transcript = toaster_project_get_transcript(m_project);
+  toaster_transcript_save_snapshot(transcript);
   for (int row : rows)
     toaster_transcript_restore_range(transcript, static_cast<size_t>(row), static_cast<size_t>(row));
 
   rebuildAllViews();
+  updateUndoRedoState();
   appendLogLine(QString("Restored %1 selected words.").arg(rows.size()));
 }
 
@@ -2155,10 +2195,12 @@ void MainWindow::silenceSelection()
     return;
 
   transcript = toaster_project_get_transcript(m_project);
+  toaster_transcript_save_snapshot(transcript);
   for (int row : rows)
     toaster_transcript_silence_range(transcript, static_cast<size_t>(row), static_cast<size_t>(row));
 
   rebuildAllViews();
+  updateUndoRedoState();
   appendLogLine(QString("Silenced %1 selected words.").arg(rows.size()));
 }
 
@@ -2171,12 +2213,187 @@ void MainWindow::unsilenceSelection()
     return;
 
   transcript = toaster_project_get_transcript(m_project);
+  toaster_transcript_save_snapshot(transcript);
   for (int row : rows)
     toaster_transcript_unsilence_range(transcript, static_cast<size_t>(row),
                                        static_cast<size_t>(row));
 
   rebuildAllViews();
+  updateUndoRedoState();
   appendLogLine(QString("Unsilenced %1 selected words.").arg(rows.size()));
+}
+
+void MainWindow::undoEdit()
+{
+  if (!m_project)
+    return;
+
+  toaster_transcript_t *transcript = toaster_project_get_transcript(m_project);
+  if (!toaster_transcript_can_undo(transcript)) {
+    statusBar()->showMessage("Nothing to undo.", 3000);
+    return;
+  }
+
+  toaster_transcript_undo(transcript);
+  rebuildAllViews();
+  updateUndoRedoState();
+  appendLogLine("Undo.");
+}
+
+void MainWindow::redoEdit()
+{
+  if (!m_project)
+    return;
+
+  toaster_transcript_t *transcript = toaster_project_get_transcript(m_project);
+  if (!toaster_transcript_can_redo(transcript)) {
+    statusBar()->showMessage("Nothing to redo.", 3000);
+    return;
+  }
+
+  toaster_transcript_redo(transcript);
+  rebuildAllViews();
+  updateUndoRedoState();
+  appendLogLine("Redo.");
+}
+
+void MainWindow::updateUndoRedoState()
+{
+  bool canUndo = false;
+  bool canRedo = false;
+
+  if (m_project) {
+    const toaster_transcript_t *transcript =
+      toaster_project_get_transcript(m_project);
+    canUndo = toaster_transcript_can_undo(transcript);
+    canRedo = toaster_transcript_can_redo(transcript);
+  }
+
+  if (m_undoAction)
+    m_undoAction->setEnabled(canUndo);
+  if (m_redoAction)
+    m_redoAction->setEnabled(canRedo);
+}
+
+void MainWindow::focusTranscriptReplace()
+{
+  if (!m_transcriptReplaceEdit || !m_transcriptSearchEdit) {
+    statusBar()->showMessage("Transcribe or import a transcript to enable find and replace.", 4000);
+    return;
+  }
+
+  if (m_transcriptDock) {
+    m_transcriptDock->show();
+    m_transcriptDock->raise();
+  }
+
+  if (!m_transcriptSearchEdit->isEnabled()) {
+    statusBar()->showMessage("Transcribe or import a transcript to enable find and replace.", 4000);
+    return;
+  }
+
+  m_transcriptReplaceEdit->setVisible(true);
+  m_transcriptReplaceButton->setVisible(true);
+  m_transcriptReplaceAllButton->setVisible(true);
+  m_transcriptReplaceEdit->setFocus();
+  m_transcriptReplaceEdit->selectAll();
+}
+
+void MainWindow::replaceCurrentMatch()
+{
+  toaster_transcript_t *transcript;
+  const TranscriptSearchMatch *match;
+  QString replacement;
+
+  if (!m_project || m_transcriptSearchMatches.isEmpty() ||
+      m_transcriptSearchIndex < 0 ||
+      m_transcriptSearchIndex >= m_transcriptSearchMatches.size())
+    return;
+
+  transcript = toaster_project_get_transcript(m_project);
+  replacement = m_transcriptReplaceEdit ? m_transcriptReplaceEdit->text() : QString();
+  match = &m_transcriptSearchMatches.at(m_transcriptSearchIndex);
+
+  toaster_transcript_save_snapshot(transcript);
+  for (int row = match->startRow; row <= match->endRow; ++row) {
+    if (row == match->startRow)
+      toaster_transcript_set_word_text(transcript, static_cast<size_t>(row),
+                                       replacement.toUtf8().constData());
+    else
+      toaster_transcript_delete_range(transcript, static_cast<size_t>(row),
+                                      static_cast<size_t>(row));
+  }
+
+  rebuildAllViews();
+  updateUndoRedoState();
+  refreshTranscriptSearch(false);
+  if (!m_transcriptSearchMatches.isEmpty()) {
+    int nextIndex = m_transcriptSearchIndex < m_transcriptSearchMatches.size()
+                      ? m_transcriptSearchIndex
+                      : 0;
+    selectTranscriptSearchMatch(nextIndex);
+  }
+  appendLogLine(QString("Replaced match with \"%1\".").arg(replacement));
+}
+
+void MainWindow::replaceAllMatches()
+{
+  toaster_transcript_t *transcript;
+  QString replacement;
+  int count;
+
+  if (!m_project || m_transcriptSearchMatches.isEmpty())
+    return;
+
+  transcript = toaster_project_get_transcript(m_project);
+  replacement = m_transcriptReplaceEdit ? m_transcriptReplaceEdit->text() : QString();
+  count = m_transcriptSearchMatches.size();
+
+  toaster_transcript_save_snapshot(transcript);
+  for (int i = m_transcriptSearchMatches.size() - 1; i >= 0; --i) {
+    const TranscriptSearchMatch &match = m_transcriptSearchMatches.at(i);
+    for (int row = match.endRow; row >= match.startRow; --row) {
+      if (row == match.startRow)
+        toaster_transcript_set_word_text(transcript, static_cast<size_t>(row),
+                                         replacement.toUtf8().constData());
+      else
+        toaster_transcript_delete_range(transcript, static_cast<size_t>(row),
+                                        static_cast<size_t>(row));
+    }
+  }
+
+  rebuildAllViews();
+  updateUndoRedoState();
+  refreshTranscriptSearch(false);
+  appendLogLine(QString("Replaced all %1 matches with \"%2\".").arg(count).arg(replacement));
+}
+
+void MainWindow::splitWordAtPlayhead()
+{
+  toaster_transcript_t *transcript;
+  qint64 positionUs;
+  int row;
+
+  if (!m_project || !m_player)
+    return;
+
+  transcript = toaster_project_get_transcript(m_project);
+  positionUs = m_player->position() * 1000;
+  row = transcriptRowForPosition(positionUs);
+  if (row < 0) {
+    statusBar()->showMessage("No word found at playhead position.", 3000);
+    return;
+  }
+
+  toaster_transcript_save_snapshot(transcript);
+  if (!toaster_transcript_split_word(transcript, static_cast<size_t>(row), positionUs)) {
+    statusBar()->showMessage("Could not split word at this position.", 3000);
+    return;
+  }
+
+  rebuildAllViews();
+  updateUndoRedoState();
+  appendLogLine(QString("Split word at row %1.").arg(row));
 }
 
 void MainWindow::onTranscriptCellChanged(int row, int column)

@@ -2,6 +2,9 @@
 description: "Use when creating, editing, or reviewing plugin code — filters, decoders, exporters, encoders. Covers the plugin registration pattern, info struct layout, and CMake wiring."
 applyTo: "plugins/**"
 ---
+
+> **⚠️ FORWARD-LOOKING**: The `plugins/` directory **does not exist yet**. No plugin code, `plugins/CMakeLists.txt`, or `filler-filter` canonical example exists in the current codebase. This instruction documents the *intended* pattern for when plugins are implemented (see PRD.md Phase 3–4). Do not reference these files as if they exist today.
+
 # Plugin Authoring
 
 Every plugin follows create → operate → destroy with a static info struct:
@@ -30,4 +33,4 @@ Register the new target in `plugins/CMakeLists.txt` via `add_subdirectory({name}
 
 ## Canonical example
 
-See `plugins/filler-filter/filler-filter.c` for the simplest complete plugin.
+When the plugin system is implemented, `plugins/filler-filter/filler-filter.c` will serve as the canonical example.

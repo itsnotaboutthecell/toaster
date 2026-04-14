@@ -22,10 +22,12 @@ mingw32-make -j4
 ## Test Commands
 
 ```bash
-./build/bin/test-edit.exe
-./build/bin/test-signals.exe
-./build/bin/test-timeline.exe
-./build/bin/test-integration.exe
+./bin/test-edit.exe        # Edit model, undo/redo, split word
+./bin/test-signals.exe     # Signal/callback system
+./bin/test-analysis.exe    # Filler and pause detection
+./bin/test-project.exe     # Project save/load
+./bin/test-timeline.exe    # Keep-segment calculation
+./bin/test-export.exe      # Script, SRT, VTT caption export
 ```
 
 ## Constraints
