@@ -358,7 +358,7 @@ const EditorView: React.FC = () => {
               {/* File info bar */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <FileVideo size={16} className="text-accent" />
+                  <FileVideo size={16} className="text-black" />
                   <span className="text-sm font-medium">
                     {mediaInfo?.file_name}
                   </span>
