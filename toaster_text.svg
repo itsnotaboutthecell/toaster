@@ -1,0 +1,22 @@
+<svg viewBox="0 130 1024 250" xmlns="http://www.w3.org/2000/svg">
+
+<style>
+.toastText {
+  fill: #E8B97A;
+  stroke: #000000;
+  stroke-width: 18;
+  stroke-linejoin: round;
+  paint-order: stroke fill;
+  font-family: "Fredoka One", "Baloo 2", "Nunito", sans-serif;
+  font-weight: 900;
+}
+</style>
+
+<text x="50%" y="60%"
+      text-anchor="middle"
+      class="toastText"
+      font-size="220">
+  toaster
+</text>
+
+</svg>
