@@ -203,6 +203,54 @@ fn build_words_from_segments(full_text: &str, segments: &[TranscriptionSegment],
     words
 }
 
+/// Sanitize word timestamps to guarantee monotonic, non-overlapping,
+/// duration-positive ordering within [0, total_audio_duration_us].
+///
+/// Whisper segments (and proportional distribution within them) can
+/// occasionally produce:
+///   - start > end (inverted range)
+///   - next.start < prev.end (overlap / rewind)
+///   - values outside the actual audio duration
+///
+/// All of these break keep-segment calculation and cause playback jumps.
+/// This function fixes them in a single forward pass without altering the
+/// ordering of words.
+fn sanitize_word_timestamps(words: &mut Vec<Word>, total_duration_us: i64) {
+    const MIN_WORD_DURATION_US: i64 = 1_000; // 1 ms minimum word duration
+
+    let max_us = total_duration_us.max(0);
+    let mut cursor_us: i64 = 0; // tracks the earliest start allowed for the next word
+
+    for word in words.iter_mut() {
+        // 1. Clamp both endpoints into [0, max_us]
+        word.start_us = word.start_us.clamp(0, max_us);
+        word.end_us = word.end_us.clamp(0, max_us);
+
+        // 2. Enforce start <= end
+        if word.start_us > word.end_us {
+            word.end_us = word.start_us;
+        }
+
+        // 3. Enforce monotonic progression: start must be >= cursor
+        if word.start_us < cursor_us {
+            word.start_us = cursor_us;
+            // Re-clamp start after shift
+            word.start_us = word.start_us.min(max_us);
+            // Ensure end is still >= start after shift
+            if word.end_us < word.start_us {
+                word.end_us = word.start_us;
+            }
+        }
+
+        // 4. Ensure minimal non-zero duration where audio budget allows
+        if word.end_us == word.start_us && word.start_us + MIN_WORD_DURATION_US <= max_us {
+            word.end_us = word.start_us + MIN_WORD_DURATION_US;
+        }
+
+        cursor_us = word.end_us;
+    }
+}
+
 /// Extract audio from any media file to a temporary 16kHz mono WAV using FFmpeg.
 /// Returns the path to the temporary WAV file.
 fn extract_audio_to_wav(input_path: &std::path::Path) -> Result<std::path::PathBuf, String> {
@@ -324,13 +372,14 @@ pub async fn transcribe_media_file(
     // segment proportionally by character count (a reasonable proxy for speech
     // duration). This is far more accurate than the previous approach of
     // dividing total audio duration evenly across all words.
-    let words: Vec<Word> = if let Some(ref segs) = segments {
+    let sample_rate = 16000.0_f64;
+    let total_duration_us = ((samples.len() as f64 / sample_rate) * 1_000_000.0) as i64;
+
+    let mut words: Vec<Word> = if let Some(ref segs) = segments {
         build_words_from_segments(&text, segs, &samples)
     } else {
         // Fallback: no segments available (some engines don't provide them).
         // Distribute words evenly across total duration (legacy behavior).
-        let sample_rate = 16000.0_f64;
-        let total_duration_us = ((samples.len() as f64 / sample_rate) * 1_000_000.0) as i64;
         let raw_words: Vec<&str> = text.split_whitespace().collect();
         let word_duration_us = if raw_words.is_empty() {
             0
@@ -351,6 +400,10 @@ pub async fn transcribe_media_file(
             })
             .collect()
     };
+
+    // Sanitize timestamps: clamp to audio duration, enforce monotonic
+    // non-overlapping progression, and ensure minimal non-zero durations.
+    sanitize_word_timestamps(&mut words, total_duration_us);
 
     if words.is_empty() {
         return Err("No words in transcription".to_string());

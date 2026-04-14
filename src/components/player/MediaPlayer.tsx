@@ -18,13 +18,22 @@ function formatTime(seconds: number): string {
 const PLAYBACK_RATES = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
 /** Build sorted list of deleted time ranges from words, with crossfade padding */
-function getDeletedRanges(words: Word[]): Array<{ start: number; end: number }> {
+function getDeletedRanges(words: Word[], duration: number): Array<{ start: number; end: number }> {
   // Padding in seconds to add before/after deleted segments to prevent clicks/pops
   const CROSSFADE_PAD = 0.01; // 10ms
+  const MIN_RANGE_DURATION = 0.001; // 1ms
+  const maxDuration = Number.isFinite(duration) && duration > 0 ? duration : Number.POSITIVE_INFINITY;
 
   const ranges: Array<{ start: number; end: number }> = [];
   let rangeStart: number | null = null;
   let rangeEnd = 0;
+  const pushRange = (start: number, end: number) => {
+    const clampedStart = Math.min(maxDuration, Math.max(0, start));
+    const clampedEnd = Math.min(maxDuration, Math.max(0, end));
+    if (clampedEnd - clampedStart >= MIN_RANGE_DURATION) {
+      ranges.push({ start: clampedStart, end: clampedEnd });
+    }
+  };
 
   for (const w of words) {
     if (w.deleted) {
@@ -36,19 +45,19 @@ function getDeletedRanges(words: Word[]): Array<{ start: number; end: number }> 
       } else if (startSec <= rangeEnd + 0.05) {
         rangeEnd = Math.max(rangeEnd, endSec);
       } else {
-        ranges.push({ start: Math.max(0, rangeStart - CROSSFADE_PAD), end: rangeEnd + CROSSFADE_PAD });
+        pushRange(rangeStart - CROSSFADE_PAD, rangeEnd + CROSSFADE_PAD);
         rangeStart = startSec;
         rangeEnd = endSec;
       }
     } else {
       if (rangeStart !== null) {
-        ranges.push({ start: Math.max(0, rangeStart - CROSSFADE_PAD), end: rangeEnd + CROSSFADE_PAD });
+        pushRange(rangeStart - CROSSFADE_PAD, rangeEnd + CROSSFADE_PAD);
         rangeStart = null;
       }
     }
   }
   if (rangeStart !== null) {
-    ranges.push({ start: Math.max(0, rangeStart - CROSSFADE_PAD), end: rangeEnd + CROSSFADE_PAD });
+    pushRange(rangeStart - CROSSFADE_PAD, rangeEnd + CROSSFADE_PAD);
   }
   return ranges;
 }
@@ -81,7 +90,7 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
   const words = useEditorStore((s) => s.words);
 
   // Memoize deleted ranges so they aren't rebuilt every frame
-  const deletedRanges = useMemo(() => getDeletedRanges(words), [words]);
+  const deletedRanges = useMemo(() => getDeletedRanges(words, duration), [words, duration]);
 
   // Sync seek requests from the store to the media element
   const lastSeekVersion = useRef(0);
@@ -132,15 +141,26 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
       const el = mediaRef.current;
       if (!el) return;
       const time = el.currentTime;
+      const END_EPSILON = 0.005; // 5ms
+      const mediaDuration =
+        Number.isFinite(el.duration) && el.duration > 0 ? el.duration : duration;
+      const maxSeekTarget =
+        Number.isFinite(mediaDuration) && mediaDuration > 0
+          ? Math.max(0, mediaDuration - END_EPSILON)
+          : Number.POSITIVE_INFINITY;
 
       // Skip deleted segments when preview edits is on
       if (previewEdits && deletedRanges.length > 0) {
         for (const range of deletedRanges) {
           if (time >= range.start && time < range.end) {
-            el.currentTime = range.end;
-            // Don't update store yet — next frame will read the new position
-            rafRef.current = requestAnimationFrame(tick);
-            return;
+            const seekTarget = Math.min(range.end, maxSeekTarget);
+            if (seekTarget > time + END_EPSILON) {
+              el.currentTime = seekTarget;
+              // Don't update store yet — next frame will read the new position
+              rafRef.current = requestAnimationFrame(tick);
+              return;
+            }
+            break;
           }
         }
       }
