@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Play, Pause, Volume2, VolumeX, Eye, EyeOff } from "lucide-react";
+import { Play, Pause, Volume2, VolumeX, Eye, EyeOff, Loader2 } from "lucide-react";
+import { convertFileSrc, invoke } from "@tauri-apps/api/core";
 import { commands, type KeepSegment } from "@/bindings";
 import { usePlayerStore } from "@/stores/playerStore";
 import { useEditorStore, type Word } from "@/stores/editorStore";
@@ -8,6 +9,12 @@ import { useEditorStore, type Word } from "@/stores/editorStore";
 interface MediaPlayerProps {
   className?: string;
   onTimeUpdate?: (time: number) => void;
+}
+
+interface CachedPreviewMetadata {
+  generationToken: string;
+  sourceMediaFingerprint: string | null;
+  editVersion: string;
 }
 
 function formatTime(seconds: number): string {
@@ -135,9 +142,59 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
   const lastSkipTargetRef = useRef(0);
   const lastObservedTimeRef = useRef(0);
 
+  // Preview cache state: tracks the result of renderTempPreviewAudio
+  const [previewCacheState, setPreviewCacheState] = useState<
+    "idle" | "loading" | "ready" | "error"
+  >("idle");
+  const [previewAudioUrl, setPreviewAudioUrl] = useState<string | null>(null);
+  const previewRenderTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const previewInvalidationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const previewRenderSeq = useRef(0);
+  const previewMetadataRef = useRef<CachedPreviewMetadata | null>(null);
+
+  /** True when we have a fresh cached preview and should use it for playback */
+  const usePreviewCache = previewEdits && previewCacheState === "ready" && !!previewAudioUrl;
+
+  /** The actual src fed to the media element */
+  const activeSrc = usePreviewCache ? previewAudioUrl : mediaUrl;
+
   // Memoize deleted ranges so they aren't rebuilt every frame
   const deletedRanges = useMemo(() => getDeletedRanges(words, duration), [words, duration]);
   const activeDeletedRanges = backendDeletedRanges ?? deletedRanges;
+
+  const resetPreviewCache = useCallback(
+    (reason: string, invalidateBackend: boolean) => {
+      if (previewRenderTimerRef.current) {
+        clearTimeout(previewRenderTimerRef.current);
+        previewRenderTimerRef.current = null;
+      }
+      if (previewInvalidationTimerRef.current) {
+        clearTimeout(previewInvalidationTimerRef.current);
+        previewInvalidationTimerRef.current = null;
+      }
+
+      previewRenderSeq.current += 1;
+      const stalePreview = previewMetadataRef.current;
+      previewMetadataRef.current = null;
+      setPreviewAudioUrl(null);
+      setPreviewCacheState("idle");
+
+      if (!invalidateBackend || !stalePreview?.generationToken) {
+        return;
+      }
+
+      previewInvalidationTimerRef.current = setTimeout(() => {
+        void invoke("invalidate_temp_preview_cache", {
+          generationToken: stalePreview.generationToken,
+          sourceMediaFingerprint: stalePreview.sourceMediaFingerprint,
+          reason,
+        }).catch((error) => {
+          console.warn("Failed to invalidate preview cache:", error);
+        });
+      }, 250);
+    },
+    [],
+  );
 
   useEffect(() => {
     let isCancelled = false;
@@ -171,6 +228,93 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
     };
   }, [words]);
 
+  useEffect(() => {
+    return () => {
+      if (previewRenderTimerRef.current) {
+        clearTimeout(previewRenderTimerRef.current);
+      }
+      if (previewInvalidationTimerRef.current) {
+        clearTimeout(previewInvalidationTimerRef.current);
+      }
+    };
+  }, []);
+
+  const previousPreviewLifecycleRef = useRef<{ mediaUrl: string | null; words: Word[] } | null>(null);
+  useEffect(() => {
+    const previous = previousPreviewLifecycleRef.current;
+    previousPreviewLifecycleRef.current = { mediaUrl, words };
+
+    if (!previous) {
+      return;
+    }
+
+    if (previous.mediaUrl !== mediaUrl) {
+      resetPreviewCache("media-change", true);
+      return;
+    }
+
+    if (previous.words !== words) {
+      resetPreviewCache("edit-change", true);
+    }
+  }, [mediaUrl, resetPreviewCache, words]);
+
+  // Debounced preview cache generation — fires whenever words or previewEdits change
+  useEffect(() => {
+    // Clear any running cache when preview is turned off or there are no words
+    if (!previewEdits || words.length === 0) {
+      resetPreviewCache(previewEdits ? "empty-transcript" : "preview-disabled", false);
+      return;
+    }
+
+    setPreviewCacheState("loading");
+
+    if (previewRenderTimerRef.current) {
+      clearTimeout(previewRenderTimerRef.current);
+    }
+
+    const seq = ++previewRenderSeq.current;
+
+    previewRenderTimerRef.current = setTimeout(() => {
+      void (async () => {
+        try {
+          const result = await commands.renderTempPreviewAudio();
+          if (seq !== previewRenderSeq.current) return; // superseded
+          if (result.status !== "ok") {
+            previewMetadataRef.current = null;
+            setPreviewCacheState("error");
+            return;
+          }
+          const meta = result.data;
+          if (meta.status === "ready" && meta.preview_url_safe_path) {
+            previewMetadataRef.current = {
+              generationToken: meta.generation_token,
+              sourceMediaFingerprint: meta.source_media_fingerprint,
+              editVersion: meta.edit_version,
+            };
+            setPreviewAudioUrl(convertFileSrc(meta.preview_url_safe_path));
+            setPreviewCacheState("ready");
+          } else {
+            // no_segments or missing_media — graceful fallback to live skip
+            previewMetadataRef.current = null;
+            setPreviewCacheState("error");
+          }
+        } catch {
+          if (seq === previewRenderSeq.current) {
+            previewMetadataRef.current = null;
+            setPreviewCacheState("error");
+          }
+        }
+      })();
+    }, 500);
+
+    return () => {
+      if (previewRenderTimerRef.current) {
+        clearTimeout(previewRenderTimerRef.current);
+        previewRenderTimerRef.current = null;
+      }
+    };
+  }, [previewEdits, resetPreviewCache, words]);
+
   // Sync seek requests from the store to the media element
   const lastSeekVersion = useRef(0);
   useEffect(() => {
@@ -179,6 +323,18 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
     lastSeekVersion.current = seekVersion;
     el.currentTime = seekTarget;
   }, [seekVersion, seekTarget]);
+
+  // When the active source switches (preview ↔ original), reset playback position to 0
+  const prevActiveSrcRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (activeSrc === prevActiveSrcRef.current) return;
+    const wasSet = prevActiveSrcRef.current !== null;
+    prevActiveSrcRef.current = activeSrc ?? null;
+    if (!wasSet) return; // initial mount — do nothing
+    const el = mediaRef.current;
+    if (el) el.currentTime = 0;
+    setCurrentTime(0);
+  }, [activeSrc, setCurrentTime]);
 
   // Sync volume and playback rate to the element
   useEffect(() => {
@@ -196,13 +352,13 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
   // Play/pause sync
   useEffect(() => {
     const el = mediaRef.current;
-    if (!el || !mediaUrl) return;
+    if (!el || !activeSrc) return;
     if (isPlaying) {
       el.play().catch(() => setPlaying(false));
     } else {
       el.pause();
     }
-  }, [isPlaying, mediaUrl, setPlaying]);
+  }, [isPlaying, activeSrc, setPlaying]);
 
   // RAF-based playback loop: polls ~60fps for precise deleted-segment skipping
   // instead of relying on the ~4Hz onTimeUpdate event
@@ -232,8 +388,8 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
           ? Math.max(0, mediaDuration - END_EPSILON)
           : Number.POSITIVE_INFINITY;
 
-      // Skip deleted segments when preview edits is on
-      if (previewEdits && activeDeletedRanges.length > 0) {
+      // Skip deleted segments when preview edits is on but no cached preview is available
+      if (previewEdits && !usePreviewCache && activeDeletedRanges.length > 0) {
         for (const range of activeDeletedRanges) {
           if (time >= range.start && time < range.end) {
             const seekTarget = Math.min(range.end, maxSeekTarget);
@@ -263,7 +419,7 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
         rafRef.current = 0;
       }
     };
-  }, [isPlaying, previewEdits, activeDeletedRanges, duration, setCurrentTime, onTimeUpdate]);
+  }, [isPlaying, previewEdits, usePreviewCache, activeDeletedRanges, duration, setCurrentTime, onTimeUpdate]);
 
   // Fallback onTimeUpdate for when paused (seek bar scrubbing, etc.)
   const handleTimeUpdate = useCallback(() => {
@@ -331,20 +487,22 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
   }
 
   const MediaTag = mediaType === "video" ? "video" : "audio";
+  // When using cached preview audio on a video file, hide the video display
+  const showVideoDisplay = mediaType === "video" && !usePreviewCache;
 
   return (
     <div className={`flex flex-col bg-neutral-900 rounded-lg ${className}`}>
-      {/* Media element */}
+      {/* Media element — src switches between original and cached preview audio */}
       <MediaTag
         ref={mediaRef}
-        src={mediaUrl}
+        src={activeSrc ?? undefined}
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onPlay={handlePlay}
         onPause={handlePause}
         onEnded={handlePause}
         className={
-          mediaType === "video"
+          showVideoDisplay
             ? "w-full rounded-t-lg bg-black"
             : "hidden"
         }
@@ -392,8 +550,17 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
               }`}
               title={t("player.previewEdits")}
             >
-              {previewEdits ? <Eye size={14} /> : <EyeOff size={14} />}
+              {previewEdits && previewCacheState === "loading" ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : previewEdits ? (
+                <Eye size={14} />
+              ) : (
+                <EyeOff size={14} />
+              )}
               {t("player.preview")}
+              {previewEdits && usePreviewCache && (
+                <span className="w-1.5 h-1.5 rounded-full bg-green-400 ml-0.5" title={t("player.previewCached")} />
+              )}
             </button>
           )}
 

@@ -876,6 +876,25 @@ async mapEditToSourceTime(editTimeUs: number) : Promise<Result<number, string>> 
     else return { status: "error", error: e  as any };
 }
 },
+async invalidateTempPreviewCache(generationToken: string | null, sourceMediaFingerprint: string | null, reason: string | null) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("invalidate_temp_preview_cache", { generationToken, sourceMediaFingerprint, reason }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Render (or reuse) a temporary preview audio artifact for the current edit state.
+ */
+async renderTempPreviewAudio() : Promise<Result<PreviewRenderMetadata, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("render_temp_preview_audio") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 /**
  * Export the edited media by running FFmpeg with trim/atrim filters.
  * 
@@ -1113,6 +1132,8 @@ export type PasteMethod = "ctrl_v" | "direct" | "none" | "shift_insert" | "ctrl_
 export type PauseInfo = { after_word_index: number; gap_duration_us: number }
 export type PermissionAccess = "allowed" | "denied" | "unknown"
 export type PostProcessProvider = { id: string; label: string; base_url: string; allow_base_url_edit?: boolean; models_endpoint?: string | null; supports_structured_output?: boolean }
+export type PreviewRenderMetadata = { status: PreviewRenderStatus; preview_file_path: string | null; preview_url_safe_path: string | null; source_media_fingerprint: string | null; edit_version: string; generation_token: string; cache_hit: boolean }
+export type PreviewRenderStatus = "ready" | "no_segments" | "missing_media"
 export type RecordingRetentionPeriod = "never" | "preserve_limit" | "days_3" | "weeks_2" | "months_3"
 export type SecretMap = Partial<{ [key in string]: string }>
 export type ShortcutBinding = { id: string; name: string; description: string; default_binding: string; current_binding: string }

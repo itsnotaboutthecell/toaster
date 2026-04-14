@@ -25,8 +25,8 @@ pub use cli::CliArgs;
 use specta_typescript::{BigIntExportBehavior, Typescript};
 use tauri_specta::{collect_commands, collect_events, Builder};
 
-use env_filter::Builder as EnvFilterBuilder;
 use commands::editor::EditorStore;
+use env_filter::Builder as EnvFilterBuilder;
 use managers::audio::AudioRecordingManager;
 use managers::editor::EditorState;
 use managers::history::HistoryManager;
@@ -442,6 +442,8 @@ pub fn run(cli_args: CliArgs) {
             commands::waveform::get_keep_segments,
             commands::waveform::generate_ffmpeg_edit_script,
             commands::waveform::map_edit_to_source_time,
+            commands::waveform::invalidate_temp_preview_cache,
+            commands::waveform::render_temp_preview_audio,
             commands::waveform::export_edited_media,
             commands::filler::analyze_fillers,
             commands::filler::delete_fillers,

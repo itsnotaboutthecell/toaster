@@ -814,20 +814,29 @@ mod precision_benchmarks {
         ];
         sanitize_word_timestamps(&mut words, total);
         for word in &words {
-            assert!(word.start_us >= 0, "start_us must be >= 0, got {}", word.start_us);
+            assert!(
+                word.start_us >= 0,
+                "start_us must be >= 0, got {}",
+                word.start_us
+            );
             assert!(
                 word.end_us <= total,
-                "end_us {} must be <= total {}", word.end_us, total
+                "end_us {} must be <= total {}",
+                word.end_us,
+                total
             );
         }
-        assert_eq!(count_monotonicity_violations(&words), MAX_MONOTONICITY_VIOLATIONS);
+        assert_eq!(
+            count_monotonicity_violations(&words),
+            MAX_MONOTONICITY_VIOLATIONS
+        );
     }
 
     /// Zero-duration words with available budget must receive the 1 ms minimum.
     #[test]
     fn sanitize_grants_minimum_duration_where_budget_allows() {
         let mut words = vec![
-            w("a", 0, 0, 0.9),            // zero-duration, room to expand
+            w("a", 0, 0, 0.9),             // zero-duration, room to expand
             w("b", 500_000, 500_000, 0.9), // zero-duration mid, room to expand
         ];
         sanitize_word_timestamps(&mut words, 2_000_000);
@@ -846,12 +855,13 @@ mod precision_benchmarks {
             w("world", 1_000_000, 2_000_000, 0.9),
             w("test", 2_000_000, 3_000_000, 0.9),
         ];
-        let before: Vec<(i64, i64)> =
-            words.iter().map(|ww| (ww.start_us, ww.end_us)).collect();
+        let before: Vec<(i64, i64)> = words.iter().map(|ww| (ww.start_us, ww.end_us)).collect();
         sanitize_word_timestamps(&mut words, 3_000_000);
-        let after: Vec<(i64, i64)> =
-            words.iter().map(|ww| (ww.start_us, ww.end_us)).collect();
-        assert_eq!(before, after, "sanitize must be idempotent on already-valid timestamps");
+        let after: Vec<(i64, i64)> = words.iter().map(|ww| (ww.start_us, ww.end_us)).collect();
+        assert_eq!(
+            before, after,
+            "sanitize must be idempotent on already-valid timestamps"
+        );
     }
 
     // ── snap_to_zero_crossing ────────────────────────────────────────────────
@@ -876,7 +886,8 @@ mod precision_benchmarks {
         let result = snap_to_zero_crossing(&samples, 100, 10);
         assert!(
             result < samples.len() - 1,
-            "ZC result {} must be within sample bounds", result
+            "ZC result {} must be within sample bounds",
+            result
         );
     }
 
@@ -885,7 +896,10 @@ mod precision_benchmarks {
     fn snap_zc_edge_near_end_of_signal() {
         let samples = vec![1.0_f32, -1.0, 1.0_f32, -1.0];
         let result = snap_to_zero_crossing(&samples, 3, 5);
-        assert!(result < samples.len() - 1, "ZC result must be within bounds");
+        assert!(
+            result < samples.len() - 1,
+            "ZC result must be within bounds"
+        );
     }
 
     // ── find_local_low_energy_boundary ───────────────────────────────────────
@@ -1014,16 +1028,16 @@ mod precision_benchmarks {
     fn full_pipeline_preserves_monotonicity_on_corrupted_input() {
         let total_duration_us = 10_000_000_i64; // 10 s
         let mut words = vec![
-            w("one",   -200_000,   300_000, 0.3),   // negative start
-            w("two",    100_000,   800_000, 0.2),   // overlaps with "one"
-            w("three",  700_000,   600_000, 0.4),   // inverted
-            w("four",   900_000, 1_500_000, 0.85),
-            w("five", 1_400_000, 2_100_000, 0.9),   // overlaps with "four"
-            w("six",  2_000_000, 1_800_000, 0.15),  // inverted
-            w("seven",2_500_000, 3_000_000, 0.9),
-            w("eight",2_900_000, 3_500_000, 0.3),   // overlaps with "seven"
+            w("one", -200_000, 300_000, 0.3),  // negative start
+            w("two", 100_000, 800_000, 0.2),   // overlaps with "one"
+            w("three", 700_000, 600_000, 0.4), // inverted
+            w("four", 900_000, 1_500_000, 0.85),
+            w("five", 1_400_000, 2_100_000, 0.9), // overlaps with "four"
+            w("six", 2_000_000, 1_800_000, 0.15), // inverted
+            w("seven", 2_500_000, 3_000_000, 0.9),
+            w("eight", 2_900_000, 3_500_000, 0.3), // overlaps with "seven"
             w("nine", 3_600_000, 4_200_000, 0.9),
-            w("ten",  4_100_000,12_000_000, 0.9),   // end beyond total
+            w("ten", 4_100_000, 12_000_000, 0.9), // end beyond total
         ];
         let n_samples = (total_duration_us as f64 / 1_000_000.0 * SAMPLE_RATE_HZ) as usize;
         let samples = vec![0.3_f32; n_samples];
@@ -1048,7 +1062,12 @@ mod precision_benchmarks {
         let mut words: Vec<Word> = (0..20)
             .map(|i| {
                 let base = i as i64 * 300_000;
-                w("x", base - 50_000, base + 400_000, if i % 3 == 0 { 0.2 } else { 0.9 })
+                w(
+                    "x",
+                    base - 50_000,
+                    base + 400_000,
+                    if i % 3 == 0 { 0.2 } else { 0.9 },
+                )
             })
             .collect();
         let n_samples = (total_duration_us as f64 / 1_000_000.0 * SAMPLE_RATE_HZ) as usize;
@@ -1060,10 +1079,16 @@ mod precision_benchmarks {
         sanitize_word_timestamps(&mut words, total_duration_us);
 
         for word in &words {
-            assert!(word.start_us >= 0, "start_us {} must be >= 0", word.start_us);
+            assert!(
+                word.start_us >= 0,
+                "start_us {} must be >= 0",
+                word.start_us
+            );
             assert!(
                 word.end_us <= total_duration_us,
-                "end_us {} must be <= total {}", word.end_us, total_duration_us
+                "end_us {} must be <= total {}",
+                word.end_us,
+                total_duration_us
             );
         }
     }
@@ -1082,7 +1107,9 @@ mod precision_benchmarks {
             assert!(
                 error <= MAX_ROUNDTRIP_SAMPLE_ERROR,
                 "roundtrip error for sample {} is {} (limit: {} sample)",
-                sample_idx, error, MAX_ROUNDTRIP_SAMPLE_ERROR
+                sample_idx,
+                error,
+                MAX_ROUNDTRIP_SAMPLE_ERROR
             );
         }
     }
@@ -1093,7 +1120,9 @@ mod precision_benchmarks {
         for i in 0_usize..100 {
             assert!(
                 sample_to_us(i) <= sample_to_us(i + 1),
-                "sample_to_us is not monotone at {} → {}", i, i + 1
+                "sample_to_us is not monotone at {} → {}",
+                i,
+                i + 1
             );
         }
     }
@@ -1167,7 +1196,13 @@ mod precision_benchmarks {
     #[test]
     fn edit_to_source_time_identity_no_deletions() {
         let words: Vec<EdWord> = (0..5)
-            .map(|i| ed_word(&format!("w{}", i), i as i64 * 1_000_000, (i + 1) as i64 * 1_000_000))
+            .map(|i| {
+                ed_word(
+                    &format!("w{}", i),
+                    i as i64 * 1_000_000,
+                    (i + 1) as i64 * 1_000_000,
+                )
+            })
             .collect();
         let mut state = EditorState::new();
         state.set_words(words);
@@ -1189,7 +1224,13 @@ mod precision_benchmarks {
         // Keep segments: [0..2M], [3M..6M]
         // Edit-time: 0..2M → source 0..2M; 2M..5M → source 3M..6M.
         let words: Vec<EdWord> = (0..6)
-            .map(|i| ed_word(&format!("w{}", i), i as i64 * 1_000_000, (i + 1) as i64 * 1_000_000))
+            .map(|i| {
+                ed_word(
+                    &format!("w{}", i),
+                    i as i64 * 1_000_000,
+                    (i + 1) as i64 * 1_000_000,
+                )
+            })
             .collect();
         let mut state = EditorState::new();
         state.set_words(words);
@@ -1211,7 +1252,13 @@ mod precision_benchmarks {
         // Keep: [0..1M], [2M..3M], [4M..5M]
         // Edit positions: 0..1M, 1M..2M, 2M..3M
         let words: Vec<EdWord> = (0..5)
-            .map(|i| ed_word(&format!("w{}", i), i as i64 * 1_000_000, (i + 1) as i64 * 1_000_000))
+            .map(|i| {
+                ed_word(
+                    &format!("w{}", i),
+                    i as i64 * 1_000_000,
+                    (i + 1) as i64 * 1_000_000,
+                )
+            })
             .collect();
         let mut state = EditorState::new();
         state.set_words(words);
@@ -1231,7 +1278,13 @@ mod precision_benchmarks {
     #[test]
     fn edit_to_source_time_all_deleted_clamps_to_zero() {
         let words: Vec<EdWord> = (0..3)
-            .map(|i| ed_word(&format!("w{}", i), i as i64 * 1_000_000, (i + 1) as i64 * 1_000_000))
+            .map(|i| {
+                ed_word(
+                    &format!("w{}", i),
+                    i as i64 * 1_000_000,
+                    (i + 1) as i64 * 1_000_000,
+                )
+            })
             .collect();
         let mut state = EditorState::new();
         state.set_words(words);

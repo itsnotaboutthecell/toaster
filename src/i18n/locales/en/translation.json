@@ -635,7 +635,8 @@
     "speed": "Speed",
     "noMedia": "No media loaded",
     "previewEdits": "Preview Edits",
-    "preview": "Preview"
+    "preview": "Preview",
+    "previewCached": "Using cached preview"
   },
   "editor": {
     "sections": {
