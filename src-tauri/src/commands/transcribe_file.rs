@@ -70,9 +70,11 @@ fn build_words_from_segments(full_text: &str, segments: &[TranscriptionSegment])
     for fw in &final_words {
         let fw_lower = fw.to_lowercase();
 
-        // Try to find a matching segment word from current position forward
+        // Try to find a matching segment word from current position forward.
+        // Use a large lookahead (20 words) to tolerate filler removal, stutters,
+        // and word corrections that can shift alignment significantly.
         let mut found = false;
-        let search_limit = (seg_idx + 5).min(segment_words.len()); // look ahead up to 5 words
+        let search_limit = (seg_idx + 20).min(segment_words.len());
         for k in seg_idx..search_limit {
             let seg_word_lower = segment_words[k].0.to_lowercase();
             // Fuzzy match: segment text might have punctuation attached
@@ -97,15 +99,22 @@ fn build_words_from_segments(full_text: &str, segments: &[TranscriptionSegment])
         }
 
         if !found {
-            // No match found — interpolate from nearest segment word
+            // No match found — interpolate from nearest segment word and advance
+            // the pointer so subsequent words don't all pile up at the same position
             let (start, end) = if seg_idx < segment_words.len() {
-                (segment_words[seg_idx].1, segment_words[seg_idx].2)
+                let ts = (segment_words[seg_idx].1, segment_words[seg_idx].2);
+                seg_idx += 1; // advance past this word to prevent repeated timestamps
+                ts
             } else if !segment_words.is_empty() {
                 let last = segment_words.last().unwrap();
                 (last.1, last.2)
             } else {
                 (0, 0)
             };
+            info!(
+                "build_words_from_segments: no match for '{}' at seg_idx={}, using interpolated {}-{}us",
+                fw, seg_idx, start, end
+            );
             words.push(Word {
                 text: fw.to_string(),
                 start_us: start,
