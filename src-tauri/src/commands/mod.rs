@@ -1,5 +1,6 @@
 pub mod audio;
 pub mod editor;
+pub mod export;
 pub mod history;
 pub mod media;
 pub mod models;

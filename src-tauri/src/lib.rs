@@ -435,6 +435,8 @@ pub fn run(cli_args: CliArgs) {
             commands::media::media_get_current,
             commands::media::media_get_asset_url,
             commands::media::media_clear,
+            commands::export::export_transcript,
+            commands::export::export_transcript_to_file,
             commands::transcription::set_model_unload_timeout,
             commands::transcription::get_model_load_status,
             commands::transcription::unload_model_manually,

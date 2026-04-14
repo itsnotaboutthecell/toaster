@@ -609,6 +609,14 @@
     "transcribing": "Transcribing...",
     "processing": "Processing..."
   },
+  "player": {
+    "play": "Play",
+    "pause": "Pause",
+    "volume": "Volume",
+    "mute": "Mute",
+    "speed": "Speed",
+    "noMedia": "No media loaded"
+  },
   "editor": {
     "deleteWord": "Delete Word",
     "restoreWord": "Restore Word",
