@@ -31,6 +31,20 @@ const EditorView: React.FC = () => {
   const seekTo = usePlayerStore((s) => s.seekTo);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [modelMissing, setModelMissing] = useState(false);
+  const [lastSavedPath, setLastSavedPath] = useState<string | null>(null);
+
+  // Auto-save: save project every 30 seconds when words exist and a save path is known
+  useEffect(() => {
+    if (!lastSavedPath || words.length === 0) return;
+    const timer = setInterval(async () => {
+      try {
+        await invoke("save_project", { path: lastSavedPath });
+      } catch (err) {
+        console.error("Auto-save failed:", err);
+      }
+    }, 30_000);
+    return () => clearInterval(timer);
+  }, [lastSavedPath, words]);
 
   // Global keyboard shortcuts
   useEffect(() => {
@@ -220,6 +234,7 @@ const EditorView: React.FC = () => {
       });
       if (!filePath) return;
       await invoke("save_project", { path: filePath });
+      setLastSavedPath(filePath);
     } catch (err) {
       console.error("Save project failed:", err);
     }
@@ -412,39 +427,65 @@ const EditorView: React.FC = () => {
       {words.length > 0 && (
         <SettingsGroup title={t("editor.sections.exportTools")}>
           <div className="px-4 py-3 space-y-3">
-            <div className="flex items-center gap-2 flex-wrap">
-              <button
-                onClick={() => handleExport("Srt")}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-background border border-mid-gray/20 rounded-lg text-xs hover:bg-mid-gray/10 transition-colors"
-              >
-                <Download size={14} />
-                SRT
-              </button>
-              <button
-                onClick={() => handleExport("Vtt")}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-background border border-mid-gray/20 rounded-lg text-xs hover:bg-mid-gray/10 transition-colors"
-              >
-                <Download size={14} />
-                VTT
-              </button>
-              <button
-                onClick={() => handleExport("Script")}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-background border border-mid-gray/20 rounded-lg text-xs hover:bg-mid-gray/10 transition-colors"
-              >
-                <Download size={14} />
-                {t("editor.script")}
-              </button>
+            {/* Export formats */}
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-mid-gray/60 mb-1.5">
+                {t("editor.exportFormats")}
+              </p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  onClick={() => handleExport("Srt")}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-background border border-mid-gray/20 rounded-lg text-xs hover:bg-mid-gray/10 transition-colors"
+                >
+                  <Download size={14} />
+                  SRT
+                </button>
+                <button
+                  onClick={() => handleExport("Vtt")}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-background border border-mid-gray/20 rounded-lg text-xs hover:bg-mid-gray/10 transition-colors"
+                >
+                  <Download size={14} />
+                  VTT
+                </button>
+                <button
+                  onClick={() => handleExport("Script")}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-background border border-mid-gray/20 rounded-lg text-xs hover:bg-mid-gray/10 transition-colors"
+                >
+                  <Download size={14} />
+                  {t("editor.script")}
+                </button>
+                <button
+                  onClick={async () => {
+                    const text = words
+                      .filter((w) => !w.deleted && !w.silenced)
+                      .map((w) => w.text)
+                      .join(" ");
+                    await navigator.clipboard.writeText(text);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-background border border-mid-gray/20 rounded-lg text-xs hover:bg-mid-gray/10 transition-colors"
+                  title={t("editor.copyTranscript")}
+                >
+                  <FileText size={14} />
+                  {t("editor.copyText")}
+                </button>
+              </div>
+            </div>
 
-              <div className="w-px h-5 bg-mid-gray/20 mx-1" />
-
-              <button
-                onClick={handleFFmpegScript}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-background border border-mid-gray/20 rounded-lg text-xs hover:bg-mid-gray/10 transition-colors"
-                title={t("editor.ffmpegScript")}
-              >
-                <Terminal size={14} />
-                FFmpeg
-              </button>
+            {/* Tools */}
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-mid-gray/60 mb-1.5">
+                {t("editor.tools")}
+              </p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  onClick={handleFFmpegScript}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-background border border-mid-gray/20 rounded-lg text-xs hover:bg-mid-gray/10 transition-colors"
+                  title={t("editor.ffmpegScript")}
+                >
+                  <Terminal size={14} />
+                  FFmpeg
+                </button>
+              </div>
             </div>
 
             {/* Filler & pause dashboard */}

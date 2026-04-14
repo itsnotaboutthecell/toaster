@@ -1,5 +1,6 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Search, X } from "lucide-react";
 import { useEditorStore } from "@/stores/editorStore";
 
 interface ContextMenuState {
@@ -71,6 +72,12 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
   } = useEditorStore();
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const findInputRef = useRef<HTMLInputElement>(null);
+  const dragStartRef = useRef<number | null>(null);
+  const isDraggingRef = useRef(false);
+  const [showFind, setShowFind] = useState(false);
+  const [findQuery, setFindQuery] = useState("");
+  const [findMatchIndex, setFindMatchIndex] = useState(0);
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
     visible: false,
     x: 0,
@@ -91,19 +98,101 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
     [selectionRange],
   );
 
-  const handleWordClick = useCallback(
+  // Drag-select handlers
+  const handleWordMouseDown = useCallback(
     (index: number, e: React.MouseEvent) => {
-      if (e.shiftKey && selectedIndex !== null) {
-        const start = Math.min(selectedIndex, index);
-        const end = Math.max(selectedIndex, index);
-        setSelectionRange([start, end]);
-      } else {
-        selectWord(index);
-      }
+      if (e.button !== 0) return; // left click only
+      dragStartRef.current = index;
+      isDraggingRef.current = false;
       closeContextMenu();
     },
-    [selectedIndex, selectWord, setSelectionRange, closeContextMenu],
+    [closeContextMenu],
   );
+
+  const handleWordMouseEnter = useCallback(
+    (index: number) => {
+      if (dragStartRef.current === null) return;
+      isDraggingRef.current = true;
+      const start = Math.min(dragStartRef.current, index);
+      const end = Math.max(dragStartRef.current, index);
+      selectWord(dragStartRef.current);
+      setSelectionRange([start, end]);
+    },
+    [selectWord, setSelectionRange],
+  );
+
+  const handleWordMouseUp = useCallback(
+    (index: number, e: React.MouseEvent) => {
+      if (dragStartRef.current === null) return;
+      if (!isDraggingRef.current) {
+        // Simple click (no drag)
+        if (e.shiftKey && selectedIndex !== null) {
+          const start = Math.min(selectedIndex, index);
+          const end = Math.max(selectedIndex, index);
+          setSelectionRange([start, end]);
+        } else {
+          selectWord(index);
+        }
+      }
+      dragStartRef.current = null;
+      isDraggingRef.current = false;
+    },
+    [selectedIndex, selectWord, setSelectionRange],
+  );
+
+  // Clear drag on global mouseup (in case mouse leaves the container)
+  useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      dragStartRef.current = null;
+      isDraggingRef.current = false;
+    };
+    window.addEventListener("mouseup", handleGlobalMouseUp);
+    return () => window.removeEventListener("mouseup", handleGlobalMouseUp);
+  }, []);
+
+  // Find matches
+  const findMatches = useMemo(() => {
+    if (!findQuery.trim()) return [];
+    const q = findQuery.toLowerCase();
+    return words
+      .map((w, i) => ({ index: i, match: w.text.toLowerCase().includes(q) }))
+      .filter((m) => m.match)
+      .map((m) => m.index);
+  }, [words, findQuery]);
+
+  // Ctrl+F to toggle find bar
+  useEffect(() => {
+    const handleFind = (e: KeyboardEvent) => {
+      if (e.key === "f" && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        setShowFind((prev) => {
+          if (!prev) setTimeout(() => findInputRef.current?.focus(), 50);
+          return !prev;
+        });
+      }
+    };
+    window.addEventListener("keydown", handleFind);
+    return () => window.removeEventListener("keydown", handleFind);
+  }, []);
+
+  const navigateFind = useCallback(
+    (direction: 1 | -1) => {
+      if (findMatches.length === 0) return;
+      const next = (findMatchIndex + direction + findMatches.length) % findMatches.length;
+      setFindMatchIndex(next);
+      selectWord(findMatches[next]);
+    },
+    [findMatches, findMatchIndex, selectWord],
+  );
+
+  const handleDeleteAllMatches = useCallback(async () => {
+    if (findMatches.length === 0) return;
+    for (const idx of findMatches) {
+      await deleteWord(idx);
+    }
+    setFindQuery("");
+    setShowFind(false);
+  }, [findMatches, deleteWord]);
 
   const handleContextMenu = useCallback(
     (index: number, e: React.MouseEvent) => {
@@ -184,6 +273,7 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
   }
 
   const contextWord = contextMenu.wordIndex >= 0 ? words[contextMenu.wordIndex] : null;
+  const findMatchSet = new Set(findMatches);
 
   return (
     <div
@@ -192,11 +282,60 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
       tabIndex={0}
       onKeyDown={handleKeyDown}
     >
+      {/* Find bar */}
+      {showFind && (
+        <div className="flex items-center gap-2 mb-3 p-2 rounded-lg bg-[#1E1E1E] border border-mid-gray/20">
+          <Search size={14} className="text-mid-gray/60 shrink-0" />
+          <input
+            ref={findInputRef}
+            type="text"
+            value={findQuery}
+            onChange={(e) => {
+              setFindQuery(e.target.value);
+              setFindMatchIndex(0);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") navigateFind(e.shiftKey ? -1 : 1);
+              if (e.key === "Escape") {
+                setShowFind(false);
+                setFindQuery("");
+              }
+            }}
+            placeholder={t("editor.findPlaceholder")}
+            className="flex-1 bg-transparent text-sm text-[#F0F0F0] outline-none placeholder:text-mid-gray/40"
+          />
+          {findMatches.length > 0 && (
+            <span className="text-[11px] text-mid-gray/60 shrink-0">
+              {findMatchIndex + 1}/{findMatches.length}
+            </span>
+          )}
+          {findMatches.length > 0 && (
+            <button
+              onClick={handleDeleteAllMatches}
+              className="px-2 py-0.5 text-[11px] text-red-400 bg-red-900/20 rounded hover:bg-red-900/40 transition-colors"
+            >
+              {t("editor.deleteAll")}
+            </button>
+          )}
+          <button
+            onClick={() => {
+              setShowFind(false);
+              setFindQuery("");
+            }}
+            className="text-mid-gray/60 hover:text-mid-gray transition-colors"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
       {/* Word spans */}
       <div className="flex flex-wrap gap-1 leading-relaxed">
         {words.map((word, index) => {
           const isSelected = selectedIndex === index;
           const isRangeSelected = isInSelectionRange(index);
+          const isFindMatch = findMatchSet.has(index);
+          const isCurrentFindMatch = findMatches.length > 0 && findMatches[findMatchIndex] === index;
           const prevWord = index > 0 ? words[index - 1] : null;
           const showSpeakerLabel =
             showSpeakers &&
@@ -226,7 +365,9 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
               <span
                 role="button"
                 tabIndex={-1}
-                onClick={(e) => handleWordClick(index, e)}
+                onMouseDown={(e) => handleWordMouseDown(index, e)}
+                onMouseEnter={() => handleWordMouseEnter(index)}
+                onMouseUp={(e) => handleWordMouseUp(index, e)}
                 onContextMenu={(e) => handleContextMenu(index, e)}
                 style={{ ...confidenceStyle, ...speakerBorderStyle }}
                 title={
@@ -238,9 +379,11 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
                   "cursor-pointer rounded px-1 py-0.5 transition-colors",
                   word.deleted && "line-through opacity-40",
                   word.silenced && !word.deleted && "opacity-60 italic",
-                  isSelected && "bg-[#E8A838] text-[#1E1E1E]",
-                  isRangeSelected && !isSelected && "bg-[#E8A838]/40",
-                  !isSelected && !isRangeSelected && !word.deleted && !word.silenced && "hover:bg-[rgba(128,128,128,0.2)]",
+                  isCurrentFindMatch && "ring-2 ring-[#E8A838] bg-[#E8A838]/30",
+                  isFindMatch && !isCurrentFindMatch && "bg-[#E8A838]/15",
+                  isSelected && !isFindMatch && "bg-[#E8A838] text-[#1E1E1E]",
+                  isRangeSelected && !isSelected && !isFindMatch && "bg-[#E8A838]/40",
+                  !isSelected && !isRangeSelected && !isFindMatch && !word.deleted && !word.silenced && "hover:bg-[rgba(128,128,128,0.2)]",
                 ]
                   .filter(Boolean)
                   .join(" ")}
