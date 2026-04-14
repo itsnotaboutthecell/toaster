@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { open, save } from "@tauri-apps/plugin-dialog";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke, convertFileSrc } from "@tauri-apps/api/core";
 import {
   FileVideo,
   Upload,
@@ -78,11 +78,9 @@ const EditorView: React.FC = () => {
       const info = await invoke<MediaInfo>("media_import", { path });
       setMediaInfo(info);
 
-      // Get asset URL for playback
-      const assetUrl = await invoke<string | null>("media_get_asset_url");
-      if (assetUrl) {
-        setMedia(assetUrl, info.media_type === "Video" ? "video" : "audio");
-      }
+      // Use Tauri's convertFileSrc for proper asset protocol URL
+      const assetUrl = convertFileSrc(info.path);
+      setMedia(assetUrl, info.media_type === "Video" ? "video" : "audio");
     } catch (err) {
       console.error("Failed to import media:", err);
     }
@@ -193,16 +191,14 @@ const EditorView: React.FC = () => {
 
       // Restore media playback
       if (mediaPath) {
-        const assetUrl = await invoke<string | null>("media_get_asset_url");
-        if (assetUrl) {
-          const info = await invoke<MediaInfo>("media_get_current", {});
-          if (info) {
-            setMediaInfo(info);
-            setMedia(
-              assetUrl,
-              info.media_type === "Video" ? "video" : "audio",
-            );
-          }
+        const info = await invoke<MediaInfo | null>("media_get_current", {});
+        if (info) {
+          setMediaInfo(info);
+          const assetUrl = convertFileSrc(info.path);
+          setMedia(
+            assetUrl,
+            info.media_type === "Video" ? "video" : "audio",
+          );
         }
       }
     } catch (err) {
