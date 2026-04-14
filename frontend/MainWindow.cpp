@@ -63,7 +63,8 @@
 #define NOMINMAX
 #endif
 #include <windows.h>
-#include <commdlg.h>
+#include <shlobj.h>
+#include <shobjidl.h>
 #endif
 
 namespace {
@@ -203,6 +204,42 @@ QString suggestedExportPath(const toaster_project_t *project)
   return QDir(defaultDocumentDialogPath()).filePath("edited.mp4");
 }
 
+QString suggestedTextExportBasePath(const toaster_project_t *project, const QString &currentProjectPath,
+                                    const QString &fallbackStem)
+{
+  if (project) {
+    QString mediaPath = QString::fromUtf8(toaster_project_get_media_path(project));
+    if (!mediaPath.isEmpty()) {
+      QFileInfo info(mediaPath);
+      return info.dir().filePath(info.completeBaseName());
+    }
+  }
+
+  if (!currentProjectPath.isEmpty()) {
+    QFileInfo info(currentProjectPath);
+    return info.dir().filePath(info.completeBaseName());
+  }
+
+  return QDir(defaultDocumentDialogPath()).filePath(fallbackStem);
+}
+
+QString suggestedCaptionPath(const toaster_project_t *project, const QString &currentProjectPath)
+{
+  return suggestedTextExportBasePath(project, currentProjectPath, "captions") + ".srt";
+}
+
+QString suggestedScriptPath(const toaster_project_t *project, const QString &currentProjectPath)
+{
+  return suggestedTextExportBasePath(project, currentProjectPath, "script") + ".txt";
+}
+
+toaster_caption_format_t captionFormatForPath(const QString &path)
+{
+  return QFileInfo(path).suffix().compare("vtt", Qt::CaseInsensitive) == 0
+           ? TOASTER_CAPTION_FORMAT_VTT
+           : TOASTER_CAPTION_FORMAT_SRT;
+}
+
 bool isSpecialWhisperToken(const QString &token)
 {
   return token.startsWith('[') && token.endsWith(']');
@@ -225,113 +262,149 @@ struct ScopedFlag {
 };
 
 #ifdef Q_OS_WIN
-std::wstring buildWin32Filter(const QString &qtFilter)
-{
-  QStringList entries = qtFilter.split(";;", Qt::SkipEmptyParts);
-  std::wstring filter;
+struct Win32FilterSpec {
+  std::vector<std::wstring> names;
+  std::vector<std::wstring> patterns;
+  std::vector<COMDLG_FILTERSPEC> specs;
 
-  if (entries.isEmpty())
-    entries << "All Files (*.*)";
+  explicit Win32FilterSpec(const QString &qtFilter)
+  {
+    QStringList entries = qtFilter.split(";;", Qt::SkipEmptyParts);
+    if (entries.isEmpty())
+      entries << "All Files (*.*)";
 
-  for (const QString &entry : entries) {
-    QString label = entry.trimmed();
-    QString pattern = "*.*";
-    int openParen = entry.lastIndexOf('(');
-    int closeParen = entry.lastIndexOf(')');
+    names.reserve(entries.size());
+    patterns.reserve(entries.size());
+    specs.reserve(entries.size());
 
-    if (openParen >= 0 && closeParen > openParen) {
-      pattern = entry.mid(openParen + 1, closeParen - openParen - 1).trimmed();
-      pattern.replace(' ', ';');
+    for (const QString &entry : entries) {
+      QString label = entry.trimmed();
+      QString pattern = "*.*";
+      int openParen = entry.lastIndexOf('(');
+      int closeParen = entry.lastIndexOf(')');
+
+      if (openParen >= 0 && closeParen > openParen) {
+        pattern = entry.mid(openParen + 1, closeParen - openParen - 1).trimmed();
+        pattern.replace(' ', ';');
+      }
+
+      names.push_back(label.toStdWString());
+      patterns.push_back(pattern.toStdWString());
+      specs.push_back({names.back().c_str(), patterns.back().c_str()});
     }
-
-    filter += label.toStdWString();
-    filter.push_back(L'\0');
-    filter += pattern.toStdWString();
-    filter.push_back(L'\0');
   }
-
-  filter.push_back(L'\0');
-  return filter;
-}
-
-void prepareDialogPath(const QString &initialPath, std::wstring *initialDirectory,
-                       std::array<wchar_t, 32768> *fileBuffer)
-{
-  QFileInfo info(initialPath);
-  QString normalizedPath = QDir::toNativeSeparators(initialPath);
-
-  if (!initialDirectory || !fileBuffer)
-    return;
-
-  fileBuffer->fill(L'\0');
-
-  if (normalizedPath.isEmpty())
-    return;
-
-  if (info.isDir()) {
-    *initialDirectory = QDir::toNativeSeparators(info.absoluteFilePath()).toStdWString();
-    return;
-  }
-
-  *initialDirectory = QDir::toNativeSeparators(info.absolutePath()).toStdWString();
-  QString fileName = info.fileName();
-  std::wstring fileNameStorage = fileName.toStdWString();
-  size_t copyLength = std::min(fileNameStorage.size(), fileBuffer->size() - 1);
-  std::copy(fileNameStorage.begin(), fileNameStorage.begin() + copyLength, fileBuffer->begin());
-}
+};
 
 QString getNativeOpenFileName(QWidget *parent, const QString &title, const QString &initialPath,
                               const QString &filter)
 {
-  OPENFILENAMEW ofn;
-  std::array<wchar_t, 32768> fileBuffer;
-  std::wstring titleStorage = title.toStdWString();
-  std::wstring filterStorage = buildWin32Filter(filter);
-  std::wstring initialDirectory;
+  IFileOpenDialog *dialog = nullptr;
+  HRESULT hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_INPROC_SERVER,
+                                IID_PPV_ARGS(&dialog));
+  if (FAILED(hr))
+    return QFileDialog::getOpenFileName(parent, title, initialPath, filter);
 
-  prepareDialogPath(initialPath, &initialDirectory, &fileBuffer);
-  ZeroMemory(&ofn, sizeof(ofn));
-  ofn.lStructSize = sizeof(ofn);
-  ofn.hwndOwner = parent ? reinterpret_cast<HWND>(parent->window()->winId()) : nullptr;
-  ofn.lpstrFile = fileBuffer.data();
-  ofn.nMaxFile = static_cast<DWORD>(fileBuffer.size());
-  ofn.lpstrTitle = titleStorage.c_str();
-  ofn.lpstrFilter = filterStorage.c_str();
-  ofn.lpstrInitialDir = initialDirectory.empty() ? nullptr : initialDirectory.c_str();
-  ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_PATHMUSTEXIST;
+  Win32FilterSpec filterSpec(filter);
+  dialog->SetFileTypes(static_cast<UINT>(filterSpec.specs.size()), filterSpec.specs.data());
+  dialog->SetTitle(title.toStdWString().c_str());
+  dialog->SetOptions(FOS_FILEMUSTEXIST | FOS_PATHMUSTEXIST | FOS_FORCEFILESYSTEM);
 
-  if (!GetOpenFileNameW(&ofn))
+  QFileInfo info(initialPath);
+  if (!initialPath.isEmpty()) {
+    QString dir = info.isDir() ? info.absoluteFilePath() : info.absolutePath();
+    IShellItem *folder = nullptr;
+    hr = SHCreateItemFromParsingName(QDir::toNativeSeparators(dir).toStdWString().c_str(),
+                                     nullptr, IID_PPV_ARGS(&folder));
+    if (SUCCEEDED(hr)) {
+      dialog->SetFolder(folder);
+      folder->Release();
+    }
+    if (!info.isDir() && !info.fileName().isEmpty())
+      dialog->SetFileName(info.fileName().toStdWString().c_str());
+  }
+
+  HWND owner = parent ? reinterpret_cast<HWND>(parent->window()->winId()) : nullptr;
+  hr = dialog->Show(owner);
+  if (FAILED(hr)) {
+    dialog->Release();
+    return QString();
+  }
+
+  IShellItem *result = nullptr;
+  hr = dialog->GetResult(&result);
+  dialog->Release();
+  if (FAILED(hr) || !result)
     return QString();
 
-  return QDir::fromNativeSeparators(QString::fromWCharArray(fileBuffer.data()));
+  PWSTR path = nullptr;
+  hr = result->GetDisplayName(SIGDN_FILESYSPATH, &path);
+  result->Release();
+  if (FAILED(hr) || !path)
+    return QString();
+
+  QString selected = QDir::fromNativeSeparators(QString::fromWCharArray(path));
+  CoTaskMemFree(path);
+  return selected;
 }
 
 QString getNativeSaveFileName(QWidget *parent, const QString &title, const QString &initialPath,
                               const QString &filter, const QString &defaultSuffix)
 {
-  OPENFILENAMEW ofn;
-  std::array<wchar_t, 32768> fileBuffer;
-  std::wstring titleStorage = title.toStdWString();
-  std::wstring filterStorage = buildWin32Filter(filter);
-  std::wstring initialDirectory;
-  std::wstring defaultSuffixStorage = defaultSuffix.toStdWString();
+  IFileSaveDialog *dialog = nullptr;
+  HRESULT hr = CoCreateInstance(CLSID_FileSaveDialog, nullptr, CLSCTX_INPROC_SERVER,
+                                IID_PPV_ARGS(&dialog));
+  if (FAILED(hr)) {
+    QString selected = QFileDialog::getSaveFileName(parent, title, initialPath, filter);
+    if (!selected.isEmpty() && !defaultSuffix.isEmpty() &&
+        !selected.endsWith("." + defaultSuffix, Qt::CaseInsensitive))
+      selected += "." + defaultSuffix;
+    return selected;
+  }
 
-  prepareDialogPath(initialPath, &initialDirectory, &fileBuffer);
-  ZeroMemory(&ofn, sizeof(ofn));
-  ofn.lStructSize = sizeof(ofn);
-  ofn.hwndOwner = parent ? reinterpret_cast<HWND>(parent->window()->winId()) : nullptr;
-  ofn.lpstrFile = fileBuffer.data();
-  ofn.nMaxFile = static_cast<DWORD>(fileBuffer.size());
-  ofn.lpstrTitle = titleStorage.c_str();
-  ofn.lpstrFilter = filterStorage.c_str();
-  ofn.lpstrInitialDir = initialDirectory.empty() ? nullptr : initialDirectory.c_str();
-  ofn.lpstrDefExt = defaultSuffixStorage.empty() ? nullptr : defaultSuffixStorage.c_str();
-  ofn.Flags = OFN_EXPLORER | OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT | OFN_PATHMUSTEXIST;
+  Win32FilterSpec filterSpec(filter);
+  dialog->SetFileTypes(static_cast<UINT>(filterSpec.specs.size()), filterSpec.specs.data());
+  dialog->SetTitle(title.toStdWString().c_str());
+  dialog->SetOptions(FOS_OVERWRITEPROMPT | FOS_PATHMUSTEXIST | FOS_FORCEFILESYSTEM);
 
-  if (!GetSaveFileNameW(&ofn))
+  if (!defaultSuffix.isEmpty())
+    dialog->SetDefaultExtension(defaultSuffix.toStdWString().c_str());
+
+  QFileInfo info(initialPath);
+  if (!initialPath.isEmpty()) {
+    QString dir = info.isDir() ? info.absoluteFilePath() : info.absolutePath();
+    IShellItem *folder = nullptr;
+    hr = SHCreateItemFromParsingName(QDir::toNativeSeparators(dir).toStdWString().c_str(),
+                                     nullptr, IID_PPV_ARGS(&folder));
+    if (SUCCEEDED(hr)) {
+      dialog->SetFolder(folder);
+      folder->Release();
+    }
+    if (!info.isDir() && !info.fileName().isEmpty())
+      dialog->SetFileName(info.fileName().toStdWString().c_str());
+  }
+
+  HWND owner = parent ? reinterpret_cast<HWND>(parent->window()->winId()) : nullptr;
+  hr = dialog->Show(owner);
+  if (FAILED(hr)) {
+    dialog->Release();
+    return QString();
+  }
+
+  IShellItem *result = nullptr;
+  hr = dialog->GetResult(&result);
+  dialog->Release();
+  if (FAILED(hr) || !result)
     return QString();
 
-  return QDir::fromNativeSeparators(QString::fromWCharArray(fileBuffer.data()));
+  PWSTR path = nullptr;
+  hr = result->GetDisplayName(SIGDN_FILESYSPATH, &path);
+  result->Release();
+  if (FAILED(hr) || !path)
+    return QString();
+
+  QString selected = QDir::fromNativeSeparators(QString::fromWCharArray(path));
+  CoTaskMemFree(path);
+  return selected;
 }
 #else
 QString getNativeOpenFileName(QWidget *parent, const QString &title, const QString &initialPath,
@@ -506,12 +579,19 @@ void MainWindow::createDocks()
   auto *exportWidget = new QWidget(this);
   auto *exportLayout = new QVBoxLayout(exportWidget);
   auto *exportHelp = new QLabel(
-    "Exports current keep segments with FFmpeg. Deleted words and pause cuts remove source spans.",
+    "Export edited media, sidecar captions, or a clean script from the current transcript state.",
     exportWidget);
   exportHelp->setWordWrap(true);
-  auto *exportButton = new QPushButton("Export Edited Media", exportWidget);
+  m_exportMediaButton = new QToolButton(exportWidget);
+  m_exportMediaButton->setToolButtonStyle(Qt::ToolButtonTextOnly);
+  m_exportCaptionsButton = new QToolButton(exportWidget);
+  m_exportCaptionsButton->setToolButtonStyle(Qt::ToolButtonTextOnly);
+  m_exportScriptButton = new QToolButton(exportWidget);
+  m_exportScriptButton->setToolButtonStyle(Qt::ToolButtonTextOnly);
   exportLayout->addWidget(exportHelp);
-  exportLayout->addWidget(exportButton);
+  exportLayout->addWidget(m_exportMediaButton);
+  exportLayout->addWidget(m_exportCaptionsButton);
+  exportLayout->addWidget(m_exportScriptButton);
   exportLayout->addStretch();
   m_exportDock = createDock(this, "Export", "exportDock", exportWidget);
 
@@ -540,7 +620,6 @@ void MainWindow::createDocks()
   connect(analyzeButton, &QPushButton::clicked, this, &MainWindow::analyzeCleanup);
   connect(applySelectedButton, &QPushButton::clicked, this, &MainWindow::applySelectedSuggestion);
   connect(applyAllButton, &QPushButton::clicked, this, &MainWindow::applyAllSuggestions);
-  connect(exportButton, &QPushButton::clicked, this, &MainWindow::exportMedia);
   connect(m_transcriptTable, &QTableWidget::cellChanged, this, &MainWindow::onTranscriptCellChanged);
   connect(m_transcriptTable->selectionModel(), &QItemSelectionModel::selectionChanged, this,
           [this]() { onTranscriptSelectionChanged(); });
@@ -565,7 +644,15 @@ void MainWindow::createMenus()
   fileMenu->addAction("Save Project As", this, &MainWindow::saveProjectAs);
   fileMenu->addSeparator();
   fileMenu->addAction(m_importTranscriptAction);
-  m_exportMediaAction = fileMenu->addAction("Export Media", this, &MainWindow::exportMedia);
+  m_exportMediaAction = new QAction("Export Media", this);
+  connect(m_exportMediaAction, &QAction::triggered, this, &MainWindow::exportMedia);
+  m_exportCaptionsAction = new QAction("Export Captions...", this);
+  connect(m_exportCaptionsAction, &QAction::triggered, this, &MainWindow::exportCaptions);
+  m_exportScriptAction = new QAction("Export Script...", this);
+  connect(m_exportScriptAction, &QAction::triggered, this, &MainWindow::exportScript);
+  fileMenu->addAction(m_exportMediaAction);
+  fileMenu->addAction(m_exportCaptionsAction);
+  fileMenu->addAction(m_exportScriptAction);
   fileMenu->addSeparator();
   fileMenu->addAction("Exit", this, &QWidget::close);
 
@@ -642,6 +729,12 @@ void MainWindow::createMenus()
     m_transcriptSearchPreviousButton->setDefaultAction(m_findPreviousAction);
   if (m_transcriptSearchNextButton)
     m_transcriptSearchNextButton->setDefaultAction(m_findNextAction);
+  if (m_exportMediaButton)
+    m_exportMediaButton->setDefaultAction(m_exportMediaAction);
+  if (m_exportCaptionsButton)
+    m_exportCaptionsButton->setDefaultAction(m_exportCaptionsAction);
+  if (m_exportScriptButton)
+    m_exportScriptButton->setDefaultAction(m_exportScriptAction);
 
   auto *helpMenu = menuBar()->addMenu("&Help");
   helpMenu->addAction("About", this, [this]() {
@@ -650,7 +743,7 @@ void MainWindow::createMenus()
       "Native transcript-first editor bootstrap.\n\n"
       "Current implementation covers project I/O, real waveform display, local whisper.cpp "
       "transcription, transcript search/navigation, plain-text transcript import, FFmpeg "
-      "export, and deterministic cleanup analysis.");
+      "media export, sidecar caption/script export, and deterministic cleanup analysis.");
   });
 }
 
@@ -1677,6 +1770,85 @@ void MainWindow::exportMedia()
   QMessageBox::information(this, "Export Media", QString("Export complete:\n%1").arg(outputPath));
 }
 
+void MainWindow::exportCaptions()
+{
+  QString errorMessage;
+  QString outputPath;
+  QString finalOutputPath;
+  toaster_caption_format_t format;
+  toaster_transcript_t *transcript;
+
+  if (!m_project)
+    return;
+
+  transcript = toaster_project_get_transcript(m_project);
+  if (toaster_transcript_word_count(transcript) == 0) {
+    QMessageBox::information(this, "Export Captions", "Transcribe or import a transcript first.");
+    return;
+  }
+
+  outputPath = getNativeSaveFileName(this, "Export Captions",
+                                     suggestedCaptionPath(m_project, m_projectPath),
+                                     "Caption Files (*.srt *.vtt);;SRT Captions (*.srt);;WebVTT Captions (*.vtt)",
+                                     "srt");
+  if (outputPath.isEmpty())
+    return;
+
+  format = captionFormatForPath(outputPath);
+  finalOutputPath = outputPath;
+  if (format == TOASTER_CAPTION_FORMAT_VTT) {
+    if (!finalOutputPath.endsWith(".vtt", Qt::CaseInsensitive))
+      finalOutputPath += ".vtt";
+  } else if (!finalOutputPath.endsWith(".srt", Qt::CaseInsensitive)) {
+    finalOutputPath += ".srt";
+  }
+
+  if (!exportCaptionsToPath(outputPath, format, &errorMessage)) {
+    QMessageBox::warning(this, "Export Captions", errorMessage);
+    return;
+  }
+
+  appendLogLine(QString("Exported captions: %1").arg(finalOutputPath));
+  QMessageBox::information(this, "Export Captions",
+                           QString("Export complete:\n%1").arg(finalOutputPath));
+}
+
+void MainWindow::exportScript()
+{
+  QString errorMessage;
+  QString outputPath;
+  QString finalOutputPath;
+  toaster_transcript_t *transcript;
+
+  if (!m_project)
+    return;
+
+  transcript = toaster_project_get_transcript(m_project);
+  if (toaster_transcript_word_count(transcript) == 0) {
+    QMessageBox::information(this, "Export Script", "Transcribe or import a transcript first.");
+    return;
+  }
+
+  outputPath = getNativeSaveFileName(this, "Export Script",
+                                     suggestedScriptPath(m_project, m_projectPath),
+                                     "Plain Text (*.txt)", "txt");
+  if (outputPath.isEmpty())
+    return;
+
+  finalOutputPath = outputPath;
+  if (!finalOutputPath.endsWith(".txt", Qt::CaseInsensitive))
+    finalOutputPath += ".txt";
+
+  if (!exportScriptToPath(outputPath, &errorMessage)) {
+    QMessageBox::warning(this, "Export Script", errorMessage);
+    return;
+  }
+
+  appendLogLine(QString("Exported script: %1").arg(finalOutputPath));
+  QMessageBox::information(this, "Export Script",
+                           QString("Export complete:\n%1").arg(finalOutputPath));
+}
+
 bool MainWindow::exportMediaToPath(const QString &outputPath, QString *errorMessage)
 {
   QString finalOutputPath = outputPath;
@@ -1783,6 +1955,86 @@ bool MainWindow::exportMediaToPath(const QString &outputPath, QString *errorMess
                         : QString("FFmpeg export failed.\n\n%1").arg(stderrText);
     }
     appendLogLine("FFmpeg export failed.");
+    return false;
+  }
+
+  return true;
+}
+
+bool MainWindow::exportCaptionsToPath(const QString &outputPath, toaster_caption_format_t format,
+                                      QString *errorMessage)
+{
+  QString finalOutputPath = outputPath;
+  toaster_transcript_t *transcript;
+
+  if (!m_project) {
+    if (errorMessage)
+      *errorMessage = "No project is loaded.";
+    return false;
+  }
+
+  transcript = toaster_project_get_transcript(m_project);
+  if (toaster_transcript_word_count(transcript) == 0) {
+    if (errorMessage)
+      *errorMessage = "Transcribe or import a transcript first.";
+    return false;
+  }
+
+  if (finalOutputPath.isEmpty()) {
+    if (errorMessage)
+      *errorMessage = "Output path is empty.";
+    return false;
+  }
+
+  if (format == TOASTER_CAPTION_FORMAT_VTT) {
+    if (!finalOutputPath.endsWith(".vtt", Qt::CaseInsensitive))
+      finalOutputPath += ".vtt";
+  } else {
+    if (!finalOutputPath.endsWith(".srt", Qt::CaseInsensitive))
+      finalOutputPath += ".srt";
+  }
+
+  if (!toaster_transcript_export_captions(transcript, finalOutputPath.toUtf8().constData(), format)) {
+    if (errorMessage)
+      *errorMessage = QString("Failed to export captions:\n%1").arg(finalOutputPath);
+    appendLogLine(QString("Caption export failed: %1").arg(finalOutputPath));
+    return false;
+  }
+
+  return true;
+}
+
+bool MainWindow::exportScriptToPath(const QString &outputPath, QString *errorMessage)
+{
+  QString finalOutputPath = outputPath;
+  toaster_transcript_t *transcript;
+
+  if (!m_project) {
+    if (errorMessage)
+      *errorMessage = "No project is loaded.";
+    return false;
+  }
+
+  transcript = toaster_project_get_transcript(m_project);
+  if (toaster_transcript_word_count(transcript) == 0) {
+    if (errorMessage)
+      *errorMessage = "Transcribe or import a transcript first.";
+    return false;
+  }
+
+  if (finalOutputPath.isEmpty()) {
+    if (errorMessage)
+      *errorMessage = "Output path is empty.";
+    return false;
+  }
+
+  if (!finalOutputPath.endsWith(".txt", Qt::CaseInsensitive))
+    finalOutputPath += ".txt";
+
+  if (!toaster_transcript_export_script(transcript, finalOutputPath.toUtf8().constData())) {
+    if (errorMessage)
+      *errorMessage = QString("Failed to export script:\n%1").arg(finalOutputPath);
+    appendLogLine(QString("Script export failed: %1").arg(finalOutputPath));
     return false;
   }
 
@@ -2400,6 +2652,10 @@ void MainWindow::updateInspector()
     m_saveProjectAction->setEnabled(m_project != nullptr);
   if (m_exportMediaAction)
     m_exportMediaAction->setEnabled(!mediaPath.isEmpty() && wordCount > 0);
+  if (m_exportCaptionsAction)
+    m_exportCaptionsAction->setEnabled(wordCount > 0);
+  if (m_exportScriptAction)
+    m_exportScriptAction->setEnabled(wordCount > 0);
   if (m_analyzeAction)
     m_analyzeAction->setEnabled(wordCount > 0);
   updateTranscriptToolState(wordCount, mediaPath);

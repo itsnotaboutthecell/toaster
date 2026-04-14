@@ -11,10 +11,10 @@
 ### Product Stance
 
 1. **Local-first.** No cloud service required for core editing.
-2. **No LLM dependency for cleanup.** Filler detection, pause handling, silence, and restore must work deterministically.
+2. **Deterministic cleanup.** Filler detection, pause handling, silence, and restore work without LLMs.
 3. **OBS-like and compliant.** Native menu bar, dockable panels, reusable shared core, and safe OBS host integration.
 4. **Non-destructive first.** Users can delete, silence, shorten, split, and restore without losing original media.
-5. **One shared engine.** Standalone app and OBS host integration consume same core edit/session/export library.
+5. **One shared engine.** Standalone app and OBS host integration consume the same C API.
 
 ---
 
@@ -27,15 +27,8 @@
 - Word-level transcript with waveform and preview
 - Project save/load
 - Caption export and optional burn-in
-
-### Drop from CutScript
-
-- Electron shell
-- Python backend process
-- Localhost HTTP bridge between UI and backend
-- AI provider settings, API keys, Ollama/OpenAI/Claude routing
-- LLM-based filler detection
-- LLM-based clip suggestion as core workflow
+- Show long-running pipeline state clearly during slow operations (loading, transcribing, exporting)
+- Make export modes explicit: fast copy, full re-encode, sidecar captions, burn-in captions
 
 ### Learn from Audiate
 
@@ -95,13 +88,7 @@
 
 #### Expansion Packs
 
-Recommended next spoken-language packs:
-
-- Spanish
-- Portuguese (Brazil)
-- French
-- German
-- Japanese
+Recommended next spoken-language packs: Spanish, Portuguese (Brazil), French, German, Japanese.
 
 Each language pack must include:
 
@@ -124,21 +111,15 @@ Each language pack must include:
 
 ### 5.2 Editing Modes
 
-1. **Edit Mode**
-   - deleting words deletes media
-   - silencing keeps duration but removes sound
-   - pause shortening changes effective duration
-2. **Transcript Mode**
-   - edits transcript text for captions/script only
-   - media timing unchanged
-3. **Boundary Mode**
-   - trim, roll, ripple, split, keyboard nudge, timing repair
+1. **Edit Mode** — deleting words deletes media; silencing keeps duration but removes sound; pause shortening changes effective duration
+2. **Transcript Mode** — edits transcript text for captions/script only; media timing unchanged
+3. **Boundary Mode** — trim, roll, ripple, split, keyboard nudge, timing repair
 
 ---
 
 ## 6. Menu Bar and Dock Model
 
-Toaster should use a native desktop menu bar with OBS-like structure.
+Toaster uses a native desktop menu bar with OBS-like structure.
 
 ### 6.1 Top-Level Menus
 
@@ -160,66 +141,80 @@ Toaster should use a native desktop menu bar with OBS-like structure.
 - Layout must persist per user.
 - Users must be able to **Reset Docks** and **Lock Docks**.
 
-### 6.3 OBS Host Rule
+### 6.3 OBS Host Rules
 
-When hosted inside OBS:
+When hosted inside OBS, all OBS-specific constraints are defined here:
 
-- Toaster surfaces must appear as **dock(s)** and **tool actions**
-- Toaster must not replace OBS main window behavior
-- destructive cut/ripple/export work must stay outside render/audio callbacks
+- Toaster surfaces must appear as **dock(s)** and **tool actions**.
+- Toaster must not replace OBS main window behavior.
+- Destructive cut/ripple/export work must stay outside render/audio callbacks.
+- Non-destructive tagging is allowed inside host; destructive cleanup/export is queued to offline workflow.
+- OBS integration must be crash-safe and safe-mode-aware.
+- The standalone app and OBS host both consume the same `libtoaster` C API with no divergence.
 
 ---
 
 ## 7. Core User Stories
 
-### P0 - Must Have
+Section 7 is the **single source of truth** for feature status. The implementation plan
+(section 14) references these P-numbers rather than restating features.
 
-1. Open audio or video file and preview it locally.
-2. Transcribe media into word-level text with timestamps.
-3. Click transcript words to seek playback.
-4. Select transcript words and **Delete**, **Silence**, or **Restore** them.
-5. Save/load a project file that preserves transcript, edits, and settings.
-6. Export cleaned media to a new file.
-7. Export SRT/VTT captions and plain-text script.
-8. Search transcript and run find/replace.
-9. Show waveform and keep transcript/playhead/waveform selection in sync.
-10. Support undo/redo for all edit actions.
+**Usable standalone state** = all P1 items complete + P2 batch cleanup reviewable.
 
-### P1 - Suggested Edits Without LLM
+### P1 - Must Have (Phase 1 - Native Core)
 
-1. Detect filler words from built-in dictionaries and repeated-word heuristics.
-2. Let users **Silence Filler Words** or **Delete Filler Words** in batch.
-3. Detect pauses using audio energy and duration thresholds.
-4. Let users **Silence Pauses**, **Delete Pauses**, or **Shorten Pauses** in batch.
-5. Support custom filler lists and ignore lists.
-6. Support restore markers for deleted spans.
-7. Support transcript-only correction mode for captions/scripts.
+| # | Status | Feature | Notes |
+|---|--------|---------|-------|
+| 1 | ⬜ | Open audio or video file and preview it locally | Needs FFmpeg decoder plugin |
+| 2 | ⬜ | Transcribe media into word-level text with timestamps | Needs ASR plugin |
+| 3 | ✅ | Click transcript words to seek playback | |
+| 4 | ✅ | Select transcript words and Delete, Silence, or Restore them | |
+| 5 | ✅ | Save/load a project file that preserves transcript, edits, and settings | |
+| 6 | ⬜ | Export cleaned media to a new file | Needs FFmpeg exporter plugin |
+| 7 | ✅ | Export SRT/VTT captions and plain-text script | |
+| 8 | ⚠️ | Search transcript and run find/replace | Find-next works; find-and-replace not wired |
+| 9 | ⚠️ | Show waveform and keep transcript/playhead/waveform selection in sync | Display works; waveform generation needs media loading |
+| 10 | ⬜ | Support undo/redo for all edit actions | No edit history API in libtoaster |
 
-### P2 - Precision Editing
+### P2 - Suggested Edits Without LLM (Phase 2 - Deterministic Cleanup)
 
-1. Split word at playhead.
-2. Edit transcription timing with handles.
-3. Drag boundary markers.
-4. Roll adjacent word boundaries.
-5. Ripple edit selected spans.
-6. Snap to zero crossings, nearby words, and optional time grid.
-7. Apply seam smoothing on edited joins during export.
-8. Support keyboard nudge for fine timing control.
+| # | Status | Feature | Notes |
+|---|--------|---------|-------|
+| 1 | ✅ | Detect filler words from built-in dictionaries and repeated-word heuristics | |
+| 2 | ⚠️ | Let users Silence/Delete Filler Words in batch | API works; batch UI not built |
+| 3 | ⚠️ | Detect pauses using audio energy and duration thresholds | Gap-based detection works; no RMS/energy analysis yet |
+| 4 | ⚠️ | Let users Silence/Delete/Shorten Pauses in batch | API works; batch UI not built |
+| 5 | ⬜ | Support custom filler lists and ignore lists | Static dictionaries only |
+| 6 | ✅ | Support restore markers for deleted spans | |
+| 7 | ⬜ | Support transcript-only correction mode for captions/scripts | |
 
-### P3 - OBS Workflow
+### P3 - Precision Editing (Phase 3 - Polish and Hardening)
 
-1. Provide OBS dock with transcript, suggested edits, and project status.
-2. Allow safe non-destructive tagging inside OBS host.
-3. Queue destructive cleanup/export to offline workflow.
-4. Preserve OBS-friendly dock behavior and crash-safe startup.
+| # | Status | Feature |
+|---|--------|---------|
+| 1 | ⬜ | Split word at playhead |
+| 2 | ⬜ | Edit transcription timing with handles |
+| 3 | ⬜ | Drag boundary markers |
+| 4 | ⬜ | Roll adjacent word boundaries |
+| 5 | ⬜ | Ripple edit selected spans |
+| 6 | ⬜ | Snap to zero crossings, nearby words, and optional time grid |
+| 7 | ⬜ | Apply seam smoothing on edited joins during export |
+| 8 | ⬜ | Support keyboard nudge for fine timing control |
+
+### P4 - OBS Workflow (Phase 4 - OBS Integration)
+
+| # | Status | Feature |
+|---|--------|---------|
+| 1 | ⬜ | Provide OBS dock with transcript, suggested edits, and project status |
+| 2 | ⬜ | Allow safe non-destructive tagging inside OBS host |
+| 3 | ⬜ | Queue destructive cleanup/export to offline workflow |
+| 4 | ⬜ | Preserve OBS-friendly dock behavior and crash-safe startup |
 
 ---
 
 ## 8. Deterministic Cleanup Engine
 
 ### 8.1 Filler Detection
-
-Must not require prompt calls or external LLMs.
 
 Inputs:
 
@@ -231,11 +226,11 @@ Inputs:
 Rules:
 
 1. Exact filler lexicon
-2. phrase lexicon (`you know`, `kind of`, `sort of`)
-3. repeated-word detection (`I I I`, `the the`)
-4. sentence-initial soft fillers (`so`, `well`, `actually`) behind confidence rules
-5. user ignore list
-6. per-language dictionaries
+2. Phrase lexicon (`you know`, `kind of`, `sort of`)
+3. Repeated-word detection (`I I I`, `the the`)
+4. Sentence-initial soft fillers (`so`, `well`, `actually`) behind confidence rules
+5. User ignore list
+6. Per-language dictionaries
 
 Outputs:
 
@@ -253,10 +248,10 @@ Inputs:
 
 Rules:
 
-1. configurable minimum pause duration
-2. configurable silence threshold
-3. preserve breaths when user wants natural cadence
-4. separate **silence** from **shorten**
+1. Configurable minimum pause duration
+2. Configurable silence threshold
+3. Preserve breaths when user wants natural cadence
+4. Separate **silence** from **shorten**
 
 Outputs:
 
@@ -311,9 +306,6 @@ Waveform + inspector             Non-destructive actions
 1. `libtoaster` must know nothing about Qt.
 2. Frontend and OBS host both consume same C API.
 3. Plugin ABI remains stable and native.
-4. No Python child process.
-5. No localhost HTTP bridge.
-6. No cloud API key management in core UX.
 
 ---
 
@@ -343,240 +335,99 @@ Project file must preserve:
 | Qt 6 Widgets | native desktop UI and docks |
 | CMake | build |
 | Local ASR engine plugin | transcription without Python service |
-| OBS Studio SDK | OBS host integration |
+| OBS Studio SDK | OBS host integration (Phase 4) |
 
 ---
 
 ## 13. Non-Goals
 
+These constraints apply globally. They are stated once here and not repeated elsewhere.
+
 - No LLM-required filler detection
 - No prompt-based clip suggestion in MVP
 - No Electron frontend
-- No Python backend service
-- No mandatory cloud transcription
+- No Python backend service or child process
+- No localhost HTTP bridge
+- No mandatory cloud transcription or cloud API key management in core UX
 - No unsafe live destructive edits on active OBS render/audio path
 
 ---
 
-## 14. Milestones
+## 14. Implementation Plan
 
-The milestones below describe product direction. Sections **16-19** translate them into
-implementation-facing guidance grounded in the current repository baseline.
+This section is the implementation-facing roadmap. Feature status is tracked in section 7;
+this section covers sequencing, parallelization, and exit criteria per phase.
 
-### Phase 1 - Native Core
+### Phase 1 - Usable Standalone Foundation
 
-- local session/edit engine
-- project save/load
-- transcript editing
-- export media and captions
-
-### Phase 2 - Suggested Edits
-
-- deterministic filler detection
-- pause detection/shorten/silence
-- transcript-only edit mode
-- timing editor and split word
-
-### Phase 3 - Precision + Polish
-
-- boundary trim/roll/ripple
-- seam smoothing
-- dock layout persistence
-- robust shortcut map
-
-### Phase 4 - OBS Integration
-
-- OBS dock
-- tool entry points
-- offline export handoff
-- crash-safe / safe-mode-aware integration
-
----
-
-## 15. Success Criteria
-
-1. User can clean up a spoken clip without touching a traditional timeline for common edits.
-2. Filler and pause cleanup works offline with no API keys and no prompt calls.
-3. UI feels native and dockable, not browser-like.
-4. Standalone app and OBS integration share one edit core.
-5. Exported media, captions, and script remain synchronized after edits.
-
----
-
-## 16. Current Implementation Baseline
-
-This section reflects the repository as it exists today and should be used as the starting
-point for implementation planning.
-
-### 16.1 Core engine baseline
-
-- `libtoaster/` already contains a shared transcript/session core with word-state flags,
-  delete/silence/restore operations, cut spans, keep-segment generation, project save/load,
-  suggestion-list APIs, filler analysis, pause analysis, and signal infrastructure.
-- `test/` already covers edit behavior, project round-trip, analysis, timeline/keep-segment
-  math, signals, and a Windows frontend automation smoke path.
-- The next build phases should treat these core contracts as the foundation, not reopen them
-  casually without a clear product reason.
-
-### 16.2 Frontend baseline
-
-- `frontend/` already provides a native Qt shell with dock creation, menu creation, media/project
-  open/save/export entry points, playback wiring, transcript search/navigation, waveform
-  rendering, cleanup-analysis actions, and automation entry points.
-- The frontend therefore already has meaningful structure. The near-term goal is to make the
-  existing workflow reliable and coherent end-to-end rather than replace the UI stack.
-
-### 16.3 Baseline gap
-
-- The repository now has real foundations, but the earlier PRD jumped from product intent to
-  milestone labels without bridging through current implementation state.
-- The implementation plan should now focus on integrating the existing core + frontend + tests
-  into a clearly usable standalone workflow before expanding OBS-specific scope.
-
----
-
-## 17. Implementation Notes from Comparative Research
-
-The following notes are implementation guidance and do not change the product stance above.
-
-### 17.1 Borrow from Handy
-
-- For any future live capture / push-to-talk / speech-triggered workflow, normalize capture
-  early, use smoothed VAD, preserve brief speech lead-in/tail, and preload/unload transcription
-  models around user intent.
-- Treat recording, cancel, processing, and paste as one coordinated lifecycle rather than a set
-  of unrelated callbacks.
-- Keep optional AI polishing above the deterministic core workflow rather than inside it.
-
-### 17.2 Borrow from CutScript
-
-- Keep transcript-first editing and the "edit transcript -> derive keep segments -> export"
-  mental model.
-- Show long-running pipeline state clearly during slow operations: loading, extracting audio,
-  transcribing, aligning, exporting.
-- Make export modes explicit: fast copy, full re-encode, sidecar captions, burn-in captions.
-- Support batch-friendly cleanup review, but keep deterministic rules first.
-
-### 17.3 Do not copy
-
-- Do not reintroduce Electron, Python backend sidecars, localhost bridges, or LLM-required
-  cleanup.
-- Do not let competitive research blur the shared-core / OBS-safe boundary that defines Toaster.
-
----
-
-## 18. Usable Standalone State
-
-Before OBS integration becomes a primary build target, Toaster should reach a usable standalone
-state.
-
-A usable standalone build means the following workflow is reliable on Windows:
-
-1. Open local audio/video and preview it.
-2. Transcribe media or import a timestamped transcript.
-3. Select transcript words and delete, silence, restore, and inspect results.
-4. Keep playback, transcript selection, and waveform selection in sync.
-5. Save and reload a project without losing edit state.
-6. Export edited media plus sidecar captions/script.
-7. Run deterministic filler/pause cleanup in reviewable batches.
-8. Pass core regression tests and frontend smoke automation for the supported workflow.
-
-Usable standalone state does **not** require full OBS integration, advanced boundary tools beyond
-the defined core workflow, or every future language pack.
-
----
-
-## 19. Phased Implementation Plan
-
-The phase plan below is implementation-facing and should be used to sequence work from the
-current repo baseline to a usable product.
-
-### 19.1 Phase 1 - Usable Standalone Foundation
-
-**Goal:** complete the minimum end-to-end standalone editing loop.  
-**Parallelization:** mostly sequential until shared contracts are stable, then parallel by
-workstream.
+**Goal:** complete the minimum end-to-end standalone editing loop (all P1 items).
 
 **Sequential foundation work**
 
-- Finalize transcript / project / export contract expectations in `libtoaster`.
-- Confirm end-to-end media load, transcription import/transcribe flow, and export-path
-  ownership.
-- Define the exact "definition of done" for usable standalone state.
+| Status | Task | Notes |
+|--------|------|-------|
+| ✅ | Finalize transcript / project / export contract expectations in `libtoaster` | |
+| ⬜ | Confirm end-to-end media load, transcription import/transcribe flow, and export-path ownership | Needs FFmpeg decoder + ASR plugin |
 
 **Parallel workstreams after the foundation is stable**
 
-- **Core/session track:** transcript state transitions, project persistence polish, keep-segment
-  correctness.
-- **Media/export track:** preview reliability, waveform loading, export correctness, caption/script
-  outputs.
-- **Frontend workflow track:** selection/edit actions, inspector clarity, transcript
-  search/navigation, dock cohesion.
-- **Quality track:** test coverage, automation smoke flow, and repeatable Windows build/run
-  validation.
+| Status | Track | Notes |
+|--------|-------|-------|
+| ✅ | **Core/session:** transcript state transitions, project persistence polish, keep-segment correctness | |
+| ⚠️ | **Media/export:** preview reliability, waveform loading, export correctness, caption/script outputs | Caption/script done; media load/export needs plugins |
+| ⚠️ | **Frontend workflow:** selection/edit actions, inspector clarity, transcript search/navigation, dock cohesion | Selection/edit/inspector done; find-replace partial |
+| ⚠️ | **Quality:** test coverage, automation smoke flow, and repeatable Windows build/run validation | Core tests pass; frontend e2e blocked on media loading |
 
-**Phase exit**
+**Phase exit:** the Windows standalone app can reliably perform the P1 workflow without timeline-first editing.
 
-- The Windows standalone app can reliably perform the P0 workflow without timeline-first editing.
-
-### 19.2 Phase 2 - Deterministic Cleanup and Guided Editing
+### Phase 2 - Deterministic Cleanup and Guided Editing
 
 **Goal:** deliver the offline cleanup workflow that makes the product meaningfully better than
-manual editing.  
-**Parallelization:** parallel inside an agreed data model; sequential only where core structures
-must change.
+manual editing (all P2 items).
 
 **Workstreams**
 
-- **Filler engine track:** dictionaries, repeated-word handling, ignore lists, review reasons.
-- **Pause engine track:** move from transcript-gap-only logic toward the PRD's intended
-  audio-energy-aware detection.
-- **Review UX track:** suggestion-list quality, batch-apply flows, transcript-only correction
-  mode.
-- **Recovery track:** restore markers, reversible cleanup behavior, regression cases.
+| Status | Track | Notes |
+|--------|-------|-------|
+| ⚠️ | **Filler engine:** dictionaries, repeated-word handling, ignore lists, review reasons | Detection done; custom lists not started |
+| ⚠️ | **Pause engine:** move from gap-only toward audio-energy-aware detection | Gap-based done; energy analysis not started |
+| ⬜ | **Review UX:** suggestion-list quality, batch-apply flows, transcript-only correction mode | |
+| ✅ | **Recovery:** restore markers, reversible cleanup behavior, regression cases | |
 
-**Phase exit**
+**Phase exit:** users can run deterministic filler and pause cleanup with reviewable batch actions and reversible results.
 
-- Users can run deterministic filler and pause cleanup with reviewable batch actions and
-  reversible results.
+### Phase 3 - Precision Editing and Release Hardening
 
-### 19.3 Phase 3 - Precision Editing and Release Hardening
-
-**Goal:** improve timing control, polish, and release confidence.  
-**Parallelization:** mixed; precision-editing features can progress in parallel, but release
-hardening gates phase exit.
+**Goal:** improve timing control, polish, and release confidence (all P3 items).
 
 **Workstreams**
 
-- Boundary editing, split/roll/ripple behavior, and timing repair.
-- Seam smoothing and edited-join quality during export.
-- Undo/redo depth, shortcut completeness, dock persistence, and workflow polish.
-- Packaging, crash handling expectations, logging, and repeatable release validation.
+| Status | Track |
+|--------|-------|
+| ⬜ | Boundary editing, split/roll/ripple behavior, and timing repair |
+| ⬜ | Seam smoothing and edited-join quality during export |
+| ⬜ | Undo/redo depth, shortcut completeness, dock persistence, and workflow polish |
+| ⬜ | Packaging, crash handling expectations, logging, and repeatable release validation |
 
-**Phase exit**
+**Phase exit:** standalone Toaster feels coherent, recoverable, and ready for real-world speech-editing sessions.
 
-- Standalone Toaster feels coherent, recoverable, and ready for real-world speech-editing
-  sessions.
+### Phase 4 - OBS-safe Integration
 
-### 19.4 Phase 4 - OBS-safe Integration
-
-**Goal:** reuse the shared core in OBS without weakening host safety.  
-**Parallelization:** mostly sequential after standalone contracts are stable.
+**Goal:** reuse the shared core in OBS without weakening host safety (all P4 items).
 
 **Workstreams**
 
-- OBS dock/tool entry design.
-- Non-destructive tagging inside host.
-- Offline destructive cleanup/export handoff.
-- Crash-safe and safe-mode-aware host behavior.
-- Shared-core parity checks between standalone and OBS flows.
+| Status | Track |
+|--------|-------|
+| ⬜ | OBS dock/tool entry design |
+| ⬜ | Non-destructive tagging inside host |
+| ⬜ | Offline destructive cleanup/export handoff |
+| ⬜ | Crash-safe and safe-mode-aware host behavior |
+| ⬜ | Shared-core parity checks between standalone and OBS flows |
 
-**Phase exit**
+**Phase exit:** OBS integration adds tagging and handoff value without duplicating the edit core or moving destructive work into unsafe host paths.
 
-- OBS integration adds tagging and handoff value without duplicating the edit core or moving
-  destructive work into unsafe host paths.
-
-### 19.5 Sequential vs Parallel Summary
+### Parallelization Summary
 
 | Workstream | Depends on | Can run in parallel with |
 |---|---|---|
@@ -587,8 +438,12 @@ hardening gates phase exit.
 | Automation, regression, packaging | each active phase | almost all tracks, but it blocks phase exit |
 | OBS integration | stable standalone product and export handoff model | limited parallelism; mostly late-phase sequential work |
 
-### 19.6 Recommended next build phase
+---
 
-After this PRD update lands, the next build phase should focus on **Phase 1 - Usable Standalone
-Foundation**. That is the shortest path to a product people can actually use, and it creates the
-stable contracts that later cleanup, precision editing, and OBS work depend on.
+## 15. Success Criteria
+
+1. User can clean up a spoken clip without touching a traditional timeline for common edits.
+2. Filler and pause cleanup works offline with no API keys and no prompt calls.
+3. UI feels native and dockable, not browser-like.
+4. Standalone app and OBS integration share one edit core.
+5. Exported media, captions, and script remain synchronized after edits.

@@ -23,6 +23,11 @@ target_include_directories(test-analysis PRIVATE ${CMAKE_SOURCE_DIR}/libtoaster)
 target_link_libraries(test-analysis PRIVATE toaster)
 add_test(NAME test-analysis COMMAND $<TARGET_FILE:test-analysis>)
 
+add_executable(test-export test-export.c)
+target_include_directories(test-export PRIVATE ${CMAKE_SOURCE_DIR}/libtoaster)
+target_link_libraries(test-export PRIVATE toaster)
+add_test(NAME test-export COMMAND $<TARGET_FILE:test-export>)
+
 if(WIN32 AND TARGET toaster-app)
   find_program(TOASTER_POWERSHELL_EXECUTABLE
     NAMES

@@ -1,6 +1,7 @@
 build/
 cmake-build-*/
 CMakeUserPresets.json
+PRD.md
 
 .vs/
 .idea/

@@ -21,7 +21,7 @@ target_link_libraries(toaster-app
 )
 
 if(WIN32)
-  target_link_libraries(toaster-app PRIVATE comdlg32)
+  target_link_libraries(toaster-app PRIVATE ole32 shell32 uuid)
 endif()
 
 if(WIN32)

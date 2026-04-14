@@ -43,6 +43,11 @@ typedef struct toaster_time_range {
   int64_t end_us;
 } toaster_time_range_t;
 
+typedef enum toaster_caption_format {
+  TOASTER_CAPTION_FORMAT_SRT = 0,
+  TOASTER_CAPTION_FORMAT_VTT = 1
+} toaster_caption_format_t;
+
 typedef struct toaster_suggestion {
   toaster_suggestion_kind_t kind;
   size_t start_index;
@@ -98,6 +103,11 @@ TOASTER_API bool toaster_transcript_get_keep_segment(const toaster_transcript_t 
                                                      size_t segment_index, toaster_time_range_t *out_range);
 TOASTER_API bool toaster_transcript_get_bounds(const toaster_transcript_t *transcript,
                                                toaster_time_range_t *out_range);
+TOASTER_API bool toaster_transcript_export_script(const toaster_transcript_t *transcript,
+                                                  const char *path);
+TOASTER_API bool toaster_transcript_export_captions(const toaster_transcript_t *transcript,
+                                                    const char *path,
+                                                    toaster_caption_format_t format);
 
 TOASTER_API toaster_project_t *toaster_project_create(void);
 TOASTER_API void toaster_project_destroy(toaster_project_t *project);

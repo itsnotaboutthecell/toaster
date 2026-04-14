@@ -55,6 +55,8 @@ private:
   void saveProject();
   void saveProjectAs();
   void exportMedia();
+  void exportCaptions();
+  void exportScript();
   void transcribeMedia();
   void importTranscript();
   void analyzeCleanup();
@@ -83,6 +85,9 @@ private:
   void loadProject(toaster_project_t *project, const QString &projectPath);
   bool saveProjectToPath(const QString &path, QString *errorMessage = nullptr);
   bool exportMediaToPath(const QString &outputPath, QString *errorMessage = nullptr);
+  bool exportCaptionsToPath(const QString &outputPath, toaster_caption_format_t format,
+                            QString *errorMessage = nullptr);
+  bool exportScriptToPath(const QString &outputPath, QString *errorMessage = nullptr);
   bool transcribeCurrentMedia(bool allowModelDownload, QString *errorMessage = nullptr);
   bool populateTranscriptFromWhisperJson(const QString &jsonPath, QString *errorMessage = nullptr);
   bool replaceTranscriptFromText(const QString &text, qint64 duration_us,
@@ -138,6 +143,8 @@ private:
   QAction *m_alwaysOnTopAction = nullptr;
   QAction *m_saveProjectAction = nullptr;
   QAction *m_exportMediaAction = nullptr;
+  QAction *m_exportCaptionsAction = nullptr;
+  QAction *m_exportScriptAction = nullptr;
   QAction *m_analyzeAction = nullptr;
   QAction *m_transcribeAction = nullptr;
   QAction *m_importTranscriptAction = nullptr;
@@ -168,6 +175,9 @@ private:
   QToolButton *m_transcriptImportButton = nullptr;
   QToolButton *m_transcriptSearchPreviousButton = nullptr;
   QToolButton *m_transcriptSearchNextButton = nullptr;
+  QToolButton *m_exportMediaButton = nullptr;
+  QToolButton *m_exportCaptionsButton = nullptr;
+  QToolButton *m_exportScriptButton = nullptr;
   WaveformView *m_waveformView = nullptr;
   QListWidget *m_suggestionList = nullptr;
   QPlainTextEdit *m_logView = nullptr;

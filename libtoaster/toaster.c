@@ -1,5 +1,7 @@
 #include "toaster.h"
 
+#include <ctype.h>
+#include <stdio.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
@@ -294,6 +296,145 @@ static size_t collect_excluded_spans(const toaster_transcript_t *transcript,
 
   *out_spans = spans;
   return merged_count;
+}
+
+static bool export_word_has_text(const toaster_word_storage_t *word)
+{
+  return word && word->text && word->text[0] != '\0';
+}
+
+static bool export_word_is_audible(const toaster_word_storage_t *word)
+{
+  return export_word_has_text(word) && !word->deleted && !word->silenced;
+}
+
+static bool export_word_attaches_to_previous(const char *text)
+{
+  unsigned char first;
+
+  if (!text || text[0] == '\0')
+    return false;
+
+  first = (unsigned char)text[0];
+  return ispunct(first) != 0;
+}
+
+static bool ensure_text_capacity(char **buffer, size_t *capacity, size_t desired_size)
+{
+  char *resized;
+  size_t new_capacity;
+
+  if (!buffer || !capacity)
+    return false;
+
+  if (desired_size <= *capacity)
+    return true;
+
+  new_capacity = *capacity ? *capacity * 2 : 64;
+  while (new_capacity < desired_size)
+    new_capacity *= 2;
+
+  resized = (char *)realloc(*buffer, new_capacity);
+  if (!resized)
+    return false;
+
+  *buffer = resized;
+  *capacity = new_capacity;
+  return true;
+}
+
+static bool append_export_text(char **buffer, size_t *length, size_t *capacity, const char *text,
+                               bool insert_space)
+{
+  size_t text_length;
+  size_t desired_size;
+
+  if (!buffer || !length || !capacity || !text)
+    return false;
+
+  text_length = strlen(text);
+  desired_size = *length + (insert_space ? 1 : 0) + text_length + 1;
+  if (!ensure_text_capacity(buffer, capacity, desired_size))
+    return false;
+
+  if (insert_space)
+    (*buffer)[(*length)++] = ' ';
+
+  memcpy(*buffer + *length, text, text_length);
+  *length += text_length;
+  (*buffer)[*length] = '\0';
+  return true;
+}
+
+static int64_t map_source_time_to_output(const toaster_time_range_t *excluded_spans,
+                                         size_t excluded_count, int64_t source_us)
+{
+  int64_t removed_duration = 0;
+  size_t index;
+
+  for (index = 0; index < excluded_count; ++index) {
+    int64_t start_us = excluded_spans[index].start_us;
+    int64_t end_us = excluded_spans[index].end_us;
+
+    if (source_us >= end_us) {
+      removed_duration += end_us - start_us;
+      continue;
+    }
+
+    if (source_us > start_us)
+      removed_duration += source_us - start_us;
+    break;
+  }
+
+  return source_us - removed_duration;
+}
+
+static bool write_caption_timestamp(FILE *file, int64_t value_us, char decimal_separator)
+{
+  int64_t total_ms;
+  int64_t hours;
+  int64_t minutes;
+  int64_t seconds;
+  int64_t milliseconds;
+
+  if (!file)
+    return false;
+
+  total_ms = value_us / 1000;
+  if (total_ms < 0)
+    total_ms = 0;
+
+  hours = total_ms / 3600000;
+  minutes = (total_ms / 60000) % 60;
+  seconds = (total_ms / 1000) % 60;
+  milliseconds = total_ms % 1000;
+
+  return fprintf(file, "%02lld:%02lld:%02lld%c%03lld",
+                 (long long)hours,
+                 (long long)minutes,
+                 (long long)seconds,
+                 decimal_separator,
+                 (long long)milliseconds) >= 0;
+}
+
+static bool write_caption_cue(FILE *file, toaster_caption_format_t format, size_t cue_index,
+                              int64_t start_us, int64_t end_us, const char *text)
+{
+  char decimal_separator;
+
+  if (!file || !text)
+    return false;
+
+  decimal_separator = format == TOASTER_CAPTION_FORMAT_VTT ? '.' : ',';
+  if (fprintf(file, "%llu\n", (unsigned long long)cue_index) < 0)
+    return false;
+  if (!write_caption_timestamp(file, start_us, decimal_separator))
+    return false;
+  if (fprintf(file, " --> ") < 0)
+    return false;
+  if (!write_caption_timestamp(file, end_us, decimal_separator))
+    return false;
+  return fprintf(file, "\n%s\n\n", text) >= 0;
 }
 
 bool toaster_startup(void)
@@ -670,4 +811,142 @@ bool toaster_transcript_get_keep_segment(const toaster_transcript_t *transcript,
 
   free(excluded_spans);
   return false;
+}
+
+bool toaster_transcript_export_script(const toaster_transcript_t *transcript, const char *path)
+{
+  FILE *file;
+  bool success = true;
+  bool wrote_word = false;
+  size_t index;
+
+  if (!transcript || !path || path[0] == '\0')
+    return false;
+
+  file = fopen(path, "wb");
+  if (!file)
+    return false;
+
+  for (index = 0; index < transcript->word_count; ++index) {
+    const toaster_word_storage_t *word = &transcript->words[index];
+
+    if (!export_word_is_audible(word))
+      continue;
+
+    if (wrote_word && !export_word_attaches_to_previous(word->text) && fputc(' ', file) == EOF) {
+      success = false;
+      break;
+    }
+    if (fputs(word->text, file) == EOF) {
+      success = false;
+      break;
+    }
+
+    wrote_word = true;
+  }
+
+  if (success && wrote_word && fputc('\n', file) == EOF)
+    success = false;
+  if (fclose(file) != 0)
+    success = false;
+
+  return success;
+}
+
+bool toaster_transcript_export_captions(const toaster_transcript_t *transcript, const char *path,
+                                        toaster_caption_format_t format)
+{
+  static const int64_t max_cue_duration_us = 4000000;
+  static const int64_t cue_break_gap_us = 1000000;
+  static const size_t max_words_per_cue = 8;
+
+  FILE *file;
+  toaster_time_range_t *excluded_spans = NULL;
+  char *cue_text = NULL;
+  size_t cue_length = 0;
+  size_t cue_capacity = 0;
+  size_t cue_word_count = 0;
+  size_t cue_index = 1;
+  size_t excluded_count;
+  size_t index;
+  int64_t cue_start_us = 0;
+  int64_t cue_end_us = 0;
+  bool cue_active = false;
+  bool success = true;
+
+  if (!transcript || !path || path[0] == '\0')
+    return false;
+  if (format != TOASTER_CAPTION_FORMAT_SRT && format != TOASTER_CAPTION_FORMAT_VTT)
+    return false;
+
+  file = fopen(path, "wb");
+  if (!file)
+    return false;
+
+  if (format == TOASTER_CAPTION_FORMAT_VTT && fputs("WEBVTT\n\n", file) == EOF)
+    success = false;
+
+  excluded_count = collect_excluded_spans(transcript, &excluded_spans);
+  for (index = 0; success && index < transcript->word_count; ++index) {
+    const toaster_word_storage_t *word = &transcript->words[index];
+    int64_t mapped_start_us;
+    int64_t mapped_end_us;
+    bool insert_space;
+
+    if (!export_word_is_audible(word))
+      continue;
+
+    mapped_start_us = map_source_time_to_output(excluded_spans, excluded_count, word->start_us);
+    mapped_end_us = map_source_time_to_output(excluded_spans, excluded_count, word->end_us);
+    if (mapped_end_us <= mapped_start_us)
+      continue;
+
+    if (!cue_active) {
+      cue_active = true;
+      cue_start_us = mapped_start_us;
+      cue_end_us = mapped_end_us;
+      cue_length = 0;
+      cue_word_count = 0;
+      if (cue_text)
+        cue_text[0] = '\0';
+    } else if (mapped_start_us - cue_end_us >= cue_break_gap_us ||
+               mapped_end_us - cue_start_us > max_cue_duration_us ||
+               cue_word_count >= max_words_per_cue) {
+      if (!write_caption_cue(file, format, cue_index++, cue_start_us, cue_end_us,
+                             cue_text ? cue_text : "")) {
+        success = false;
+        break;
+      }
+
+      cue_start_us = mapped_start_us;
+      cue_end_us = mapped_end_us;
+      cue_length = 0;
+      cue_word_count = 0;
+      if (cue_text)
+        cue_text[0] = '\0';
+    } else if (mapped_end_us > cue_end_us) {
+      cue_end_us = mapped_end_us;
+    }
+
+    insert_space = cue_word_count > 0 && !export_word_attaches_to_previous(word->text);
+    if (!append_export_text(&cue_text, &cue_length, &cue_capacity, word->text, insert_space)) {
+      success = false;
+      break;
+    }
+
+    ++cue_word_count;
+    if (mapped_end_us > cue_end_us)
+      cue_end_us = mapped_end_us;
+  }
+
+  if (success && cue_active && cue_word_count > 0)
+    success = write_caption_cue(file, format, cue_index, cue_start_us, cue_end_us,
+                                cue_text ? cue_text : "");
+
+  free(excluded_spans);
+  free(cue_text);
+  if (fclose(file) != 0)
+    success = false;
+
+  return success;
 }
