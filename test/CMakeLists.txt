@@ -28,6 +28,11 @@ target_include_directories(test-export PRIVATE ${CMAKE_SOURCE_DIR}/libtoaster)
 target_link_libraries(test-export PRIVATE toaster)
 add_test(NAME test-export COMMAND $<TARGET_FILE:test-export>)
 
+add_executable(test-model test-model.c)
+target_include_directories(test-model PRIVATE ${CMAKE_SOURCE_DIR}/libtoaster)
+target_link_libraries(test-model PRIVATE toaster)
+add_test(NAME test-model COMMAND $<TARGET_FILE:test-model>)
+
 if(WIN32 AND TARGET toaster-app)
   find_program(TOASTER_POWERSHELL_EXECUTABLE
     NAMES

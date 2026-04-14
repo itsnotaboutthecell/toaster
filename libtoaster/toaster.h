@@ -36,6 +36,8 @@ typedef struct toaster_word {
   int64_t end_us;
   bool deleted;
   bool silenced;
+  float confidence;
+  int speaker_id;
 } toaster_word_t;
 
 typedef struct toaster_time_range {
@@ -58,6 +60,33 @@ typedef struct toaster_suggestion {
   const char *reason;
 } toaster_suggestion_t;
 
+/* Model management */
+
+typedef enum toaster_model_engine {
+  TOASTER_MODEL_ENGINE_WHISPER = 0
+} toaster_model_engine_t;
+
+typedef struct toaster_model_info {
+  const char *id;
+  const char *name;
+  const char *description;
+  const char *filename;
+  const char *url;
+  const char *sha256;
+  uint64_t size_mb;
+  float accuracy_score;
+  float speed_score;
+  bool is_downloaded;
+  bool is_recommended;
+  bool supports_translation;
+  toaster_model_engine_t engine;
+  const char *const *supported_languages;
+  size_t language_count;
+} toaster_model_info_t;
+
+typedef void (*toaster_download_progress_cb)(const char *model_id, uint64_t downloaded, uint64_t total,
+                                             void *user_data);
+
 typedef void (*toaster_signal_callback_t)(const char *signal, void *param, void *user_data);
 
 TOASTER_API bool toaster_startup(void);
@@ -77,6 +106,10 @@ TOASTER_API bool toaster_transcript_set_word_text(toaster_transcript_t *transcri
                                                   const char *text);
 TOASTER_API bool toaster_transcript_set_word_times(toaster_transcript_t *transcript, size_t index,
                                                    int64_t start_us, int64_t end_us);
+TOASTER_API bool toaster_transcript_set_word_confidence(toaster_transcript_t *transcript, size_t index,
+                                                        float confidence);
+TOASTER_API bool toaster_transcript_set_word_speaker(toaster_transcript_t *transcript, size_t index,
+                                                     int speaker_id);
 TOASTER_API bool toaster_transcript_delete_range(toaster_transcript_t *transcript, size_t start_index,
                                                  size_t end_index);
 TOASTER_API bool toaster_transcript_silence_range(toaster_transcript_t *transcript, size_t start_index,
@@ -162,6 +195,18 @@ TOASTER_API bool toaster_signal_handler_disconnect(toaster_signal_handler_t *han
                                                    toaster_signal_callback_t callback, void *user_data);
 TOASTER_API void toaster_signal_handler_emit(toaster_signal_handler_t *handler, const char *signal,
                                              void *param);
+
+/* Model catalog and lifecycle */
+
+TOASTER_API size_t toaster_model_catalog_count(void);
+TOASTER_API bool toaster_model_catalog_get(size_t index, toaster_model_info_t *out_info);
+TOASTER_API bool toaster_model_catalog_find(const char *model_id, toaster_model_info_t *out_info);
+TOASTER_API bool toaster_model_is_downloaded(const char *model_id);
+TOASTER_API const char *toaster_model_get_active(void);
+TOASTER_API bool toaster_model_set_active(const char *model_id);
+TOASTER_API const char *toaster_model_get_directory(void);
+TOASTER_API bool toaster_model_set_directory(const char *dir);
+TOASTER_API bool toaster_model_refresh_status(void);
 
 #ifdef __cplusplus
 }

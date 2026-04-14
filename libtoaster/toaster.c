@@ -12,6 +12,8 @@ typedef struct toaster_word_storage {
   int64_t end_us;
   bool deleted;
   bool silenced;
+  float confidence;
+  int speaker_id;
 } toaster_word_storage_t;
 
 typedef enum toaster_word_state_kind {
@@ -530,6 +532,8 @@ bool toaster_transcript_add_word(toaster_transcript_t *transcript, const char *t
   word->end_us = end_us;
   word->deleted = false;
   word->silenced = false;
+  word->confidence = -1.0f;
+  word->speaker_id = -1;
   return true;
 }
 
@@ -549,6 +553,8 @@ bool toaster_transcript_get_word(const toaster_transcript_t *transcript, size_t 
   out_word->end_us = transcript->words[index].end_us;
   out_word->deleted = transcript->words[index].deleted;
   out_word->silenced = transcript->words[index].silenced;
+  out_word->confidence = transcript->words[index].confidence;
+  out_word->speaker_id = transcript->words[index].speaker_id;
   return true;
 }
 
@@ -568,6 +574,23 @@ bool toaster_transcript_set_word_times(toaster_transcript_t *transcript, size_t 
 
   transcript->words[index].start_us = start_us;
   transcript->words[index].end_us = end_us;
+  return true;
+}
+
+bool toaster_transcript_set_word_confidence(toaster_transcript_t *transcript, size_t index,
+                                            float confidence)
+{
+  if (!transcript || index >= transcript->word_count)
+    return false;
+  transcript->words[index].confidence = confidence;
+  return true;
+}
+
+bool toaster_transcript_set_word_speaker(toaster_transcript_t *transcript, size_t index, int speaker_id)
+{
+  if (!transcript || index >= transcript->word_count)
+    return false;
+  transcript->words[index].speaker_id = speaker_id;
   return true;
 }
 
@@ -1011,6 +1034,8 @@ static bool capture_snapshot(const toaster_transcript_t *transcript, toaster_sna
       snap->words[index].end_us = transcript->words[index].end_us;
       snap->words[index].deleted = transcript->words[index].deleted;
       snap->words[index].silenced = transcript->words[index].silenced;
+      snap->words[index].confidence = transcript->words[index].confidence;
+      snap->words[index].speaker_id = transcript->words[index].speaker_id;
     }
     snap->word_count = transcript->word_count;
   }
@@ -1058,6 +1083,8 @@ static bool restore_snapshot(toaster_transcript_t *transcript, const toaster_sna
       new_words[index].end_us = snap->words[index].end_us;
       new_words[index].deleted = snap->words[index].deleted;
       new_words[index].silenced = snap->words[index].silenced;
+      new_words[index].confidence = snap->words[index].confidence;
+      new_words[index].speaker_id = snap->words[index].speaker_id;
     }
   }
 

@@ -246,8 +246,8 @@ bool toaster_project_save(const toaster_project_t *project, const char *path)
     if (!toaster_transcript_get_word(transcript, index, &word))
       continue;
 
-    fprintf(file, "WORD\t%" PRId64 "\t%" PRId64 "\t%d\t%d\t", word.start_us, word.end_us,
-            word.deleted ? 1 : 0, word.silenced ? 1 : 0);
+    fprintf(file, "WORD\t%" PRId64 "\t%" PRId64 "\t%d\t%d\t%.6f\t%d\t", word.start_us, word.end_us,
+            word.deleted ? 1 : 0, word.silenced ? 1 : 0, word.confidence, word.speaker_id);
     write_escaped(file, word.text);
     fputc('\n', file);
   }
@@ -328,14 +328,36 @@ toaster_project_t *toaster_project_load(const char *path)
       char *end_field = next_field(&cursor);
       char *deleted_field = next_field(&cursor);
       char *silenced_field = next_field(&cursor);
-      char *text_field = cursor ? cursor : (char *)"";
+      char *confidence_field = NULL;
+      char *speaker_field = NULL;
+      char *text_field;
       char *text_value;
       size_t word_index;
+      float confidence = -1.0f;
+      int speaker_id = -1;
 
       if (!start_field || !end_field || !deleted_field || !silenced_field) {
         toaster_project_destroy(project);
         fclose(file);
         return NULL;
+      }
+
+      /* Try reading optional confidence and speaker_id fields (v2 format) */
+      {
+        char *maybe_conf = next_field(&cursor);
+        if (maybe_conf && cursor) {
+          char *maybe_spk = next_field(&cursor);
+          if (maybe_spk && cursor) {
+            confidence = (float)atof(maybe_conf);
+            speaker_id = atoi(maybe_spk);
+            text_field = cursor ? cursor : (char *)"";
+          } else {
+            /* Only one extra field — treat as text (v1 format) */
+            text_field = maybe_conf;
+          }
+        } else {
+          text_field = maybe_conf ? maybe_conf : (char *)"";
+        }
       }
 
       text_value = unescape_string(text_field);
@@ -358,6 +380,8 @@ toaster_project_t *toaster_project_load(const char *path)
         toaster_transcript_delete_range(project->transcript, word_index, word_index);
       if (atoi(silenced_field) != 0)
         toaster_transcript_silence_range(project->transcript, word_index, word_index);
+      toaster_transcript_set_word_confidence(project->transcript, word_index, confidence);
+      toaster_transcript_set_word_speaker(project->transcript, word_index, speaker_id);
       free(text_value);
       continue;
     }
