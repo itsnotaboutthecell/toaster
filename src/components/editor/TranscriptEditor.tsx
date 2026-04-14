@@ -114,6 +114,10 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
 
   // Detect fillers — highlights filler words in the transcript
   const handleDetectFillers = useCallback(async () => {
+    if (highlightType === "filler") {
+      clearHighlights();
+      return;
+    }
     setIsDetecting(true);
     try {
       const result = await invoke<FillerAnalysis>("analyze_fillers", {});
@@ -127,10 +131,14 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
     } finally {
       setIsDetecting(false);
     }
-  }, [setHighlightedIndices, clearHighlights]);
+  }, [highlightType, setHighlightedIndices, clearHighlights]);
 
   // Detect pauses — highlights words adjacent to long pauses
   const handleDetectPauses = useCallback(async () => {
+    if (highlightType === "pause") {
+      clearHighlights();
+      return;
+    }
     setIsDetecting(true);
     try {
       const result = await invoke<FillerAnalysis>("analyze_fillers", {});
@@ -145,7 +153,7 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
     } finally {
       setIsDetecting(false);
     }
-  }, [setHighlightedIndices, clearHighlights]);
+  }, [highlightType, setHighlightedIndices, clearHighlights]);
 
   const isInSelectionRange = useCallback(
     (index: number): boolean => {
@@ -502,8 +510,8 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
                   "cursor-pointer rounded px-1 py-0.5 transition-colors",
                   word.deleted && "line-through opacity-40",
                   word.silenced && !word.deleted && "opacity-60 italic",
-                  isHighlighted && highlightType === "filler" && "bg-red-300/30 text-black",
-                  isHighlighted && highlightType === "pause" && "bg-red-300/30 text-black",
+                  isHighlighted && highlightType === "filler" && "bg-red-400/50 text-black",
+                  isHighlighted && highlightType === "pause" && "bg-red-400/50 text-black",
                   isCurrentFindMatch && !isHighlighted && "ring-2 ring-[#E8A838] bg-[#E8A838]/30",
                   isFindMatch && !isCurrentFindMatch && !isHighlighted && "bg-[#E8A838]/15",
                   isSelected && !isFindMatch && !isHighlighted && "bg-[#E8A838] text-[#1E1E1E]",
