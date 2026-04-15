@@ -425,7 +425,6 @@ fn build_export_args(
     } else {
         // Multiple segments — filter_complex with trim/atrim + concat
         let post_filters = build_audio_post_filters(audio_opts, total_duration_s);
-        let needs_post = post_filters.is_some();
 
         if has_video {
             let mut filter_parts = Vec::new();

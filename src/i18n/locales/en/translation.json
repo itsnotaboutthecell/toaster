@@ -716,6 +716,7 @@
     "exportEditedMedia": "Export Edited Media",
     "exportingEditedMedia": "Exporting edited media...",
     "normalizeAudio": "Normalize audio volume",
+    "burnCaptions": "Burn captions into video",
     "exportVolume": "Volume adjustment",
     "exportFadeIn": "Fade in",
     "exportFadeOut": "Fade out",

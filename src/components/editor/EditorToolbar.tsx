@@ -114,6 +114,17 @@ const EditorToolbar: React.FC<EditorToolbarProps> = React.memo(({
               />
               {t("editor.normalizeAudio")}
             </label>
+            {mediaInfo?.media_type === "Video" && (
+              <label className="flex items-center gap-2 text-xs cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={burnCaptions}
+                  onChange={(e) => onBurnCaptionsChange(e.target.checked)}
+                  className="accent-primary"
+                />
+                {t("editor.burnCaptions")}
+              </label>
+            )}
 
             {/* Volume slider */}
             <div className="flex items-center gap-2 text-xs">
