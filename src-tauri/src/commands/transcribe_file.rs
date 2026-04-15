@@ -224,7 +224,9 @@ fn refine_word_boundaries(words: &mut [Word], samples: &[f32]) {
         return;
     }
 
-    const SEARCH_WINDOW_US: i64 = 80_000; // ±80ms search window around each boundary
+    const SEARCH_WINDOW_US: i64 = 80_000; // ±80ms default search window
+    const SHORT_WORD_SEARCH_WINDOW_US: i64 = 160_000; // ±160ms for short-word boundaries
+    const SHORT_WORD_DURATION_THRESHOLD_US: i64 = 200_000; // words < 200ms are "short"
     const RMS_WINDOW_SAMPLES: usize = 80; // 5ms RMS analysis window (16000 * 0.005)
                                           // ±2 ms at 16 kHz = 32 samples; tight enough to stay near the energy dip
     const ZC_SNAP_HALF: usize = 32;
@@ -234,9 +236,24 @@ fn refine_word_boundaries(words: &mut [Word], samples: &[f32]) {
     for i in 0..words.len() - 1 {
         let boundary_us = words[i].end_us;
 
+        // Use a wider search window when either adjacent word is short.
+        // Short leading words are the primary source of audible remnants
+        // after deletion because proportional split underestimates their
+        // duration.
+        let left_dur = (words[i].end_us - words[i].start_us).max(0);
+        let right_dur = (words[i + 1].end_us - words[i + 1].start_us).max(0);
+        let window_us =
+            if left_dur < SHORT_WORD_DURATION_THRESHOLD_US
+                || right_dur < SHORT_WORD_DURATION_THRESHOLD_US
+            {
+                SHORT_WORD_SEARCH_WINDOW_US
+            } else {
+                SEARCH_WINDOW_US
+            };
+
         // Search window in samples
         let center_sample = (boundary_us as f64 / 1_000_000.0 * SAMPLE_RATE_HZ) as usize;
-        let half_window_samples = (SEARCH_WINDOW_US as f64 / 1_000_000.0 * SAMPLE_RATE_HZ) as usize;
+        let half_window_samples = (window_us as f64 / 1_000_000.0 * SAMPLE_RATE_HZ) as usize;
 
         let search_start = center_sample.saturating_sub(half_window_samples);
         let search_end = (center_sample + half_window_samples).min(samples.len());
@@ -257,6 +274,19 @@ fn refine_word_boundaries(words: &mut [Word], samples: &[f32]) {
                 min_pos = pos + RMS_WINDOW_SAMPLES / 2; // centre of the window
             }
             pos += RMS_WINDOW_SAMPLES / 2; // 50 % overlap for smooth coverage
+        }
+
+        // If local energy is essentially flat around this boundary, moving it
+        // is more likely to introduce drift than improve seam quality.
+        // Require a meaningful energy dip before applying a correction.
+        let center_start = center_sample
+            .saturating_sub(RMS_WINDOW_SAMPLES / 2)
+            .min(samples.len().saturating_sub(RMS_WINDOW_SAMPLES));
+        let center_end = (center_start + RMS_WINDOW_SAMPLES).min(samples.len());
+        let center_energy = rms(&samples[center_start..center_end]);
+        const MIN_DIP_RATIO: f32 = 0.97; // at least 3% dip to consider reliable
+        if center_energy > 1e-6 && min_energy >= center_energy * MIN_DIP_RATIO {
+            continue;
         }
 
         // Stage 2: snap min_pos to the nearest zero-crossing within ±ZC_SNAP_HALF.
@@ -289,6 +319,117 @@ fn refine_word_boundaries(words: &mut [Word], samples: &[f32]) {
         {
             words[i].end_us = refined_us;
             words[i + 1].start_us = refined_us;
+        }
+    }
+}
+
+/// Align the start of segment-leading words to the true speech onset.
+///
+/// Whisper's segment `start` time often lands at or slightly after the first
+/// phoneme rather than at the acoustic onset (the pre-voice burst of a
+/// plosive, the initial fricative noise, etc.).  When the leading word is
+/// subsequently deleted, audio before `start_us` that still contains speech
+/// energy leaks through.
+///
+/// This function scans backwards from the first word's nominal start to find
+/// the earliest sample whose short-term energy exceeds a threshold derived
+/// from the word's body.  The word's `start_us` is then shifted to that
+/// onset point (snapped to a zero-crossing for click-free cuts).
+///
+/// It also pushes the first inter-word boundary later if the first word is
+/// very short, using a wider energy search to ensure the gap lands in actual
+/// silence rather than mid-phoneme.
+///
+/// Monotonic ordering is preserved: onset can only move earlier (never past
+/// the previous word's end), and inter-word shifts respect minimum durations.
+fn align_onset_boundaries(words: &mut [Word], samples: &[f32]) {
+    if words.is_empty() || samples.is_empty() {
+        return;
+    }
+
+    const ONSET_SEARCH_US: i64 = 50_000; // search up to 50 ms before nominal start
+    const RMS_WINDOW: usize = 48; // 3 ms at 16 kHz
+    const RMS_STEP: usize = 16; // 1 ms step
+    const ZC_SNAP_HALF: usize = 32;
+    const MIN_WORD_US: i64 = 10_000;
+
+    // Phase 1: pull each segment-leading word's start to the true onset.
+    // A word is "segment-leading" if it is the first word overall, or there
+    // is a gap (≥ 20 ms) between it and the previous word's end, which
+    // typically marks a segment boundary.
+    for i in 0..words.len() {
+        let is_segment_start = i == 0
+            || (words[i].start_us - words[i - 1].end_us) >= 20_000;
+        if !is_segment_start {
+            continue;
+        }
+
+        let nominal_start_sample = us_to_sample(words[i].start_us, samples.len());
+
+        // Measure the word's body energy (first 20 ms of the word body).
+        let body_start = nominal_start_sample;
+        let body_end = (body_start + 320).min(samples.len()); // 20 ms
+        if body_end <= body_start + RMS_WINDOW {
+            continue;
+        }
+        let body_energy = rms(&samples[body_start..body_end]);
+        if body_energy < 1e-5 {
+            continue; // silence — nothing to align
+        }
+
+        // Onset threshold: 15% of body energy
+        let onset_threshold = body_energy * 0.15;
+
+        // Search backwards from nominal start
+        let onset_search_samples =
+            (ONSET_SEARCH_US as f64 / 1_000_000.0 * SAMPLE_RATE_HZ) as usize;
+        let search_start = nominal_start_sample.saturating_sub(onset_search_samples);
+        // Don't cross into the previous word
+        let earliest_allowed = if i > 0 {
+            us_to_sample(words[i - 1].end_us, samples.len())
+        } else {
+            0
+        };
+        let search_start = search_start.max(earliest_allowed);
+
+        if nominal_start_sample <= search_start + RMS_WINDOW {
+            continue;
+        }
+
+        // Scan backwards: find the earliest position whose energy is above
+        // threshold (i.e. the onset of speech).
+        let mut onset_sample = nominal_start_sample;
+        let mut pos = nominal_start_sample.saturating_sub(RMS_WINDOW);
+        while pos >= search_start {
+            let end = (pos + RMS_WINDOW).min(samples.len());
+            if end - pos < RMS_WINDOW {
+                break;
+            }
+            let e = rms(&samples[pos..end]);
+            if e >= onset_threshold {
+                onset_sample = pos;
+            } else {
+                // Energy dropped below threshold — onset is at the last
+                // above-threshold position (already recorded).
+                break;
+            }
+            if pos < RMS_STEP {
+                break;
+            }
+            pos -= RMS_STEP;
+        }
+
+        if onset_sample < nominal_start_sample {
+            let snapped = snap_to_zero_crossing(samples, onset_sample, ZC_SNAP_HALF);
+            let onset_us = sample_to_us(snapped);
+            let lower_bound = if i > 0 {
+                words[i - 1].end_us + MIN_WORD_US
+            } else {
+                0
+            };
+            if onset_us >= lower_bound && onset_us < words[i].start_us {
+                words[i].start_us = onset_us;
+            }
         }
     }
 }
@@ -333,12 +474,22 @@ fn build_words_from_segments(
             continue;
         }
 
+        // Minimum effective character weight per word.  Short words like
+        // "I", "a", "is" would otherwise receive unrealistically brief
+        // durations that push the first inter-word boundary too early,
+        // causing audible remnants when the leading word is deleted.
+        const MIN_WORD_CHAR_WEIGHT: usize = 3;
+
         // Total character count for proportional distribution
-        let total_chars: usize = seg_words.iter().map(|w| w.len().max(1)).sum();
+        let total_chars: usize = seg_words
+            .iter()
+            .map(|w| w.len().max(MIN_WORD_CHAR_WEIGHT))
+            .sum();
 
         let mut cursor_us = seg_start_us;
         for (j, sw) in seg_words.iter().enumerate() {
-            let char_fraction = sw.len().max(1) as f64 / total_chars as f64;
+            let char_fraction =
+                sw.len().max(MIN_WORD_CHAR_WEIGHT) as f64 / total_chars as f64;
             let word_duration_us = (seg_duration_us as f64 * char_fraction) as i64;
 
             let word_start = cursor_us;
@@ -399,8 +550,7 @@ fn build_words_from_segments(
                 let ts = (segment_words[seg_idx].1, segment_words[seg_idx].2);
                 seg_idx += 1; // advance past this word to prevent repeated timestamps
                 ts
-            } else if !segment_words.is_empty() {
-                let last = segment_words.last().unwrap();
+            } else if let Some(last) = segment_words.last() {
                 (last.1, last.2)
             } else {
                 (0, 0)
@@ -424,6 +574,9 @@ fn build_words_from_segments(
 
     // Refine word boundaries by snapping to silence points in the audio
     refine_word_boundaries(&mut words, samples);
+
+    // Align segment-leading word starts to true speech onset
+    align_onset_boundaries(&mut words, samples);
 
     (words, meta)
 }
@@ -706,6 +859,215 @@ mod tests {
         assert_eq!(words[0].end_us, 450_000);
         assert_eq!(words[1].start_us, 450_000);
     }
+
+    // ── proportional split: short word weighting ────────────────────────────
+
+    /// A short leading word (1 char like "I") must receive at least the
+    /// minimum weighted share, not just 1/total_chars.
+    #[test]
+    fn proportional_split_gives_short_leading_word_adequate_duration() {
+        // Segment: "I said hello" over 1.5 s
+        let segments = vec![TranscriptionSegment {
+            start: 0.0,
+            end: 1.5,
+            text: " I said hello".to_string(),
+        }];
+        let samples = vec![0.3_f32; 24_000]; // 1.5 s at 16 kHz
+        let (words, _meta) = build_words_from_segments("I said hello", &segments, &samples);
+        assert_eq!(words.len(), 3);
+
+        // With MIN_WORD_CHAR_WEIGHT=3, "I" (1 char → weight 3) out of
+        // total 3+4+5=12 gets 25% = 375ms.  Without the floor it would
+        // be 1/10 = 150ms.  Assert it's at least 250ms.
+        let first_word_duration = words[0].end_us - words[0].start_us;
+        assert!(
+            first_word_duration >= 250_000,
+            "short leading word 'I' got only {} µs, expected ≥ 250 000 µs",
+            first_word_duration
+        );
+    }
+
+    /// Two equally-long words should still split roughly evenly.
+    #[test]
+    fn proportional_split_equal_words_stay_even() {
+        let segments = vec![TranscriptionSegment {
+            start: 0.0,
+            end: 1.0,
+            text: " hello world".to_string(),
+        }];
+        let samples = vec![0.3_f32; 16_000];
+        let (words, _) = build_words_from_segments("hello world", &segments, &samples);
+        assert_eq!(words.len(), 2);
+        let d0 = words[0].end_us - words[0].start_us;
+        let d1 = words[1].end_us - words[1].start_us;
+        // Both are 5 chars → same weight → equal split (500ms each ±tolerance).
+        let diff = (d0 - d1).abs();
+        assert!(
+            diff < 50_000,
+            "equal-length words should have similar durations, diff = {} µs",
+            diff
+        );
+    }
+
+    // ── wider refine window for short words ─────────────────────────────────
+
+    /// When the leading word is short, refine_word_boundaries should use its
+    /// wider search window and find a silence gap that the default ±80ms
+    /// window would miss.
+    #[test]
+    fn refine_uses_wider_window_for_short_leading_word() {
+        // "I" from 0–100ms, "world" from 100ms–1000ms.
+        // True silence gap at ~250ms (sample 4000).  Default ±80ms window
+        // from 100ms would search [20ms, 180ms] = samples [320, 2880] and
+        // miss the gap at sample 4000.  With ±160ms the window reaches it.
+        let mut words = vec![
+            make_word("I", 0, 100_000, 0.9),
+            make_word("world", 100_000, 1_000_000, 0.9),
+        ];
+        let mut samples = vec![0.5_f32; 16_000];
+        // Silence gap at samples 3920..4080 (≈ 245ms..255ms)
+        for s in samples[3_920..4_080].iter_mut() {
+            *s = 0.0;
+        }
+        refine_word_boundaries(&mut words, &samples);
+        // Boundary should have shifted toward ~250ms.
+        assert!(
+            words[0].end_us > 200_000,
+            "short-word boundary should shift to ~250ms gap, got {} µs",
+            words[0].end_us
+        );
+        assert!(
+            words[0].end_us < 300_000,
+            "boundary should land near 250ms, got {} µs",
+            words[0].end_us
+        );
+        assert_eq!(words[0].end_us, words[1].start_us);
+    }
+
+    // ── onset alignment ─────────────────────────────────────────────────────
+
+    /// When speech energy begins before the nominal segment start,
+    /// align_onset_boundaries must pull word start earlier.
+    #[test]
+    fn onset_alignment_pulls_start_to_true_onset() {
+        // Word starts at 500ms nominally, but there is energy from ~470ms.
+        let mut words = vec![
+            make_word("hello", 500_000, 1_000_000, 0.9),
+            make_word("world", 1_000_000, 1_500_000, 0.9),
+        ];
+        // Silence before 7200 (450ms), then speech from 7520 (470ms) onward
+        let mut samples = vec![0.0_f32; 24_000]; // 1.5s
+        for s in samples[7_520..].iter_mut() {
+            *s = 0.5;
+        }
+        // Nominal start at 500ms = sample 8000, but energy begins at 470ms = 7520
+        align_onset_boundaries(&mut words, &samples);
+        assert!(
+            words[0].start_us < 500_000,
+            "onset should be pulled earlier from 500ms, got {} µs",
+            words[0].start_us
+        );
+        // Should be near 470ms
+        assert!(
+            words[0].start_us >= 450_000 && words[0].start_us <= 490_000,
+            "onset should land near 470ms, got {} µs",
+            words[0].start_us
+        );
+    }
+
+    /// Onset alignment must not cross into the previous word's territory.
+    #[test]
+    fn onset_alignment_respects_previous_word_boundary() {
+        let mut words = vec![
+            make_word("hello", 0, 400_000, 0.9),
+            make_word("world", 450_000, 1_000_000, 0.9),
+        ];
+        // Continuous energy everywhere — onset search should stop at prev end
+        let samples = vec![0.5_f32; 16_000];
+        let start_before = words[1].start_us;
+        align_onset_boundaries(&mut words, &samples);
+        // word[1].start_us must not go below word[0].end_us
+        assert!(
+            words[1].start_us >= words[0].end_us,
+            "onset must not cross previous word boundary: got {} vs prev end {}",
+            words[1].start_us,
+            words[0].end_us,
+        );
+        // And it should have moved at most to near words[0].end_us
+        assert!(
+            words[1].start_us <= start_before,
+            "onset should move earlier or stay, got {} (was {})",
+            words[1].start_us,
+            start_before,
+        );
+    }
+
+    /// Onset alignment with no energy before nominal start should not change it.
+    #[test]
+    fn onset_alignment_noop_when_silence_before_start() {
+        let mut words = vec![
+            make_word("hello", 500_000, 1_000_000, 0.9),
+        ];
+        let mut samples = vec![0.0_f32; 16_000]; // silence everywhere
+        // Speech only from sample 8000 onward (500ms)
+        for s in samples[8_000..].iter_mut() {
+            *s = 0.5;
+        }
+        let start_before = words[0].start_us;
+        align_onset_boundaries(&mut words, &samples);
+        // Should stay at 500ms (±small ZC snap tolerance)
+        assert!(
+            (words[0].start_us - start_before).abs() < 5_000,
+            "onset should stay near 500ms when no earlier energy, got {} µs",
+            words[0].start_us,
+        );
+    }
+
+    // ── beginning-word deletion precision (integration) ─────────────────────
+
+    /// End-to-end: after the full pipeline, deleting the first short word
+    /// ("I" in "I said hello") must produce a clean boundary — the kept
+    /// word "said" must start at or after the silence gap, not mid-phoneme.
+    #[test]
+    fn beginning_short_word_deletion_boundary_lands_in_silence() {
+        // Simulate: "I said hello" over 1.5s.
+        // Audio layout:
+        //   0–300ms: "I" speech (samples 0..4800)
+        //   300–350ms: silence gap (samples 4800..5600)
+        //   350ms–1s: "said" speech (samples 5600..16000)
+        //   1s–1.5s: "hello" speech
+        let mut samples = vec![0.5_f32; 24_000]; // 1.5s
+        // Silence gap at 300–350ms
+        for s in samples[4_800..5_600].iter_mut() {
+            *s = 0.0;
+        }
+
+        let segments = vec![TranscriptionSegment {
+            start: 0.0,
+            end: 1.5,
+            text: " I said hello".to_string(),
+        }];
+        let total_duration_us = 1_500_000;
+
+        let (mut words, align_meta) =
+            build_words_from_segments("I said hello", &segments, &samples);
+        sanitize_word_timestamps(&mut words, total_duration_us);
+        realign_suspicious_spans(&mut words, &samples, Some(&align_meta));
+        sanitize_word_timestamps(&mut words, total_duration_us);
+
+        assert_eq!(words.len(), 3);
+
+        // The boundary between "I" and "said" should be in or near the
+        // silence gap (300–350ms = 300_000–350_000 µs).
+        let boundary = words[0].end_us;
+        assert!(
+            boundary >= 280_000 && boundary <= 380_000,
+            "boundary between 'I' and 'said' should be near silence gap \
+             (300–350ms), got {} µs",
+            boundary
+        );
+        assert_eq!(words[0].end_us, words[1].start_us);
+    }
 }
 
 /// Precision benchmark suite for the Toaster edit pipeline.
@@ -716,7 +1078,7 @@ mod tests {
 ///
 /// Acceptance thresholds (in comments near each group):
 ///   - Monotonicity violations:  0 (hard invariant)
-///   - Boundary drift budget:   ≤ 82 000 µs (search window 80 ms + ZC snap 2 ms)
+///   - Boundary drift budget:   ≤ 162 000 µs (search window 160 ms + ZC snap 2 ms)
 ///   - Sample↔µs roundtrip:    ≤ 1 sample error (≈62.5 µs at 16 kHz)
 ///   - Edit→source time drift:  0 µs (integer arithmetic, exact)
 ///
@@ -735,8 +1097,8 @@ mod precision_benchmarks {
 
     // ── acceptance thresholds ────────────────────────────────────────────────
     /// Maximum µs a boundary is allowed to drift after `refine_word_boundaries`.
-    /// Derived from SEARCH_WINDOW_US (80 ms) + ZC_SNAP_HALF in µs (2 ms).
-    const MAX_BOUNDARY_DRIFT_US: i64 = 82_000;
+    /// Derived from SHORT_WORD_SEARCH_WINDOW_US (160 ms) + ZC_SNAP_HALF in µs (2 ms).
+    const MAX_BOUNDARY_DRIFT_US: i64 = 162_000;
 
     /// Zero monotonicity violations are tolerated anywhere in the pipeline.
     const MAX_MONOTONICITY_VIOLATIONS: usize = 0;
@@ -970,7 +1332,7 @@ mod precision_benchmarks {
 
     /// The boundary shift caused by `refine_word_boundaries` must not exceed
     /// the combined search + snap budget.
-    /// Threshold: ≤ MAX_BOUNDARY_DRIFT_US (82 000 µs).
+    /// Threshold: ≤ MAX_BOUNDARY_DRIFT_US (162 000 µs).
     #[test]
     fn refine_boundary_drift_within_budget() {
         let initial_boundary_us = 500_000_i64;
