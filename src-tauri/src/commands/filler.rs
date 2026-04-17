@@ -38,8 +38,10 @@ pub fn analyze_fillers(
     let settings = crate::settings::get_settings(&app);
     let filler_list = settings.custom_filler_words.clone().unwrap_or_default();
 
-    let mut config = FillerConfig::default();
-    config.filler_words = filler_list;
+    let mut config = FillerConfig {
+        filler_words: filler_list,
+        ..Default::default()
+    };
     if let Some(threshold) = min_pause_us {
         config.pause_threshold_us = threshold;
     }
@@ -108,8 +110,10 @@ pub fn delete_fillers(
     let settings = crate::settings::get_settings(&app);
     let filler_list = settings.custom_filler_words.clone().unwrap_or_default();
 
-    let mut config = FillerConfig::default();
-    config.filler_words = filler_list;
+    let config = FillerConfig {
+        filler_words: filler_list,
+        ..Default::default()
+    };
 
     let mut state = store.0.lock().unwrap();
     let indices = filler::detect_fillers(state.get_words(), &config);
@@ -259,8 +263,10 @@ pub fn cleanup_all(
     let settings = crate::settings::get_settings(&app);
     let filler_list = settings.custom_filler_words.clone().unwrap_or_default();
 
-    let mut config = FillerConfig::default();
-    config.filler_words = filler_list;
+    let config = FillerConfig {
+        filler_words: filler_list,
+        ..Default::default()
+    };
 
     let _threshold = min_pause_us.unwrap_or(filler::DEFAULT_PAUSE_THRESHOLD_US);
     let _max_gap = max_gap_us.unwrap_or(filler::DEFAULT_MAX_GAP_US);

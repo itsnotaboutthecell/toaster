@@ -30,16 +30,13 @@ pub enum EngineType {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type, PartialEq)]
+#[derive(Default)]
 pub enum ModelCategory {
+    #[default]
     Transcription,
     System,
 }
 
-impl Default for ModelCategory {
-    fn default() -> Self {
-        ModelCategory::Transcription
-    }
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct ModelInfo {
@@ -685,7 +682,7 @@ impl ModelManager {
 
         for filename in &bundled_models {
             let bundled_path = self.app_handle.path().resolve(
-                &format!("resources/models/{}", filename),
+                format!("resources/models/{}", filename),
                 tauri::path::BaseDirectory::Resource,
             );
 

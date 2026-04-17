@@ -474,6 +474,7 @@ fn build_caption_style(
     )
 }
 
+#[allow(clippy::too_many_arguments)] // ffmpeg arg builder — each parameter is semantically distinct.
 fn build_export_args(
     input_path: &str,
     output_path: &str,
@@ -696,7 +697,7 @@ fn cleanup_preview_cache(
             parsed_entry.as_ref(),
         ) {
             (Some(active_source), Some(active_edit), Some((_, source, edit))) => {
-                source != active_source || (source == active_source && edit != active_edit)
+                source != active_source || edit != active_edit
             }
             (Some(active_source), None, Some((_, source, _))) => source != active_source,
             _ => false,

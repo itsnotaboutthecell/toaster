@@ -2,11 +2,11 @@ use std::path::PathBuf;
 use std::sync::OnceLock;
 use tauri::Manager;
 
-/// Portable mode support for Toaster.
-///
-/// When a file named `portable` exists next to the executable, all user data
-/// (settings, models, recordings, database, logs) is stored in a `Data/`
-/// directory alongside the executable instead of `%APPDATA%`.
+// Portable mode support for Toaster.
+//
+// When a file named `portable` exists next to the executable, all user data
+// (settings, models, recordings, database, logs) is stored in a `Data/`
+// directory alongside the executable instead of `%APPDATA%`.
 
 static PORTABLE_DATA_DIR: OnceLock<Option<PathBuf>> = OnceLock::new();
 

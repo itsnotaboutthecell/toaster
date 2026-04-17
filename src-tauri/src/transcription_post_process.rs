@@ -677,13 +677,18 @@ fn extract_low_confidence_word_ranges(
             }
 
             let search_end = (cursor + LOOKAHEAD_WORDS).min(normalized_tokens.len());
-            let mut found_at: Option<usize> = None;
-            for idx in cursor..search_end {
-                if words_match_loosely(&normalized_tokens[idx], segment_word) {
-                    found_at = Some(idx);
-                    break;
-                }
-            }
+            let found_at = normalized_tokens
+                .iter()
+                .enumerate()
+                .skip(cursor)
+                .take(search_end.saturating_sub(cursor))
+                .find_map(|(idx, token)| {
+                    if words_match_loosely(token, segment_word) {
+                        Some(idx)
+                    } else {
+                        None
+                    }
+                });
 
             if let Some(idx) = found_at {
                 matched += 1;

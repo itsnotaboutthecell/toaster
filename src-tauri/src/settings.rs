@@ -116,10 +116,12 @@ pub struct PostProcessProvider {
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Type)]
 #[serde(rename_all = "snake_case")]
+#[derive(Default)]
 pub enum ModelUnloadTimeout {
     Never,
     Immediately,
     Min2,
+    #[default]
     Min5,
     Min10,
     Min15,
@@ -137,11 +139,6 @@ pub enum RecordingRetentionPeriod {
     Months3,
 }
 
-impl Default for ModelUnloadTimeout {
-    fn default() -> Self {
-        ModelUnloadTimeout::Min5
-    }
-}
 
 impl ModelUnloadTimeout {
     pub fn to_minutes(self) -> Option<u64> {
@@ -169,21 +166,20 @@ impl ModelUnloadTimeout {
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Type)]
 #[serde(rename_all = "snake_case")]
+#[derive(Default)]
 pub enum WhisperAcceleratorSetting {
+    #[default]
     Auto,
     Cpu,
     Gpu,
 }
 
-impl Default for WhisperAcceleratorSetting {
-    fn default() -> Self {
-        WhisperAcceleratorSetting::Auto
-    }
-}
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Type)]
 #[serde(rename_all = "snake_case")]
+#[derive(Default)]
 pub enum OrtAcceleratorSetting {
+    #[default]
     Auto,
     Cpu,
     Cuda,
@@ -192,11 +188,6 @@ pub enum OrtAcceleratorSetting {
     Rocm,
 }
 
-impl Default for OrtAcceleratorSetting {
-    fn default() -> Self {
-        OrtAcceleratorSetting::Auto
-    }
-}
 
 #[derive(Clone, Serialize, Deserialize, Type)]
 #[serde(transparent)]

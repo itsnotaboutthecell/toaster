@@ -168,7 +168,7 @@ fn realign_suspicious_spans(
 
         let low_confidence = [words[i].confidence, words[i + 1].confidence]
             .iter()
-            .any(|&c| c >= 0.0 && c < LOW_CONF_THRESHOLD);
+            .any(|&c| (0.0..LOW_CONF_THRESHOLD).contains(&c));
         let confidence_unknown = words[i].confidence < 0.0 || words[i + 1].confidence < 0.0;
         let very_short_word = left_duration < 35_000 || right_duration < 35_000;
         let abrupt_duration_jump = min_duration > 0
@@ -211,21 +211,21 @@ fn realign_suspicious_spans(
     }
 }
 
-/// Refine word boundaries with hybrid RMS + zero-crossing snapping.
-///
-/// After proportional timestamp distribution, word boundaries may fall in the
-/// middle of speech. This function performs a two-stage refinement per boundary:
-///
-/// 1. **RMS energy scan** (±80 ms): slides a 5 ms window across the search range
-///    and picks the centre of the lowest-energy window — the most likely gap between
-///    words.
-/// 2. **Zero-crossing snap** (±2 ms around the energy minimum): moves the candidate
-///    to the nearest sample index where the signal crosses zero, avoiding a cut mid-
-///    waveform cycle which would produce an audible click on export.
-///
-/// Monotonic ordering and per-word minimum-duration constraints are preserved.
-///
-/// `samples` must be 16 kHz mono f32 audio.
+// Refine word boundaries with hybrid RMS + zero-crossing snapping.
+//
+// After proportional timestamp distribution, word boundaries may fall in the
+// middle of speech. This function performs a two-stage refinement per boundary:
+//
+// 1. **RMS energy scan** (±80 ms): slides a 5 ms window across the search range
+//    and picks the centre of the lowest-energy window — the most likely gap between
+//    words.
+// 2. **Zero-crossing snap** (±2 ms around the energy minimum): moves the candidate
+//    to the nearest sample index where the signal crosses zero, avoiding a cut mid-
+//    waveform cycle which would produce an audible click on export.
+//
+// Monotonic ordering and per-word minimum-duration constraints are preserved.
+//
+// `samples` must be 16 kHz mono f32 audio.
 
 /// Pre-correction for proportional char-weight boundaries: when one word in an
 /// adjacent pair is very short (<200 ms), scan ±200 ms around the boundary for
@@ -605,8 +605,13 @@ fn build_words_from_segments(
         // and word corrections that can shift alignment significantly.
         let mut found = false;
         let search_limit = (seg_idx + 20).min(segment_words.len());
-        for k in seg_idx..search_limit {
-            let seg_word_lower = segment_words[k].0.to_lowercase();
+        for (k, seg_word) in segment_words
+            .iter()
+            .enumerate()
+            .skip(seg_idx)
+            .take(search_limit.saturating_sub(seg_idx))
+        {
+            let seg_word_lower = seg_word.0.to_lowercase();
             // Fuzzy match: segment text might have punctuation attached
             if seg_word_lower == fw_lower
                 || seg_word_lower.starts_with(&fw_lower)
@@ -615,8 +620,8 @@ fn build_words_from_segments(
             {
                 words.push(Word {
                     text: fw.to_string(),
-                    start_us: segment_words[k].1,
-                    end_us: segment_words[k].2,
+                    start_us: seg_word.1,
+                    end_us: seg_word.2,
                     deleted: false,
                     silenced: false,
                     confidence: -1.0,
@@ -706,7 +711,7 @@ fn build_words_from_segments(
 /// All of these break keep-segment calculation and cause playback jumps.
 /// This function fixes them in a single forward pass without altering the
 /// ordering of words.
-fn sanitize_word_timestamps(words: &mut Vec<Word>, total_duration_us: i64) {
+fn sanitize_word_timestamps(words: &mut [Word], total_duration_us: i64) {
     const MIN_WORD_DURATION_US: i64 = 1_000; // 1 ms minimum word duration
 
     let max_us = total_duration_us.max(0);
@@ -774,7 +779,7 @@ fn extract_audio_to_wav(input_path: &std::path::Path) -> Result<std::path::PathB
             "16000", // 16kHz sample rate
             "-ac",
             "1",                                     // mono
-            &wav_path.to_string_lossy().to_string(), // output
+            wav_path.to_string_lossy().as_ref(), // output
         ])
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped())
@@ -929,14 +934,14 @@ pub async fn transcribe_media_file(
 
     // Detect whether the ASR engine provided word-level timestamps.
     // If so, use segments directly; otherwise use proportional distribution.
-    let segments_are_word_level = segments.as_ref().map_or(false, |segs| {
+    let segments_are_word_level = segments.as_ref().is_some_and(|segs| {
         if segs.is_empty() {
             return false;
         }
         // If most segments contain exactly 1 word, the engine provided word-level timestamps
         let single_word_count = segs
             .iter()
-            .filter(|s| s.text.trim().split_whitespace().count() == 1)
+            .filter(|s| s.text.split_whitespace().count() == 1)
             .count();
         single_word_count as f64 / segs.len() as f64 > 0.8
     });

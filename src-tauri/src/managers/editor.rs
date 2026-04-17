@@ -1,7 +1,7 @@
-/// Transcript editing engine for word-level video editing.
-///
-/// Manages a list of timestamped words with delete/restore/split/silence
-/// operations and full undo/redo support (up to 64 snapshots).
+// Transcript editing engine for word-level video editing.
+//
+// Manages a list of timestamped words with delete/restore/split/silence
+// operations and full undo/redo support (up to 64 snapshots).
 
 const MAX_UNDO: usize = 64;
 const DEFAULT_QUANTIZATION_FPS_NUM: u32 = 30;
@@ -299,8 +299,8 @@ impl EditorState {
                 continue;
             }
 
-            for idx in start..end {
-                reserved_indices[idx] = true;
+            for slot in reserved_indices[start..end].iter_mut() {
+                *slot = true;
             }
             accepted.push(proposal);
         }

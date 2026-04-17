@@ -39,6 +39,12 @@ pub struct LocalCleanupReviewState {
     next_id: AtomicU64,
 }
 
+impl Default for LocalCleanupReviewState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl LocalCleanupReviewState {
     pub fn new() -> Self {
         Self {
@@ -433,7 +439,7 @@ pub fn run(cli_args: CliArgs) {
 
             win_builder.build()?;
 
-            let mut settings = get_settings(&app.handle());
+            let mut settings = get_settings(app.handle());
 
             // CLI --debug flag overrides debug_mode and log level (runtime-only, not persisted)
             if cli_args.debug {
@@ -472,18 +478,15 @@ pub fn run(cli_args: CliArgs) {
 
             Ok(())
         })
-        .on_window_event(|window, event| match event {
-            tauri::WindowEvent::CloseRequested { api, .. } => {
-                api.prevent_close();
-                let _res = window.hide();
+        .on_window_event(|window, event| if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+            api.prevent_close();
+            let _res = window.hide();
 
-                #[cfg(target_os = "macos")]
-                {
-                    // No tray: keep the dock icon visible so the user can reopen
-                    let _ = window;
-                }
+            #[cfg(target_os = "macos")]
+            {
+                // No tray: keep the dock icon visible so the user can reopen
+                let _ = window;
             }
-            _ => {}
         })
         .invoke_handler(invoke_handler)
         .build(tauri::generate_context!())

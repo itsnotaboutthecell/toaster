@@ -290,15 +290,15 @@ pub fn trim_pauses(words: &mut [Word], pause_threshold_us: i64, max_gap_us: i64)
     let mut gap_idx = 0;
     let mut cumulative_shift: i64 = 0;
 
-    for i in 0..words.len() {
+    for (i, word) in words.iter_mut().enumerate() {
         while gap_idx < gaps.len() && gaps[gap_idx].0 <= i {
             cumulative_shift += gaps[gap_idx].1;
             gap_idx += 1;
         }
 
         if cumulative_shift > 0 {
-            words[i].start_us -= cumulative_shift;
-            words[i].end_us -= cumulative_shift;
+            word.start_us -= cumulative_shift;
+            word.end_us -= cumulative_shift;
         }
     }
 
@@ -341,14 +341,14 @@ pub fn tighten_gaps(words: &mut [Word], target_gap_us: i64) -> usize {
     let mut gap_idx = 0;
     let mut cumulative_shift: i64 = 0;
 
-    for i in 0..words.len() {
+    for (i, word) in words.iter_mut().enumerate() {
         while gap_idx < gaps.len() && gaps[gap_idx].0 <= i {
             cumulative_shift += gaps[gap_idx].1;
             gap_idx += 1;
         }
         if cumulative_shift > 0 {
-            words[i].start_us -= cumulative_shift;
-            words[i].end_us -= cumulative_shift;
+            word.start_us -= cumulative_shift;
+            word.end_us -= cumulative_shift;
         }
     }
 
