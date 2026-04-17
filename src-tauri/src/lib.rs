@@ -1,13 +1,10 @@
 pub mod audio_toolkit;
 pub mod cli;
 mod commands;
-mod helpers;
 mod llm_client;
 mod managers;
 pub mod portable;
 mod settings;
-mod signal_handle;
-mod transcription_coordinator;
 mod transcription_post_process;
 mod utils;
 
@@ -23,15 +20,10 @@ use managers::history::HistoryManager;
 use managers::media::{MediaState, MediaStore};
 use managers::model::ModelManager;
 use managers::transcription::TranscriptionManager;
-#[cfg(unix)]
-use signal_hook::consts::{SIGUSR1, SIGUSR2};
-#[cfg(unix)]
-use signal_hook::iterator::Signals;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, AtomicU8, Ordering};
 use std::sync::{Arc, Mutex};
 use tokio::sync::oneshot;
-pub use transcription_coordinator::TranscriptionCoordinator;
 
 use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_log::{Builder as LogBuilder, RotationStrategy, Target, TargetKind};
@@ -202,15 +194,9 @@ fn initialize_core_logic(app_handle: &AppHandle) {
     app_handle.manage(MediaStore(Mutex::new(MediaState::new())));
     app_handle.manage(LocalCleanupReviewState::new());
 
-    // Note: Keyboard shortcuts have been removed (legacy Handy dictation surface).
-    // Toaster is a transcript editor and does not register global hotkeys.
-
-    #[cfg(unix)]
-    let signals = Signals::new(&[SIGUSR1, SIGUSR2])
-        .expect("failed to register Unix signal handlers");
-    // Set up signal handlers for toggling transcription
-    #[cfg(unix)]
-    signal_handle::setup_signal_handler(app_handle.clone(), signals);
+    // Note: Keyboard shortcuts and Unix signal handlers have been removed
+    // (legacy Handy dictation surface). Toaster is a transcript editor
+    // and does not register global hotkeys or signal-based toggles.
 
     // Apply macOS Accessory policy if starting hidden.
     #[cfg(target_os = "macos")]
@@ -366,7 +352,6 @@ pub fn run(cli_args: CliArgs) {
             commands::history::retry_history_entry_transcription,
             commands::history::update_history_limit,
             commands::history::update_recording_retention_period,
-            helpers::clamshell::is_laptop,
         ])
         .events(collect_events![managers::history::HistoryUpdatePayload,]);
 
@@ -416,16 +401,8 @@ pub fn run(cli_args: CliArgs) {
         );
 
     builder
-        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
-            if args.iter().any(|a| a == "--toggle-transcription") {
-                signal_handle::send_transcription_input(app, "transcribe", "CLI");
-            } else if args.iter().any(|a| a == "--toggle-post-process") {
-                signal_handle::send_transcription_input(app, "transcribe_with_post_process", "CLI");
-            } else if args.iter().any(|a| a == "--cancel") {
-                crate::utils::cancel_current_operation(app);
-            } else {
-                show_main_window(app);
-            }
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            show_main_window(app);
         }))
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_process::init())
@@ -469,7 +446,6 @@ pub fn run(cli_args: CliArgs) {
             // Store the file log level in the atomic for the filter to use
             FILE_LOG_LEVEL.store(file_log_level.to_level_filter() as u8, Ordering::Relaxed);
             let app_handle = app.handle().clone();
-            app.manage(TranscriptionCoordinator::new(app_handle.clone()));
 
             initialize_core_logic(&app_handle);
 
@@ -483,9 +459,6 @@ pub fn run(cli_args: CliArgs) {
             std::thread::spawn(|| {
                 let _ = crate::managers::transcription::get_available_accelerators();
             });
-
-            // Hide tray icon if --no-tray was passed (no-op: tray removed)
-            let _ = cli_args.no_tray;
 
             // Show main window only if not starting hidden.
             // CLI --start-hidden flag overrides the setting.

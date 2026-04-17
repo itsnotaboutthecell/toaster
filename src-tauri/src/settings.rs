@@ -785,10 +785,10 @@ impl AppSettings {
     }
 }
 
+#[cfg(test)]
 fn validate_settings(settings: &mut AppSettings) -> bool {
     let mut changed = false;
 
-    // Caption settings bounds
     if settings.caption_position > 100 {
         settings.caption_position = default_caption_position();
         changed = true;
@@ -798,7 +798,6 @@ fn validate_settings(settings: &mut AppSettings) -> bool {
         changed = true;
     }
 
-    // Validate hex colors
     let is_valid_hex = |s: &str| -> bool {
         let h = s.trim_start_matches('#');
         (h.len() == 6 || h.len() == 8) && h.chars().all(|c| c.is_ascii_hexdigit())
@@ -812,89 +811,11 @@ fn validate_settings(settings: &mut AppSettings) -> bool {
         changed = true;
     }
 
-    // Audio export bounds
     settings.export_volume_db = settings.export_volume_db.clamp(-60.0, 24.0);
     settings.export_fade_in_ms = settings.export_fade_in_ms.min(30_000);
     settings.export_fade_out_ms = settings.export_fade_out_ms.min(30_000);
 
     changed
-}
-
-pub fn load_or_create_app_settings(app: &AppHandle) -> AppSettings {
-    // Initialize store
-    let store = app
-        .store(crate::portable::store_path(SETTINGS_STORE_PATH))
-        .expect("Failed to initialize store");
-
-    let mut settings = if let Some(settings_value) = store.get("settings") {
-        // Parse the entire settings object
-        match serde_json::from_value::<AppSettings>(settings_value) {
-            Ok(mut settings) => {
-                debug!("Found existing settings: {:?}", settings);
-                let default_settings = get_default_settings();
-                let mut updated = false;
-
-                // Merge default bindings into existing settings
-                for (key, value) in default_settings.bindings {
-                    if !settings.bindings.contains_key(&key) {
-                        debug!("Adding missing binding: {}", key);
-                        settings.bindings.insert(key, value);
-                        updated = true;
-                    }
-                }
-
-                // Seed custom_filler_words on upgrade from older settings
-                if settings.custom_filler_words.is_none() {
-                    settings.custom_filler_words = default_settings.custom_filler_words;
-                    updated = true;
-                }
-
-                if updated {
-                    debug!("Settings updated with new bindings");
-                    match serde_json::to_value(&settings) {
-                        Ok(val) => store.set("settings", val),
-                        Err(e) => warn!("Failed to serialize updated settings: {}", e),
-                    }
-                }
-
-                settings
-            }
-            Err(e) => {
-                warn!("Failed to parse settings: {}", e);
-                // Fall back to default settings if parsing fails
-                let default_settings = get_default_settings();
-                match serde_json::to_value(&default_settings) {
-                    Ok(val) => store.set("settings", val),
-                    Err(e) => warn!("Failed to serialize default settings: {}", e),
-                }
-                default_settings
-            }
-        }
-    } else {
-        let default_settings = get_default_settings();
-        match serde_json::to_value(&default_settings) {
-            Ok(val) => store.set("settings", val),
-            Err(e) => warn!("Failed to serialize default settings: {}", e),
-        }
-        default_settings
-    };
-
-    if ensure_post_process_defaults(&mut settings) {
-        match serde_json::to_value(&settings) {
-            Ok(val) => store.set("settings", val),
-            Err(e) => warn!("Failed to serialize post-processed settings: {}", e),
-        }
-    }
-
-    if validate_settings(&mut settings) {
-        debug!("Settings validation corrected out-of-range values");
-        match serde_json::to_value(&settings) {
-            Ok(val) => store.set("settings", val),
-            Err(e) => warn!("Failed to serialize validated settings: {}", e),
-        }
-    }
-
-    settings
 }
 
 pub fn get_settings(app: &AppHandle) -> AppSettings {
@@ -939,18 +860,6 @@ pub fn write_settings(app: &AppHandle, settings: AppSettings) {
         Ok(val) => store.set("settings", val),
         Err(e) => warn!("Failed to serialize settings for write: {}", e),
     }
-}
-
-pub fn get_bindings(app: &AppHandle) -> HashMap<String, ShortcutBinding> {
-    let settings = get_settings(app);
-
-    settings.bindings
-}
-
-pub fn get_stored_binding(app: &AppHandle, id: &str) -> Option<ShortcutBinding> {
-    let bindings = get_bindings(app);
-
-    bindings.get(id).cloned()
 }
 
 pub fn get_history_limit(app: &AppHandle) -> usize {

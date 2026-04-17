@@ -1,5 +1,7 @@
 use anyhow::{anyhow, Result};
-use chrono::{DateTime, Local, Utc};
+use chrono::Utc;
+#[cfg(test)]
+use chrono::{DateTime, Local};
 use log::{debug, error, info};
 use rusqlite::{params, Connection, OptionalExtension};
 use rusqlite_migration::{Migrations, M};
@@ -210,73 +212,8 @@ impl HistoryManager {
         })
     }
 
-    pub fn recordings_dir(&self) -> &std::path::Path {
-        &self.recordings_dir
-    }
-
-    /// Save a new history entry to the database.
-    /// The WAV file should already have been written to the recordings directory.
-    pub fn save_entry(
-        &self,
-        file_name: String,
-        transcription_text: String,
-        post_process_requested: bool,
-        post_processed_text: Option<String>,
-        post_process_prompt: Option<String>,
-    ) -> Result<HistoryEntry> {
-        let timestamp = Utc::now().timestamp();
-        let title = self.format_timestamp_title(timestamp);
-
-        let conn = self.get_connection()?;
-        conn.execute(
-            "INSERT INTO transcription_history (
-                file_name,
-                timestamp,
-                saved,
-                title,
-                transcription_text,
-                post_processed_text,
-                post_process_prompt,
-                post_process_requested
-            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
-            params![
-                &file_name,
-                timestamp,
-                false,
-                &title,
-                &transcription_text,
-                &post_processed_text,
-                &post_process_prompt,
-                post_process_requested,
-            ],
-        )?;
-
-        let entry = HistoryEntry {
-            id: conn.last_insert_rowid(),
-            file_name,
-            timestamp,
-            saved: false,
-            title,
-            transcription_text,
-            post_processed_text,
-            post_process_prompt,
-            post_process_requested,
-        };
-
-        debug!("Saved history entry with id {}", entry.id);
-
-        self.cleanup_old_entries()?;
-
-        // Emit typed event for real-time frontend updates
-        if let Err(e) = (HistoryUpdatePayload::Added {
-            entry: entry.clone(),
-        })
-        .emit(&self.app_handle)
-        {
-            error!("Failed to emit history-updated event: {}", e);
-        }
-
-        Ok(entry)
+    pub fn get_audio_file_path(&self, file_name: &str) -> PathBuf {
+        self.recordings_dir.join(file_name)
     }
 
     /// Update an existing history entry with new transcription results (used by retry).
@@ -637,11 +574,7 @@ impl HistoryManager {
     }
 
     /// Get the latest entry with non-empty transcription text.
-    pub fn get_latest_completed_entry(&self) -> Result<Option<HistoryEntry>> {
-        let conn = self.get_connection()?;
-        Self::get_latest_completed_entry_with_conn(&conn)
-    }
-
+    #[cfg(test)]
     fn get_latest_completed_entry_with_conn(conn: &Connection) -> Result<Option<HistoryEntry>> {
         let mut stmt = conn.prepare(
             "SELECT
@@ -689,10 +622,6 @@ impl HistoryManager {
         }
 
         Ok(())
-    }
-
-    pub fn get_audio_file_path(&self, file_name: &str) -> PathBuf {
-        self.recordings_dir.join(file_name)
     }
 
     pub async fn get_entry_by_id(&self, id: i64) -> Result<Option<HistoryEntry>> {
@@ -746,16 +675,6 @@ impl HistoryManager {
         }
 
         Ok(())
-    }
-
-    fn format_timestamp_title(&self, timestamp: i64) -> String {
-        if let Some(utc_datetime) = DateTime::from_timestamp(timestamp, 0) {
-            // Convert UTC to local timezone
-            let local_datetime = utc_datetime.with_timezone(&Local);
-            local_datetime.format("%B %e, %Y - %l:%M%p").to_string()
-        } else {
-            format!("Recording {}", timestamp)
-        }
     }
 }
 

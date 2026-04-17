@@ -20,8 +20,6 @@ struct LocalCleanupReviewRequestEvent {
 
 const LOCAL_CLEANUP_REVIEW_TIMEOUT_SECS: u64 = 45;
 
-/// Drop guard that notifies the [`TranscriptionCoordinator`] when the
-/// transcription pipeline finishes — whether it completes normally or panics.
 const TRANSCRIPTION_FIELD: &str = "transcription";
 const CLEANUP_CONTRACT_VERSION: &str = "transcript_cleanup_contract_v1";
 const CLEANUP_TRANSCRIPTION_FIELD: &str = "cleaned_transcription";
@@ -1287,7 +1285,6 @@ async fn request_local_cleanup_review(
 }
 
 pub(crate) struct ProcessedTranscription {
-    pub final_text: String,
     pub post_processed_text: Option<String>,
     pub post_process_prompt: Option<String>,
 }
@@ -1335,7 +1332,6 @@ pub(crate) async fn process_transcription_output(
 
                 if accepted {
                     post_processed_text = Some(processed_text.clone());
-                    final_text = processed_text;
 
                     if let Some(prompt_id) = &settings.post_process_selected_prompt_id {
                         if let Some(prompt) = settings
@@ -1346,8 +1342,6 @@ pub(crate) async fn process_transcription_output(
                             post_process_prompt = Some(prompt.prompt.clone());
                         }
                     }
-                } else {
-                    final_text = pre_post_process_text;
                 }
             }
         }
@@ -1356,7 +1350,6 @@ pub(crate) async fn process_transcription_output(
     }
 
     ProcessedTranscription {
-        final_text,
         post_processed_text,
         post_process_prompt,
     }

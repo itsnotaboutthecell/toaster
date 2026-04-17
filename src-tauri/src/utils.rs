@@ -1,5 +1,4 @@
 use crate::managers::transcription::TranscriptionManager;
-use crate::TranscriptionCoordinator;
 use log::info;
 use std::sync::Arc;
 use tauri::{AppHandle, Manager};
@@ -12,11 +11,6 @@ pub fn cancel_current_operation(app: &AppHandle) {
     // Unload model if immediate unload is enabled
     let tm = app.state::<Arc<TranscriptionManager>>();
     tm.maybe_unload_immediately("cancellation");
-
-    // Notify coordinator so it can keep lifecycle state coherent.
-    if let Some(coordinator) = app.try_state::<TranscriptionCoordinator>() {
-        coordinator.notify_cancel(false);
-    }
 
     info!("Operation cancellation completed - returned to idle state");
 }
