@@ -7,14 +7,15 @@ use crate::commands::editor::EditorStore;
 use crate::managers::editor::Word;
 use crate::managers::transcription::TranscriptionManager;
 
+mod extract;
+use extract::{extract_audio_to_wav, is_wav_file};
+
 const SAMPLE_RATE_HZ: f64 = 16000.0;
 /// Maximum transcription duration in seconds (4 hours).
 /// At 16kHz mono float32 this is ~921 MB of WAV sample data.
 const MAX_TRANSCRIPTION_DURATION_SECS: u64 = 14400;
 /// Bytes per sample for 16kHz mono PCM (4 bytes for f32 / pcm_s16le raw estimate).
 const BYTES_PER_SAMPLE: u64 = 4;
-/// FFmpeg audio extraction timeout (10 minutes).
-const EXTRACT_AUDIO_TIMEOUT_SECS: u64 = 600;
 
 #[derive(Debug, Clone, Copy, Default)]
 struct WordAlignmentMeta {
@@ -747,95 +748,6 @@ fn sanitize_word_timestamps(words: &mut [Word], total_duration_us: i64) {
     }
 }
 
-/// Extract audio from any media file to a temporary 16kHz mono WAV using FFmpeg.
-/// Returns the path to the temporary WAV file.
-fn extract_audio_to_wav(input_path: &std::path::Path) -> Result<std::path::PathBuf, String> {
-    let temp_dir = std::env::temp_dir().join("toaster_audio");
-    std::fs::create_dir_all(&temp_dir).map_err(|e| format!("Failed to create temp dir: {}", e))?;
-
-    let wav_path = temp_dir.join(format!(
-        "extract_{}.wav",
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_millis()
-    ));
-
-    info!(
-        "Extracting audio from {} to {}",
-        input_path.display(),
-        wav_path.display()
-    );
-
-    let mut child = std::process::Command::new("ffmpeg")
-        .args([
-            "-y", // overwrite
-            "-i",
-            &input_path.to_string_lossy(), // input file
-            "-vn",                         // no video
-            "-acodec",
-            "pcm_s16le", // 16-bit PCM
-            "-ar",
-            "16000", // 16kHz sample rate
-            "-ac",
-            "1",                                     // mono
-            wav_path.to_string_lossy().as_ref(), // output
-        ])
-        .stdout(std::process::Stdio::piped())
-        .stderr(std::process::Stdio::piped())
-        .spawn()
-        .map_err(|e| {
-            format!(
-                "FFmpeg not found. Install FFmpeg to transcribe non-WAV files. Error: {}",
-                e
-            )
-        })?;
-
-    let timeout = std::time::Duration::from_secs(EXTRACT_AUDIO_TIMEOUT_SECS);
-    let start = std::time::Instant::now();
-    loop {
-        match child.try_wait() {
-            Ok(Some(_status)) => break,
-            Ok(None) => {
-                if start.elapsed() > timeout {
-                    let _ = child.kill();
-                    let _ = child.wait();
-                    // Clean up partially-written temp file
-                    let _ = std::fs::remove_file(&wav_path);
-                    return Err(format!(
-                        "FFmpeg audio extraction timed out after {} minutes. The input file may be too large.",
-                        EXTRACT_AUDIO_TIMEOUT_SECS / 60
-                    ));
-                }
-                std::thread::sleep(std::time::Duration::from_millis(200));
-            }
-            Err(e) => {
-                let _ = std::fs::remove_file(&wav_path);
-                return Err(format!("Error waiting for FFmpeg: {}", e));
-            }
-        }
-    }
-
-    let output = child
-        .wait_with_output()
-        .map_err(|e| format!("Failed to read FFmpeg output: {}", e))?;
-
-    if !output.status.success() {
-        let _ = std::fs::remove_file(&wav_path);
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(format!("FFmpeg audio extraction failed: {}", stderr));
-    }
-
-    Ok(wav_path)
-}
-
-/// Check if a file is already a WAV file.
-fn is_wav_file(path: &std::path::Path) -> bool {
-    path.extension()
-        .and_then(|e| e.to_str())
-        .map(|e| e.eq_ignore_ascii_case("wav"))
-        .unwrap_or(false)
-}
 
 /// Transcribe any audio or video file and populate the editor with word-level results.
 ///
