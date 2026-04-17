@@ -3,10 +3,8 @@ mod actions;
 mod apple_intelligence;
 pub mod audio_toolkit;
 pub mod cli;
-mod clipboard;
 mod commands;
 mod helpers;
-mod input;
 mod llm_client;
 mod managers;
 pub mod portable;
@@ -280,7 +278,6 @@ pub fn run(cli_args: CliArgs) {
         .commands(collect_commands![
             shortcut::change_binding,
             shortcut::reset_binding,
-            shortcut::change_ptt_setting,
             shortcut::change_sound_theme_setting,
             shortcut::change_start_hidden_setting,
             shortcut::change_autostart_setting,
@@ -292,10 +289,8 @@ pub fn run(cli_args: CliArgs) {
             shortcut::change_extra_recording_buffer_setting,
             shortcut::change_paste_delay_ms_setting,
             shortcut::change_paste_method_setting,
-            shortcut::get_available_typing_tools,
-            shortcut::change_typing_tool_setting,
+            shortcut::change_ptt_setting,
             shortcut::change_external_script_path_setting,
-            shortcut::change_clipboard_handling_setting,
             shortcut::change_auto_submit_setting,
             shortcut::change_auto_submit_key_setting,
             shortcut::change_post_process_enabled_setting,
@@ -349,7 +344,6 @@ pub fn run(cli_args: CliArgs) {
             commands::open_app_data_dir,
             commands::check_apple_intelligence_available,
             commands::resolve_local_cleanup_review,
-            commands::initialize_enigo,
             commands::initialize_shortcuts,
             commands::models::get_available_models,
             commands::models::get_model_info,
