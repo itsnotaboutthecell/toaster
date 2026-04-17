@@ -10,14 +10,11 @@ mod helpers;
 mod input;
 mod llm_client;
 mod managers;
-mod overlay;
 pub mod portable;
 mod settings;
 mod shortcut;
 mod signal_handle;
 mod transcription_coordinator;
-mod tray;
-mod tray_i18n;
 mod utils;
 
 pub use cli::CliArgs;
@@ -40,12 +37,10 @@ use signal_hook::iterator::Signals;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, AtomicU8, Ordering};
 use std::sync::{Arc, Mutex};
-use tauri::image::Image;
 use tokio::sync::oneshot;
 pub use transcription_coordinator::TranscriptionCoordinator;
 
-use tauri::tray::TrayIconBuilder;
-use tauri::{AppHandle, Emitter, Listener, Manager};
+use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_autostart::{MacosLauncher, ManagerExt};
 use tauri_plugin_log::{Builder as LogBuilder, RotationStrategy, Target, TargetKind};
 
@@ -225,112 +220,20 @@ fn initialize_core_logic(app_handle: &AppHandle) {
     // This matches the pattern used for Enigo initialization.
 
     #[cfg(unix)]
-    let signals = Signals::new(&[SIGUSR1, SIGUSR2]).unwrap();
+    let signals = Signals::new(&[SIGUSR1, SIGUSR2])
+        .expect("failed to register Unix signal handlers");
     // Set up signal handlers for toggling transcription
     #[cfg(unix)]
     signal_handle::setup_signal_handler(app_handle.clone(), signals);
 
-    // Apply macOS Accessory policy if starting hidden and tray is available.
-    // If the tray icon is disabled, keep the dock icon so the user can reopen.
+    // Apply macOS Accessory policy if starting hidden.
     #[cfg(target_os = "macos")]
     {
         let settings = settings::get_settings(app_handle);
-        if settings.start_hidden && settings.show_tray_icon {
+        if settings.start_hidden {
             let _ = app_handle.set_activation_policy(tauri::ActivationPolicy::Accessory);
         }
     }
-    // Get the current theme to set the appropriate initial icon
-    let initial_theme = tray::get_current_theme(app_handle);
-
-    // Choose the appropriate initial icon based on theme
-    let initial_icon_path = tray::get_icon_path(initial_theme, tray::TrayIconState::Idle);
-
-    let tray = TrayIconBuilder::new()
-        .icon(
-            Image::from_path(
-                app_handle
-                    .path()
-                    .resolve(initial_icon_path, tauri::path::BaseDirectory::Resource)
-                    .unwrap(),
-            )
-            .unwrap(),
-        )
-        .tooltip(tray::tray_tooltip())
-        .show_menu_on_left_click(true)
-        .icon_as_template(true)
-        .on_menu_event(|app, event| match event.id.as_ref() {
-            "settings" => {
-                show_main_window(app);
-            }
-            "check_updates" => {
-                let settings = settings::get_settings(app);
-                if settings.update_checks_enabled {
-                    show_main_window(app);
-                    let _ = app.emit("check-for-updates", ());
-                }
-            }
-            "copy_last_transcript" => {
-                tray::copy_last_transcript(app);
-            }
-            "unload_model" => {
-                let transcription_manager = app.state::<Arc<TranscriptionManager>>();
-                if !transcription_manager.is_model_loaded() {
-                    log::warn!("No model is currently loaded.");
-                    return;
-                }
-                match transcription_manager.unload_model() {
-                    Ok(()) => log::info!("Model unloaded via tray."),
-                    Err(e) => log::error!("Failed to unload model via tray: {}", e),
-                }
-            }
-            "cancel" => {
-                use crate::utils::cancel_current_operation;
-
-                // Use centralized cancellation that handles all operations
-                cancel_current_operation(app);
-            }
-            "quit" => {
-                app.exit(0);
-            }
-            id if id.starts_with("model_select:") => {
-                let model_id = id.strip_prefix("model_select:").unwrap().to_string();
-                let current_model = settings::get_settings(app).selected_model;
-                if model_id == current_model {
-                    return;
-                }
-                let app_clone = app.clone();
-                std::thread::spawn(move || {
-                    match commands::models::switch_active_model(&app_clone, &model_id) {
-                        Ok(()) => {
-                            log::info!("Model switched to {} via tray.", model_id);
-                        }
-                        Err(e) => {
-                            log::error!("Failed to switch model via tray: {}", e);
-                        }
-                    }
-                    tray::update_tray_menu(&app_clone, &tray::TrayIconState::Idle, None);
-                });
-            }
-            _ => {}
-        })
-        .build(app_handle)
-        .unwrap();
-    app_handle.manage(tray);
-
-    // Initialize tray menu with idle state
-    utils::update_tray_menu(app_handle, &utils::TrayIconState::Idle, None);
-
-    // Apply show_tray_icon setting
-    let settings = settings::get_settings(app_handle);
-    if !settings.show_tray_icon {
-        tray::set_tray_visibility(app_handle, false);
-    }
-
-    // Refresh tray menu when model state changes
-    let app_handle_for_listener = app_handle.clone();
-    app_handle.listen("model-state-changed", move |_| {
-        tray::update_tray_menu(&app_handle_for_listener, &tray::TrayIconState::Idle, None);
-    });
 
     // Get the autostart manager and configure based on user setting
     let autostart_manager = app_handle.autolaunch();
@@ -344,8 +247,6 @@ fn initialize_core_logic(app_handle: &AppHandle) {
         let _ = autostart_manager.disable();
     }
 
-    // Create the recording overlay window (hidden by default)
-    utils::create_recording_overlay(app_handle);
 }
 
 #[tauri::command]
@@ -413,6 +314,11 @@ pub fn run(cli_args: CliArgs) {
             shortcut::delete_post_process_prompt,
             shortcut::set_post_process_selected_prompt,
             shortcut::update_custom_words,
+            shortcut::change_custom_filler_words_setting,
+            shortcut::change_caption_font_size_setting,
+            shortcut::change_caption_bg_color_setting,
+            shortcut::change_caption_text_color_setting,
+            shortcut::change_caption_position_setting,
             shortcut::suspend_binding,
             shortcut::resume_binding,
             shortcut::change_mute_while_recording_setting,
@@ -426,7 +332,6 @@ pub fn run(cli_args: CliArgs) {
             shortcut::change_update_checks_setting,
             shortcut::change_keyboard_implementation_setting,
             shortcut::get_keyboard_implementation,
-            shortcut::change_show_tray_icon_setting,
             shortcut::change_whisper_accelerator_setting,
             shortcut::change_ort_accelerator_setting,
             shortcut::change_whisper_gpu_device,
@@ -496,6 +401,7 @@ pub fn run(cli_args: CliArgs) {
             commands::media::media_clear,
             commands::export::export_transcript,
             commands::export::export_transcript_to_file,
+            commands::export::get_caption_segments,
             commands::transcribe_file::transcribe_media_file,
             commands::waveform::generate_waveform_peaks,
             commands::waveform::get_keep_segments,
@@ -572,11 +478,6 @@ pub fn run(cli_args: CliArgs) {
                 .build(),
         );
 
-    #[cfg(target_os = "macos")]
-    {
-        builder = builder.plugin(tauri_nspanel::init());
-    }
-
     builder
         .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
             if args.iter().any(|a| a == "--toggle-transcription") {
@@ -651,10 +552,8 @@ pub fn run(cli_args: CliArgs) {
                 let _ = crate::managers::transcription::get_available_accelerators();
             });
 
-            // Hide tray icon if --no-tray was passed
-            if cli_args.no_tray {
-                tray::set_tray_visibility(&app_handle, false);
-            }
+            // Hide tray icon if --no-tray was passed (no-op: tray removed)
+            let _ = cli_args.no_tray;
 
             // Show main window only if not starting hidden.
             // CLI --start-hidden flag overrides the setting.
@@ -662,10 +561,7 @@ pub fn run(cli_args: CliArgs) {
             let should_hide = settings.start_hidden || cli_args.start_hidden;
             let should_force_show = should_force_show_permissions_window(&app_handle);
 
-            // If start_hidden but tray is disabled, we must show the window
-            // anyway. Without a tray icon, the dock is the only way back in.
-            let tray_available = settings.show_tray_icon && !cli_args.no_tray;
-            if should_force_show || !should_hide || !tray_available {
+            if should_force_show || !should_hide {
                 show_main_window(&app_handle);
             }
 
@@ -678,25 +574,9 @@ pub fn run(cli_args: CliArgs) {
 
                 #[cfg(target_os = "macos")]
                 {
-                    let settings = get_settings(&window.app_handle());
-                    let tray_visible =
-                        settings.show_tray_icon && !window.app_handle().state::<CliArgs>().no_tray;
-                    if tray_visible {
-                        // Tray is available: hide the dock icon, app lives in the tray
-                        let res = window
-                            .app_handle()
-                            .set_activation_policy(tauri::ActivationPolicy::Accessory);
-                        if let Err(e) = res {
-                            log::error!("Failed to set activation policy: {}", e);
-                        }
-                    }
                     // No tray: keep the dock icon visible so the user can reopen
+                    let _ = window;
                 }
-            }
-            tauri::WindowEvent::ThemeChanged(theme) => {
-                log::info!("Theme changed to: {:?}", theme);
-                // Update tray icon to match new theme, maintaining idle state
-                utils::change_tray_icon(&window.app_handle(), utils::TrayIconState::Idle);
             }
             _ => {}
         })

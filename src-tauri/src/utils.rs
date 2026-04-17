@@ -4,13 +4,24 @@ use crate::shortcut;
 use crate::TranscriptionCoordinator;
 use log::info;
 use std::sync::Arc;
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter, Manager};
 
 // Re-export all utility modules for easy access
 // pub use crate::audio_feedback::*;
 pub use crate::clipboard::*;
-pub use crate::overlay::*;
-pub use crate::tray::*;
+
+// Overlay window was removed (legacy Handy dictation UI). These stubs remain
+// as no-ops so dictation-era callers (actions.rs, managers/audio.rs,
+// shortcut/mod.rs) still compile until they are pruned by their own todos.
+pub fn show_recording_overlay(_app_handle: &AppHandle) {}
+pub fn show_transcribing_overlay(_app_handle: &AppHandle) {}
+pub fn show_processing_overlay(_app_handle: &AppHandle) {}
+pub fn hide_recording_overlay(_app_handle: &AppHandle) {}
+pub fn update_overlay_position(_app_handle: &AppHandle) {}
+
+pub fn emit_levels(app_handle: &AppHandle, levels: &Vec<f32>) {
+    let _ = app_handle.emit("mic-level", levels);
+}
 
 /// Centralized cancellation function that can be called from anywhere in the app.
 /// Handles cancelling both recording and transcription operations and updates UI state.
@@ -26,7 +37,6 @@ pub fn cancel_current_operation(app: &AppHandle) {
     audio_manager.cancel_recording();
 
     // Update tray icon and hide overlay
-    change_tray_icon(app, crate::tray::TrayIconState::Idle);
     hide_recording_overlay(app);
 
     // Unload model if immediate unload is enabled

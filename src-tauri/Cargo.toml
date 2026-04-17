@@ -19,9 +19,6 @@ incremental = true # Compile your binary in smaller steps.
 name = "toaster_app_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
-# [[bin]]
-# name = "cli"
-# path = "src/audio_toolkit/bin/cli.rs"
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
@@ -33,7 +30,6 @@ once_cell = "1"
 tauri = { version = "2.10.2", features = [
   "protocol-asset",
   "macos-private-api",
-  "tray-icon",
   'image-png',
 ] }
 tauri-plugin-log = "2.7.1"
@@ -47,7 +43,7 @@ rusqlite_migration = "2.3"
 tauri-plugin-fs = "2.4.4"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-rdev = { git = "https://github.com/rustdesk-org/rdev" }
+rdev = { git = "https://github.com/rustdesk-org/rdev", rev = "a90dbe1172f8832f54c97c62e823c5a34af5fdfe" }
 cpal = "0.16.0"
 anyhow = "1.0.95"
 rubato = "0.16.2"
@@ -55,9 +51,9 @@ hound = "3.5.1"
 log = "0.4.25"
 env_filter = "0.1.0"
 tokio = "1.43.0"
-vad-rs = { git = "https://github.com/cjpais/vad-rs", default-features = false }
+vad-rs = { git = "https://github.com/cjpais/vad-rs", rev = "2a412ed858695b9251f3f5a1a20d95b59fa7c498", default-features = false }
 enigo = "0.6.1"
-rodio = { git = "https://github.com/cjpais/rodio.git" }
+rodio = { git = "https://github.com/cjpais/rodio.git", rev = "fed30292db417cb95305c118c0e1d804fb74cbff" }
 reqwest = { version = "0.12", features = ["json", "stream"] }
 futures-util = "0.3"
 rustfft = "6.4.0"
@@ -78,6 +74,7 @@ specta-typescript = "0.0.9"
 tauri-specta = { version = "=2.0.0-rc.21", features = ["derive", "typescript"] }
 tauri-plugin-dialog = "2.6"
 
+
 [target.'cfg(unix)'.dependencies]
 signal-hook = "0.3"
 
@@ -94,23 +91,22 @@ windows = { version = "0.61.3", features = [
   "Win32_System_Com_StructuredStorage",
   "Win32_System_Variant",
   "Win32_Foundation",
-  "Win32_UI_WindowsAndMessaging",
 ] }
 winreg = "0.55"
 
 [target.'cfg(target_os = "macos")'.dependencies]
-tauri-nspanel = { git = "https://github.com/ahkohd/tauri-nspanel", branch = "v2.1" }
 transcribe-rs = { version = "0.3.3", features = ["whisper-metal"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
-gtk-layer-shell = { version = "0.8", features = ["v0_6"] }
-gtk = "0.18"
 transcribe-rs = { version = "0.3.3", features = ["whisper-vulkan"] }
 
-[patch.crates-io]
-tauri-runtime = { git = "https://github.com/cjpais/tauri.git", branch = "handy-2.10.2" }
-tauri-runtime-wry = { git = "https://github.com/cjpais/tauri.git", branch = "handy-2.10.2" }
-tauri-utils = { git = "https://github.com/cjpais/tauri.git", branch = "handy-2.10.2" }
+# [patch.crates-io] removed after overlay window (tauri-nspanel) was deleted.
+# The fork at cjpais/tauri@handy-2.10.2 was carried for NSPanel support. Verify
+# unpatched builds work; if builds fail, restore and document why.
+# [patch.crates-io]
+# tauri-runtime = { git = "https://github.com/cjpais/tauri.git", branch = "handy-2.10.2" }
+# tauri-runtime-wry = { git = "https://github.com/cjpais/tauri.git", branch = "handy-2.10.2" }
+# tauri-utils = { git = "https://github.com/cjpais/tauri.git", branch = "handy-2.10.2" }
 
 [dev-dependencies]
 tempfile = "3"
