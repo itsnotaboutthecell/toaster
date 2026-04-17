@@ -2,8 +2,6 @@
 // Holds the live transcription post-processing pipeline. Dictation state
 // machine stays in actions.rs until p1-remove-actions deletes it.
 
-#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
-use crate::apple_intelligence;
 use crate::managers::editor::LocalLlmWordProposal;
 use crate::settings::{get_settings, AppSettings, APPLE_INTELLIGENCE_PROVIDER_ID};
 use ferrous_opencc::{config::BuiltinConfig, OpenCC};
@@ -934,51 +932,11 @@ async fn post_process_transcription(settings: &AppSettings, transcription: &str)
             build_cleanup_contract_system_prompt(&prompt, &protected_tokens_for_prompt);
         let user_content = transcription.to_string();
 
-        // Handle Apple Intelligence separately since it uses native Swift APIs
+        // Apple Intelligence bridge removed — the provider entry is kept in
+        // settings for backwards compatibility but produces no output.
         if provider.id == APPLE_INTELLIGENCE_PROVIDER_ID {
-            #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
-            {
-                if !apple_intelligence::check_apple_intelligence_availability() {
-                    debug!(
-                        "Apple Intelligence selected but not currently available on this device"
-                    );
-                    return None;
-                }
-
-                let token_limit = model.trim().parse::<i32>().unwrap_or(0);
-                return match apple_intelligence::process_text_with_system_prompt(
-                    &system_prompt,
-                    &user_content,
-                    token_limit,
-                ) {
-                    Ok(result) => match validate_cleanup_candidate(transcription, &result, None) {
-                        Ok(validated) => {
-                            debug!(
-                                    "Apple Intelligence post-processing succeeded. Output length: {} chars",
-                                    validated.len()
-                                );
-                            Some(validated)
-                        }
-                        Err(validation_error) => {
-                            warn!(
-                                    "Apple Intelligence output rejected by cleanup contract validation: {}. Preserving original text.",
-                                    validation_error
-                                );
-                            None
-                        }
-                    },
-                    Err(err) => {
-                        error!("Apple Intelligence post-processing failed: {}", err);
-                        None
-                    }
-                };
-            }
-
-            #[cfg(not(all(target_os = "macos", target_arch = "aarch64")))]
-            {
-                debug!("Apple Intelligence provider selected on unsupported platform");
-                return None;
-            }
+            debug!("Apple Intelligence provider selected but native bridge is removed");
+            return None;
         }
 
         let json_schema = build_cleanup_contract_schema();

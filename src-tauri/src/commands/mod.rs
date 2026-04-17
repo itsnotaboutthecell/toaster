@@ -118,19 +118,12 @@ pub fn open_app_data_dir(app: AppHandle) -> Result<(), String> {
     Ok(())
 }
 
-/// Check if Apple Intelligence is available on this device.
-/// Called by the frontend when the user selects Apple Intelligence provider.
+/// Apple Intelligence support was removed; the command is retained so the
+/// frontend keeps compiling and simply reports "not available" everywhere.
 #[specta::specta]
 #[tauri::command]
 pub fn check_apple_intelligence_available() -> bool {
-    #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
-    {
-        crate::apple_intelligence::check_apple_intelligence_availability()
-    }
-    #[cfg(not(all(target_os = "macos", target_arch = "aarch64")))]
-    {
-        false
-    }
+    false
 }
 
 #[specta::specta]
