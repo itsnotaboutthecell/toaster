@@ -671,72 +671,10 @@ fn default_post_process_providers() -> Vec<PostProcessProvider> {
             local_only: true,
             requires_api_key: false,
         },
-        PostProcessProvider {
-            id: "openai".to_string(),
-            label: "OpenAI".to_string(),
-            base_url: "https://api.openai.com/v1".to_string(),
-            allow_base_url_edit: false,
-            models_endpoint: Some("/models".to_string()),
-            supports_structured_output: true,
-            local_only: false,
-            requires_api_key: true,
-        },
-        PostProcessProvider {
-            id: "zai".to_string(),
-            label: "Z.AI".to_string(),
-            base_url: "https://api.z.ai/api/paas/v4".to_string(),
-            allow_base_url_edit: false,
-            models_endpoint: Some("/models".to_string()),
-            supports_structured_output: true,
-            local_only: false,
-            requires_api_key: true,
-        },
-        PostProcessProvider {
-            id: "openrouter".to_string(),
-            label: "OpenRouter".to_string(),
-            base_url: "https://openrouter.ai/api/v1".to_string(),
-            allow_base_url_edit: false,
-            models_endpoint: Some("/models".to_string()),
-            supports_structured_output: true,
-            local_only: false,
-            requires_api_key: true,
-        },
-        PostProcessProvider {
-            id: "anthropic".to_string(),
-            label: "Anthropic".to_string(),
-            base_url: "https://api.anthropic.com/v1".to_string(),
-            allow_base_url_edit: false,
-            models_endpoint: Some("/models".to_string()),
-            supports_structured_output: false,
-            local_only: false,
-            requires_api_key: true,
-        },
-        PostProcessProvider {
-            id: "groq".to_string(),
-            label: "Groq".to_string(),
-            base_url: "https://api.groq.com/openai/v1".to_string(),
-            allow_base_url_edit: false,
-            models_endpoint: Some("/models".to_string()),
-            supports_structured_output: false,
-            local_only: false,
-            requires_api_key: true,
-        },
-        PostProcessProvider {
-            id: "cerebras".to_string(),
-            label: "Cerebras".to_string(),
-            base_url: "https://api.cerebras.ai/v1".to_string(),
-            allow_base_url_edit: false,
-            models_endpoint: Some("/models".to_string()),
-            supports_structured_output: true,
-            local_only: false,
-            requires_api_key: true,
-        },
     ];
 
     // Note: We always include Apple Intelligence on macOS ARM64 without checking availability
-    // at startup. The availability check is deferred to when the user actually tries to use it
-    // (in actions.rs). This prevents crashes on macOS 26.x beta where accessing
-    // SystemLanguageModel.default during early app initialization causes SIGABRT.
+    // at startup. The availability check is deferred to when the user actually tries to use it.
     #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
     {
         providers.push(PostProcessProvider {
@@ -750,18 +688,6 @@ fn default_post_process_providers() -> Vec<PostProcessProvider> {
             requires_api_key: false,
         });
     }
-
-    // AWS Bedrock via Mantle (OpenAI-compatible endpoint)
-    providers.push(PostProcessProvider {
-        id: "bedrock_mantle".to_string(),
-        label: "AWS Bedrock (Mantle)".to_string(),
-        base_url: "https://bedrock-mantle.us-east-1.api.aws/v1".to_string(),
-        allow_base_url_edit: false,
-        models_endpoint: Some("/models".to_string()),
-        supports_structured_output: true,
-        local_only: false,
-        requires_api_key: true,
-    });
 
     providers
 }
@@ -810,6 +736,33 @@ fn default_typing_tool() -> TypingTool {
 
 fn ensure_post_process_defaults(settings: &mut AppSettings) -> bool {
     let mut changed = false;
+
+    // Migration: Toaster is local-only for post-processing. Strip any cloud
+    // providers inherited from Handy's defaults (openai, anthropic, groq,
+    // cerebras, openrouter, zai, bedrock_mantle). The seed loop below will
+    // re-add only the ones in default_post_process_providers().
+    const LEGACY_CLOUD_PROVIDER_IDS: &[&str] = &[
+        "openai",
+        "anthropic",
+        "groq",
+        "cerebras",
+        "openrouter",
+        "zai",
+        "bedrock_mantle",
+    ];
+    let before_len = settings.post_process_providers.len();
+    settings
+        .post_process_providers
+        .retain(|p| !LEGACY_CLOUD_PROVIDER_IDS.contains(&p.id.as_str()));
+    if settings.post_process_providers.len() != before_len {
+        for id in LEGACY_CLOUD_PROVIDER_IDS {
+            settings.post_process_api_keys.remove(*id);
+            settings.post_process_models.remove(*id);
+        }
+        debug!("Migrated: removed cloud LLM providers from settings (Toaster is local-only)");
+        changed = true;
+    }
+
     for provider in default_post_process_providers() {
         // Use match to do a single lookup - either sync existing or add new
         match settings

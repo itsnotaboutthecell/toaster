@@ -1,6 +1,6 @@
 use crate::settings::PostProcessProvider;
 use log::debug;
-use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_TYPE, REFERER, USER_AGENT};
+use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_TYPE, USER_AGENT};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -59,38 +59,23 @@ struct ChatMessageResponse {
     content: Option<String>,
 }
 
-/// Build headers for API requests based on provider type
-fn build_headers(provider: &PostProcessProvider, api_key: &str) -> Result<HeaderMap, String> {
+/// Build headers for API requests. All supported providers are OpenAI-compatible
+/// (Ollama / LM Studio / custom local endpoints), so we use Bearer auth only.
+fn build_headers(_provider: &PostProcessProvider, api_key: &str) -> Result<HeaderMap, String> {
     let mut headers = HeaderMap::new();
 
-    // Common headers
     headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
     headers.insert(
-        REFERER,
-        HeaderValue::from_static("https://github.com/cjpais/Handy"),
-    );
-    headers.insert(
         USER_AGENT,
-        HeaderValue::from_static("Handy/1.0 (+https://github.com/cjpais/Handy)"),
+        HeaderValue::from_static("Toaster/1.0 (+https://github.com/itsnotaboutthecell/toaster)"),
     );
-    headers.insert("X-Title", HeaderValue::from_static("Handy"));
 
-    // Provider-specific auth headers
     if !api_key.is_empty() {
-        if provider.id == "anthropic" {
-            headers.insert(
-                "x-api-key",
-                HeaderValue::from_str(api_key)
-                    .map_err(|e| format!("Invalid API key header value: {}", e))?,
-            );
-            headers.insert("anthropic-version", HeaderValue::from_static("2023-06-01"));
-        } else {
-            headers.insert(
-                AUTHORIZATION,
-                HeaderValue::from_str(&format!("Bearer {}", api_key))
-                    .map_err(|e| format!("Invalid authorization header value: {}", e))?,
-            );
-        }
+        headers.insert(
+            AUTHORIZATION,
+            HeaderValue::from_str(&format!("Bearer {}", api_key))
+                .map_err(|e| format!("Invalid authorization header value: {}", e))?,
+        );
     }
 
     Ok(headers)
