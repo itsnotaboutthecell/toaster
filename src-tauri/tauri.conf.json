@@ -10,7 +10,6 @@
     "frontendDist": "../dist"
   },
   "app": {
-    "macOSPrivateApi": true,
     "windows": [],
     "security": {
       "csp": "default-src 'self' asset: https://tauri.localhost; script-src 'self' 'unsafe-inline' 'unsafe-eval' asset: https://tauri.localhost; style-src 'self' 'unsafe-inline' asset: https://tauri.localhost; img-src 'self' asset: https: blob: data:; media-src 'self' asset: blob: tauri: https://asset.localhost; font-src 'self' asset: data:; connect-src 'self' ipc: http://ipc.localhost tauri: asset: https: http://localhost:*; worker-src 'self' blob:",

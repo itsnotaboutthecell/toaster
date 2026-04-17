@@ -145,14 +145,6 @@ npm run lint
 - Run Cargo commands from `src-tauri\` when working directly with Cargo
 - Stop running `toaster-app.exe`/`toaster.exe` before rebuilds to avoid DLL lock/link errors
 
-## macOS private API usage
-
-Toaster uses `macOSPrivateApi: true` and the `tauri-nspanel` crate to create a
-floating recording overlay (`NSPanel`). This means the app **cannot be submitted
-to the Mac App Store** in its current form. For direct distribution (`.dmg` /
-updater) this is fine. See [`docs/MACOS_NOTES.md`](docs/MACOS_NOTES.md) for full
-details, App Store implications, and alternative approaches.
-
 ## Windows code signing
 
 The production build (`cargo tauri build`) produces an unsigned installer by default.
