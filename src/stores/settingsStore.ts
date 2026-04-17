@@ -62,7 +62,7 @@ interface SettingsStore {
 }
 
 // Note: Default settings are now fetched from Rust via commands.getDefaultSettings()
-// This ensures platform-specific defaults (like overlay_position, shortcuts, paste_method) work correctly
+// This ensures platform-specific defaults work correctly
 
 const DEFAULT_AUDIO_DEVICE: AudioDevice = {
   index: "default",

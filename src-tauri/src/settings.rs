@@ -115,14 +115,6 @@ pub struct PostProcessProvider {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Type)]
-#[serde(rename_all = "lowercase")]
-pub enum OverlayPosition {
-    None,
-    Top,
-    Bottom,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Type)]
 #[serde(rename_all = "snake_case")]
 pub enum ModelUnloadTimeout {
     Never,
@@ -137,32 +129,6 @@ pub enum ModelUnloadTimeout {
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Type)]
 #[serde(rename_all = "snake_case")]
-pub enum PasteMethod {
-    CtrlV,
-    Direct,
-    None,
-    ShiftInsert,
-    CtrlShiftV,
-    ExternalScript,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Type)]
-#[serde(rename_all = "snake_case")]
-pub enum ClipboardHandling {
-    DontModify,
-    CopyToClipboard,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Type)]
-#[serde(rename_all = "snake_case")]
-pub enum AutoSubmitKey {
-    Enter,
-    CtrlEnter,
-    CmdEnter,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Type)]
-#[serde(rename_all = "snake_case")]
 pub enum RecordingRetentionPeriod {
     Never,
     PreserveLimit,
@@ -171,47 +137,9 @@ pub enum RecordingRetentionPeriod {
     Months3,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Type)]
-#[serde(rename_all = "snake_case")]
-pub enum KeyboardImplementation {
-    Tauri,
-    HandyKeys,
-}
-
-impl Default for KeyboardImplementation {
-    fn default() -> Self {
-        #[cfg(target_os = "linux")]
-        return KeyboardImplementation::Tauri;
-        #[cfg(not(target_os = "linux"))]
-        return KeyboardImplementation::HandyKeys;
-    }
-}
-
 impl Default for ModelUnloadTimeout {
     fn default() -> Self {
         ModelUnloadTimeout::Min5
-    }
-}
-
-impl Default for PasteMethod {
-    fn default() -> Self {
-        // Default to CtrlV for macOS and Windows, Direct for Linux
-        #[cfg(target_os = "linux")]
-        return PasteMethod::Direct;
-        #[cfg(not(target_os = "linux"))]
-        return PasteMethod::CtrlV;
-    }
-}
-
-impl Default for ClipboardHandling {
-    fn default() -> Self {
-        ClipboardHandling::DontModify
-    }
-}
-
-impl Default for AutoSubmitKey {
-    fn default() -> Self {
-        AutoSubmitKey::Enter
     }
 }
 
@@ -236,49 +164,6 @@ impl ModelUnloadTimeout {
             ModelUnloadTimeout::Sec15 => Some(15),
             _ => self.to_minutes().map(|m| m * 60),
         }
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Type)]
-#[serde(rename_all = "snake_case")]
-pub enum SoundTheme {
-    Marimba,
-    Pop,
-    Custom,
-}
-
-impl SoundTheme {
-    fn as_str(&self) -> &'static str {
-        match self {
-            SoundTheme::Marimba => "marimba",
-            SoundTheme::Pop => "pop",
-            SoundTheme::Custom => "custom",
-        }
-    }
-
-    pub fn to_start_path(&self) -> String {
-        format!("resources/{}_start.wav", self.as_str())
-    }
-
-    pub fn to_stop_path(&self) -> String {
-        format!("resources/{}_stop.wav", self.as_str())
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Type)]
-#[serde(rename_all = "snake_case")]
-pub enum TypingTool {
-    Auto,
-    Wtype,
-    Kwtype,
-    Dotool,
-    Ydotool,
-    Xdotool,
-}
-
-impl Default for TypingTool {
-    fn default() -> Self {
-        TypingTool::Auto
     }
 }
 
@@ -346,14 +231,6 @@ impl std::ops::DerefMut for SecretMap {
 pub struct AppSettings {
     #[serde(default)]
     pub bindings: HashMap<String, ShortcutBinding>,
-    #[serde(default = "default_push_to_talk")]
-    pub push_to_talk: bool,
-    #[serde(default)]
-    pub audio_feedback: bool,
-    #[serde(default = "default_audio_feedback_volume")]
-    pub audio_feedback_volume: f32,
-    #[serde(default = "default_sound_theme")]
-    pub sound_theme: SoundTheme,
     #[serde(default = "default_start_hidden")]
     pub start_hidden: bool,
     #[serde(default = "default_update_checks_enabled")]
@@ -374,8 +251,6 @@ pub struct AppSettings {
     pub translate_to_english: bool,
     #[serde(default = "default_selected_language")]
     pub selected_language: String,
-    #[serde(default = "default_overlay_position")]
-    pub overlay_position: OverlayPosition,
     #[serde(default = "default_debug_mode")]
     pub debug_mode: bool,
     #[serde(default = "default_log_level")]
@@ -390,14 +265,6 @@ pub struct AppSettings {
     pub history_limit: usize,
     #[serde(default = "default_recording_retention_period")]
     pub recording_retention_period: RecordingRetentionPeriod,
-    #[serde(default)]
-    pub paste_method: PasteMethod,
-    #[serde(default)]
-    pub clipboard_handling: ClipboardHandling,
-    #[serde(default = "default_auto_submit")]
-    pub auto_submit: bool,
-    #[serde(default)]
-    pub auto_submit_key: AutoSubmitKey,
     #[serde(default = "default_post_process_enabled")]
     pub post_process_enabled: bool,
     #[serde(default = "default_post_process_provider_id")]
@@ -414,8 +281,6 @@ pub struct AppSettings {
     pub post_process_selected_prompt_id: Option<String>,
     #[serde(default)]
     pub mute_while_recording: bool,
-    #[serde(default)]
-    pub append_trailing_space: bool,
     #[serde(default = "default_app_language")]
     pub app_language: String,
     #[serde(default)]
@@ -424,16 +289,6 @@ pub struct AppSettings {
     pub experimental_simplify_mode: bool,
     #[serde(default)]
     pub lazy_stream_close: bool,
-    #[serde(default)]
-    pub keyboard_implementation: KeyboardImplementation,
-    #[serde(default = "default_show_tray_icon")]
-    pub show_tray_icon: bool,
-    #[serde(default = "default_paste_delay_ms")]
-    pub paste_delay_ms: u64,
-    #[serde(default = "default_typing_tool")]
-    pub typing_tool: TypingTool,
-    #[serde(default)]
-    pub external_script_path: Option<String>,
     #[serde(default)]
     pub custom_filler_words: Option<Vec<String>>,
     #[serde(default)]
@@ -470,10 +325,6 @@ fn default_model() -> String {
 
 fn default_settings_version() -> u32 {
     1
-}
-
-fn default_push_to_talk() -> bool {
-    true
 }
 
 fn default_caption_font_size() -> u32 {
@@ -516,13 +367,6 @@ fn default_selected_language() -> String {
     "auto".to_string()
 }
 
-fn default_overlay_position() -> OverlayPosition {
-    #[cfg(target_os = "linux")]
-    return OverlayPosition::None;
-    #[cfg(not(target_os = "linux"))]
-    return OverlayPosition::Bottom;
-}
-
 fn default_debug_mode() -> bool {
     false
 }
@@ -535,28 +379,12 @@ fn default_word_correction_threshold() -> f64 {
     0.18
 }
 
-fn default_paste_delay_ms() -> u64 {
-    60
-}
-
-fn default_auto_submit() -> bool {
-    false
-}
-
 fn default_history_limit() -> usize {
     5
 }
 
 fn default_recording_retention_period() -> RecordingRetentionPeriod {
     RecordingRetentionPeriod::PreserveLimit
-}
-
-fn default_audio_feedback_volume() -> f32 {
-    1.0
-}
-
-fn default_sound_theme() -> SoundTheme {
-    SoundTheme::Marimba
 }
 
 fn default_post_process_enabled() -> bool {
@@ -571,10 +399,6 @@ fn default_app_language() -> String {
     tauri_plugin_os::locale()
         .map(|l| l.replace('_', "-"))
         .unwrap_or_else(|| "en".to_string())
-}
-
-fn default_show_tray_icon() -> bool {
-    true
 }
 
 fn default_post_process_provider_id() -> String {
@@ -722,10 +546,6 @@ fn default_post_process_prompts() -> Vec<LLMPrompt> {
 
 fn default_whisper_gpu_device() -> i32 {
     -1 // auto
-}
-
-fn default_typing_tool() -> TypingTool {
-    TypingTool::Auto
 }
 
 fn ensure_post_process_defaults(settings: &mut AppSettings) -> bool {
@@ -896,10 +716,6 @@ pub fn get_default_settings() -> AppSettings {
 
     AppSettings {
         bindings,
-        push_to_talk: true,
-        audio_feedback: false,
-        audio_feedback_volume: default_audio_feedback_volume(),
-        sound_theme: default_sound_theme(),
         start_hidden: default_start_hidden(),
         update_checks_enabled: default_update_checks_enabled(),
         selected_model: "".to_string(),
@@ -910,7 +726,6 @@ pub fn get_default_settings() -> AppSettings {
         preferred_output_sample_rate: default_preferred_output_sample_rate(),
         translate_to_english: false,
         selected_language: "auto".to_string(),
-        overlay_position: default_overlay_position(),
         debug_mode: false,
         log_level: default_log_level(),
         custom_words: Vec::new(),
@@ -918,10 +733,6 @@ pub fn get_default_settings() -> AppSettings {
         word_correction_threshold: default_word_correction_threshold(),
         history_limit: default_history_limit(),
         recording_retention_period: default_recording_retention_period(),
-        paste_method: PasteMethod::default(),
-        clipboard_handling: ClipboardHandling::default(),
-        auto_submit: default_auto_submit(),
-        auto_submit_key: AutoSubmitKey::default(),
         post_process_enabled: default_post_process_enabled(),
         post_process_provider_id: default_post_process_provider_id(),
         post_process_providers: default_post_process_providers(),
@@ -930,16 +741,10 @@ pub fn get_default_settings() -> AppSettings {
         post_process_prompts: default_post_process_prompts(),
         post_process_selected_prompt_id: None,
         mute_while_recording: false,
-        append_trailing_space: false,
         app_language: default_app_language(),
         experimental_enabled: false,
         experimental_simplify_mode: false,
         lazy_stream_close: false,
-        keyboard_implementation: KeyboardImplementation::default(),
-        show_tray_icon: default_show_tray_icon(),
-        paste_delay_ms: default_paste_delay_ms(),
-        typing_tool: default_typing_tool(),
-        external_script_path: None,
         custom_filler_words: Some(vec![
             "um".to_string(),
             "uh".to_string(),
@@ -1180,13 +985,6 @@ pub fn get_recording_retention_period(app: &AppHandle) -> RecordingRetentionPeri
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn default_settings_disable_auto_submit() {
-        let settings = get_default_settings();
-        assert!(!settings.auto_submit);
-        assert_eq!(settings.auto_submit_key, AutoSubmitKey::Enter);
-    }
 
     #[test]
     fn default_settings_disable_experimental_simplify_mode() {
