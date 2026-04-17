@@ -192,6 +192,14 @@ async changeExperimentalEnabledSetting(enabled: boolean) : Promise<Result<null, 
     else return { status: "error", error: e  as any };
 }
 },
+async changeExperimentalSimplifyModeSetting(enabled: boolean) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("change_experimental_simplify_mode_setting", { enabled }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async changePostProcessBaseUrlSetting(providerId: string, baseUrl: string) : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("change_post_process_base_url_setting", { providerId, baseUrl }) };
@@ -272,6 +280,46 @@ async updateCustomWords(words: string[]) : Promise<Result<null, string>> {
     else return { status: "error", error: e  as any };
 }
 },
+async changeCustomFillerWordsSetting(words: string[]) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("change_custom_filler_words_setting", { words }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async changeCaptionFontSizeSetting(size: number) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("change_caption_font_size_setting", { size }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async changeCaptionBgColorSetting(color: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("change_caption_bg_color_setting", { color }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async changeCaptionTextColorSetting(color: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("change_caption_text_color_setting", { color }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async changeCaptionPositionSetting(position: number) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("change_caption_position_setting", { position }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 /**
  * Temporarily unregister a binding while the user is editing it in the UI.
  * This avoids firing the action while keys are being recorded.
@@ -314,6 +362,38 @@ async changeAppendTrailingSpaceSetting(enabled: boolean) : Promise<Result<null, 
 async changeLazyStreamCloseSetting(enabled: boolean) : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("change_lazy_stream_close_setting", { enabled }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async changeNormalizeAudioSetting(enabled: boolean) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("change_normalize_audio_setting", { enabled }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async changeExportVolumeDbSetting(volumeDb: number) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("change_export_volume_db_setting", { volumeDb }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async changeExportFadeInMsSetting(fadeInMs: number) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("change_export_fade_in_ms_setting", { fadeInMs }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async changeExportFadeOutMsSetting(fadeOutMs: number) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("change_export_fade_out_ms_setting", { fadeOutMs }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -513,6 +593,14 @@ async openAppDataDir() : Promise<Result<null, string>> {
 async checkAppleIntelligenceAvailable() : Promise<boolean> {
     return await TAURI_INVOKE("check_apple_intelligence_available");
 },
+async resolveLocalCleanupReview(requestId: string, accept: boolean) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("resolve_local_cleanup_review", { requestId, accept }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 /**
  * Try to initialize Enigo (keyboard/mouse simulation).
  * On macOS, this will return an error if accessibility permissions are not granted.
@@ -701,6 +789,14 @@ async getSelectedOutputDevice() : Promise<Result<string, string>> {
     else return { status: "error", error: e  as any };
 }
 },
+async normalizePlaybackAudioContract() : Promise<Result<PlaybackAudioContract, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("normalize_playback_audio_contract") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async playTestSound(soundType: string) : Promise<void> {
     await TAURI_INVOKE("play_test_sound", { soundType });
 },
@@ -728,6 +824,9 @@ async isRecording() : Promise<boolean> {
 },
 async editorSetWords(words: Word[]) : Promise<Word[]> {
     return await TAURI_INVOKE("editor_set_words", { words });
+},
+async editorApplyLocalLlmProposals(proposals: LocalLlmWordProposal[]) : Promise<LocalLlmApplyResponse> {
+    return await TAURI_INVOKE("editor_apply_local_llm_proposals", { proposals });
 },
 async editorGetWords() : Promise<Word[]> {
     return await TAURI_INVOKE("editor_get_words");
@@ -758,6 +857,12 @@ async editorRedo() : Promise<boolean> {
 },
 async editorGetKeepSegments() : Promise<([number, number])[]> {
     return await TAURI_INVOKE("editor_get_keep_segments");
+},
+async editorGetTimingContract() : Promise<TimingContractSnapshot> {
+    return await TAURI_INVOKE("editor_get_timing_contract");
+},
+async editorGetProjection() : Promise<EditorProjection> {
+    return await TAURI_INVOKE("editor_get_projection");
 },
 async mediaImport(path: string) : Promise<Result<MediaInfo, string>> {
     try {
@@ -806,6 +911,15 @@ async exportTranscriptToFile(format: ExportFormat, path: string, maxCharsPerLine
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+/**
+ * Return all caption segments with their time ranges.
+ * 
+ * The frontend caches these and performs a simple time-range lookup on each
+ * frame, keeping the hot-path fast while the segmentation logic stays here.
+ */
+async getCaptionSegments() : Promise<CaptionSegment[]> {
+    return await TAURI_INVOKE("get_caption_segments");
 },
 /**
  * Transcribe any audio or video file and populate the editor with word-level results.
@@ -901,9 +1015,9 @@ async renderTempPreviewAudio() : Promise<Result<PreviewRenderMetadata, string>> 
  * Uses the keep-segments from the editor to produce an output file
  * with deleted segments removed. Supports both audio-only and video+audio.
  */
-async exportEditedMedia(inputPath: string, outputPath: string) : Promise<Result<string, string>> {
+async exportEditedMedia(inputPath: string, outputPath: string, burnCaptions: boolean | null) : Promise<Result<string, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("export_edited_media", { inputPath, outputPath }) };
+    return { status: "ok", data: await TAURI_INVOKE("export_edited_media", { inputPath, outputPath, burnCaptions }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -929,11 +1043,57 @@ async deleteFillers() : Promise<Result<number, string>> {
 }
 },
 /**
+ * Delete all detected adjacent duplicate words in the transcript.
+ */
+async deleteDuplicates() : Promise<Result<number, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("delete_duplicates") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
  * Silence all detected long pauses by marking adjacent words as silenced.
  */
 async silencePauses(minPauseUs: number | null) : Promise<Result<number, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("silence_pauses", { minPauseUs }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Trim long pauses by reducing dead-air gaps to a maximum duration.
+ * 
+ * Unlike `silence_pauses` (which marks words as silenced), this command
+ * shifts timestamps so that gaps exceeding the threshold are capped at
+ * 300 ms, effectively removing dead air from the timeline.
+ */
+async trimPauses(minPauseUs: number | null, maxGapUs: number | null) : Promise<Result<number, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("trim_pauses", { minPauseUs, maxGapUs }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Tighten all inter-word gaps to a maximum target duration.
+ * Shortens ALL gaps exceeding the target — creating a tighter pace.
+ */
+async tightenGaps(targetGapUs: number | null) : Promise<Result<number, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("tighten_gaps", { targetGapUs }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async cleanupAll(minPauseUs: number | null, maxGapUs: number | null) : Promise<Result<CleanupResult, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("cleanup_all", { minPauseUs, maxGapUs }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -1065,23 +1225,47 @@ historyUpdatePayload: "history-update-payload"
 
 /** user-defined types **/
 
-export type AppSettings = { bindings: Partial<{ [key in string]: ShortcutBinding }>; push_to_talk: boolean; audio_feedback: boolean; audio_feedback_volume?: number; sound_theme?: SoundTheme; start_hidden?: boolean; autostart_enabled?: boolean; update_checks_enabled?: boolean; selected_model?: string; always_on_microphone?: boolean; selected_microphone?: string | null; clamshell_microphone?: string | null; selected_output_device?: string | null; translate_to_english?: boolean; selected_language?: string; overlay_position?: OverlayPosition; debug_mode?: boolean; log_level?: LogLevel; custom_words?: string[]; model_unload_timeout?: ModelUnloadTimeout; word_correction_threshold?: number; history_limit?: number; recording_retention_period?: RecordingRetentionPeriod; paste_method?: PasteMethod; clipboard_handling?: ClipboardHandling; auto_submit?: boolean; auto_submit_key?: AutoSubmitKey; post_process_enabled?: boolean; post_process_provider_id?: string; post_process_providers?: PostProcessProvider[]; post_process_api_keys?: SecretMap; post_process_models?: Partial<{ [key in string]: string }>; post_process_prompts?: LLMPrompt[]; post_process_selected_prompt_id?: string | null; mute_while_recording?: boolean; append_trailing_space?: boolean; app_language?: string; experimental_enabled?: boolean; lazy_stream_close?: boolean; keyboard_implementation?: KeyboardImplementation; show_tray_icon?: boolean; paste_delay_ms?: number; typing_tool?: TypingTool; external_script_path: string | null; custom_filler_words?: string[] | null; whisper_accelerator?: WhisperAcceleratorSetting; ort_accelerator?: OrtAcceleratorSetting; whisper_gpu_device?: number; extra_recording_buffer_ms?: number }
+export type AppSettings = { bindings?: Partial<{ [key in string]: ShortcutBinding }>; push_to_talk?: boolean; audio_feedback?: boolean; audio_feedback_volume?: number; sound_theme?: SoundTheme; start_hidden?: boolean; autostart_enabled?: boolean; update_checks_enabled?: boolean; selected_model?: string; always_on_microphone?: boolean; selected_microphone?: string | null; clamshell_microphone?: string | null; selected_output_device?: string | null; preferred_output_sample_rate?: number; translate_to_english?: boolean; selected_language?: string; overlay_position?: OverlayPosition; debug_mode?: boolean; log_level?: LogLevel; custom_words?: string[]; model_unload_timeout?: ModelUnloadTimeout; word_correction_threshold?: number; history_limit?: number; recording_retention_period?: RecordingRetentionPeriod; paste_method?: PasteMethod; clipboard_handling?: ClipboardHandling; auto_submit?: boolean; auto_submit_key?: AutoSubmitKey; post_process_enabled?: boolean; post_process_provider_id?: string; post_process_providers?: PostProcessProvider[]; post_process_api_keys?: SecretMap; post_process_models?: Partial<{ [key in string]: string }>; post_process_prompts?: LLMPrompt[]; post_process_selected_prompt_id?: string | null; mute_while_recording?: boolean; append_trailing_space?: boolean; app_language?: string; experimental_enabled?: boolean; experimental_simplify_mode?: boolean; lazy_stream_close?: boolean; keyboard_implementation?: KeyboardImplementation; show_tray_icon?: boolean; paste_delay_ms?: number; typing_tool?: TypingTool; external_script_path?: string | null; custom_filler_words?: string[] | null; whisper_accelerator?: WhisperAcceleratorSetting; ort_accelerator?: OrtAcceleratorSetting; whisper_gpu_device?: number; extra_recording_buffer_ms?: number; normalize_audio_on_export?: boolean; export_volume_db?: number; export_fade_in_ms?: number; export_fade_out_ms?: number; caption_font_size?: number; caption_bg_color?: string; caption_text_color?: string; caption_position?: number; settings_version?: number }
 export type AudioDevice = { index: string; name: string; is_default: boolean }
 export type AutoSubmitKey = "enter" | "ctrl_enter" | "cmd_enter"
 export type AvailableAccelerators = { whisper: string[]; ort: string[]; gpu_devices: GpuDeviceOption[] }
 export type BindingResponse = { success: boolean; binding: ShortcutBinding | null; error: string | null }
+/**
+ * A caption segment for SRT/VTT output and live preview.
+ */
+export type CaptionSegment = { index: number; start_us: number; end_us: number; text: string }
+/**
+ * Combined iterative cleanup: delete fillers, then delete cascading
+ * duplicates, then trim pauses — all in a single undo snapshot.
+ * 
+ * After deleting fillers, new duplicates may emerge (e.g., "the um the"
+ * becomes "the the"). This command loops until no more fillers or
+ * duplicates are found, then trims pauses.
+ */
+export type CleanupResult = { fillers_removed: number; duplicates_removed: number; pauses_trimmed: number; gaps_tightened: number; passes: number }
 export type ClipboardHandling = "dont_modify" | "copy_to_clipboard"
 export type CustomSounds = { start: boolean; stop: boolean }
+/**
+ * Atomic frontend projection of editor state after a backend transaction.
+ */
+export type EditorProjection = { words: Word[]; timing_contract: TimingContractSnapshot }
 export type EngineType = "Whisper" | "Parakeet" | "Moonshine" | "MoonshineStreaming" | "SenseVoice" | "GigaAM" | "Canary" | "Cohere"
 export type ExportFormat = "Srt" | "Vtt" | "Script"
 /**
- * Detect filler words and long pauses in the current transcript.
+ * Detect filler words, duplicates, and long pauses in the current transcript.
+ * Runs iterative simulation: after marking fillers as deleted, re-scans for
+ * cascading duplicates (e.g., "the um the" → "the the" after filler removal).
+ * This ensures the reported counts match what `cleanup_all` would actually remove.
  */
 export type FillerAnalysis = { filler_indices: number[]; 
 /**
  * Each pause: (word_index_before_gap, gap_duration_us)
  */
-pauses: PauseInfo[]; filler_count: number; pause_count: number }
+pauses: PauseInfo[]; filler_count: number; pause_count: number; 
+/**
+ * Indices of the second word in each adjacent duplicate pair.
+ */
+duplicate_indices: number[]; duplicate_count: number }
 export type GpuDeviceOption = { id: number; name: string; total_vram_mb: number }
 export type HistoryEntry = { id: number; file_name: string; timestamp: number; saved: boolean; title: string; transcription_text: string; post_processed_text: string | null; post_process_prompt: string | null; post_process_requested: boolean }
 export type HistoryUpdatePayload = { action: "added"; entry: HistoryEntry } | { action: "updated"; entry: HistoryEntry } | { action: "deleted"; id: number } | { action: "toggled"; id: number }
@@ -1099,6 +1283,20 @@ reset_bindings: string[] }
 export type KeepSegment = { start_us: number; end_us: number }
 export type KeyboardImplementation = "tauri" | "handy_keys"
 export type LLMPrompt = { id: string; name: string; prompt: string }
+export type LocalLlmApplyResponse = { projection: EditorProjection; apply_result: LocalLlmApplyResult }
+/**
+ * Outcome for applying a batch of local LLM proposals.
+ */
+export type LocalLlmApplyResult = { applied_proposals: number; applied_word_indices: number[]; rejected_proposals: LocalLlmProposalRejection[] }
+/**
+ * Rejection details for a proposal that failed validation.
+ */
+export type LocalLlmProposalRejection = { proposal_index: number; start_word_index: number; end_word_index: number; reason: string }
+/**
+ * Backend-authoritative word-level LLM rewrite proposal.
+ * The range is half-open: `[start_word_index, end_word_index)`.
+ */
+export type LocalLlmWordProposal = { start_word_index: number; end_word_index: number; replacement_words: string[] }
 export type LogLevel = "trace" | "debug" | "info" | "warn" | "error"
 export type MediaInfo = { 
 /**
@@ -1122,7 +1320,8 @@ media_type: MediaType;
  */
 extension: string }
 export type MediaType = "Video" | "Audio"
-export type ModelInfo = { id: string; name: string; description: string; filename: string; url: string | null; sha256: string | null; size_mb: number; is_downloaded: boolean; is_downloading: boolean; partial_size: number; is_directory: boolean; engine_type: EngineType; accuracy_score: number; speed_score: number; supports_translation: boolean; is_recommended: boolean; supported_languages: string[]; supports_language_selection: boolean; is_custom: boolean }
+export type ModelCategory = "Transcription" | "System"
+export type ModelInfo = { id: string; name: string; description: string; filename: string; url: string | null; sha256: string | null; size_mb: number; is_downloaded: boolean; is_downloading: boolean; partial_size: number; is_directory: boolean; engine_type: EngineType; accuracy_score: number; speed_score: number; supports_translation: boolean; is_recommended: boolean; supported_languages: string[]; supports_language_selection: boolean; is_custom: boolean; category?: ModelCategory }
 export type ModelLoadStatus = { is_loaded: boolean; current_model: string | null }
 export type ModelUnloadTimeout = "never" | "immediately" | "min_2" | "min_5" | "min_10" | "min_15" | "hour_1" | "sec_15"
 export type OrtAcceleratorSetting = "auto" | "cpu" | "cuda" | "directml" | "rocm"
@@ -1131,13 +1330,46 @@ export type PaginatedHistory = { entries: HistoryEntry[]; has_more: boolean }
 export type PasteMethod = "ctrl_v" | "direct" | "none" | "shift_insert" | "ctrl_shift_v" | "external_script"
 export type PauseInfo = { after_word_index: number; gap_duration_us: number }
 export type PermissionAccess = "allowed" | "denied" | "unknown"
-export type PostProcessProvider = { id: string; label: string; base_url: string; allow_base_url_edit?: boolean; models_endpoint?: string | null; supports_structured_output?: boolean }
+export type PlaybackAudioContract = { selected_output_device: string; selected_output_device_available: boolean; preferred_output_sample_rate: number; detected_output_sample_rate: number | null; normalized_output_sample_rate: number; mismatch_detected: boolean }
+export type PostProcessProvider = { id: string; label: string; base_url: string; allow_base_url_edit?: boolean; models_endpoint?: string | null; supports_structured_output?: boolean; local_only?: boolean; requires_api_key?: boolean }
 export type PreviewRenderMetadata = { status: PreviewRenderStatus; preview_file_path: string | null; preview_url_safe_path: string | null; source_media_fingerprint: string | null; edit_version: string; generation_token: string; cache_hit: boolean }
 export type PreviewRenderStatus = "ready" | "no_segments" | "missing_media"
 export type RecordingRetentionPeriod = "never" | "preserve_limit" | "days_3" | "weeks_2" | "months_3"
 export type SecretMap = Partial<{ [key in string]: string }>
 export type ShortcutBinding = { id: string; name: string; description: string; default_binding: string; current_binding: string }
 export type SoundTheme = "marimba" | "pop" | "custom"
+/**
+ * Diagnostics snapshot for edit-time/source-time contract validation.
+ */
+export type TimingContractSnapshot = { 
+/**
+ * Monotonic revision incremented after each successful state mutation.
+ */
+timeline_revision: number; total_words: number; deleted_words: number; active_words: number; 
+/**
+ * Source-media bounds inferred from transcript words.
+ */
+source_start_us: number; source_end_us: number; 
+/**
+ * Total duration of all keep-segments (edited timeline duration).
+ */
+total_keep_duration_us: number; keep_segments: TimingSegment[]; 
+/**
+ * Keep-segments snapped to the configured playback frame grid.
+ */
+quantized_keep_segments: TimingSegment[]; quantization_fps_num: number; quantization_fps_den: number; 
+/**
+ * True when keep-segments satisfy ordering/coverage contract checks.
+ */
+keep_segments_valid: boolean; 
+/**
+ * Human-readable warning when a contract check fails.
+ */
+warning: string | null }
+/**
+ * A keep-segment represented in microseconds.
+ */
+export type TimingSegment = { start_us: number; end_us: number }
 export type TypingTool = "auto" | "wtype" | "kwtype" | "dotool" | "ydotool" | "xdotool"
 export type WhisperAcceleratorSetting = "auto" | "cpu" | "gpu"
 export type WindowsMicrophonePermissionStatus = { supported: boolean; overall_access: PermissionAccess; device_access: PermissionAccess; app_access: PermissionAccess; desktop_app_access: PermissionAccess }
@@ -1163,7 +1395,7 @@ speaker_id: number }
 
 import {
 	invoke as TAURI_INVOKE,
-	Channel as TAURI_CHANNEL,
+	Channel as _TAURI_CHANNEL,
 } from "@tauri-apps/api/core";
 import * as TAURI_API_EVENT from "@tauri-apps/api/event";
 import { type WebviewWindow as __WebviewWindow__ } from "@tauri-apps/api/webviewWindow";

@@ -76,19 +76,8 @@ const DEFAULT_AUDIO_DEVICE: AudioDevice = {
 const settingUpdaters: {
   [K in keyof Settings]?: (value: Settings[K]) => Promise<unknown>;
 } = {
-  always_on_microphone: (value) =>
-    commands.updateMicrophoneMode(value as boolean),
-  audio_feedback: (value) =>
-    commands.changeAudioFeedbackSetting(value as boolean),
-  audio_feedback_volume: (value) =>
-    commands.changeAudioFeedbackVolumeSetting(value as number),
-  sound_theme: (value) => commands.changeSoundThemeSetting(value as string),
-  start_hidden: (value) => commands.changeStartHiddenSetting(value as boolean),
-  autostart_enabled: (value) =>
-    commands.changeAutostartSetting(value as boolean),
   update_checks_enabled: (value) =>
     commands.changeUpdateChecksSetting(value as boolean),
-  push_to_talk: (value) => commands.changePttSetting(value as boolean),
   selected_microphone: (value) =>
     commands.setSelectedMicrophone(
       (value as string) === "Default" || value === null
@@ -111,32 +100,17 @@ const settingUpdaters: {
     commands.changeTranslateToEnglishSetting(value as boolean),
   selected_language: (value) =>
     commands.changeSelectedLanguageSetting(value as string),
-  overlay_position: (value) =>
-    commands.changeOverlayPositionSetting(value as string),
   debug_mode: (value) => commands.changeDebugModeSetting(value as boolean),
   custom_words: (value) => commands.updateCustomWords(value as string[]),
+  custom_filler_words: (value) =>
+    commands.changeCustomFillerWordsSetting(value as string[]),
   word_correction_threshold: (value) =>
     commands.changeWordCorrectionThresholdSetting(value as number),
-  paste_delay_ms: (value) =>
-    commands.changePasteDelayMsSetting(value as number),
-  paste_method: (value) => commands.changePasteMethodSetting(value as string),
-  typing_tool: (value) => commands.changeTypingToolSetting(value as string),
-  external_script_path: (value) =>
-    commands.changeExternalScriptPathSetting(value as string | null),
-  clipboard_handling: (value) =>
-    commands.changeClipboardHandlingSetting(value as string),
-  auto_submit: (value) => commands.changeAutoSubmitSetting(value as boolean),
-  auto_submit_key: (value) =>
-    commands.changeAutoSubmitKeySetting(value as string),
   history_limit: (value) => commands.updateHistoryLimit(value as number),
   post_process_enabled: (value) =>
     commands.changePostProcessEnabledSetting(value as boolean),
   post_process_selected_prompt_id: (value) =>
     commands.setPostProcessSelectedPrompt(value as string),
-  mute_while_recording: (value) =>
-    commands.changeMuteWhileRecordingSetting(value as boolean),
-  append_trailing_space: (value) =>
-    commands.changeAppendTrailingSpaceSetting(value as boolean),
   log_level: (value) => commands.setLogLevel(value as any),
   app_language: (value) => commands.changeAppLanguageSetting(value as string),
   experimental_enabled: (value) =>
@@ -145,8 +119,6 @@ const settingUpdaters: {
     commands.changeExperimentalSimplifyModeSetting(value as boolean),
   lazy_stream_close: (value) =>
     commands.changeLazyStreamCloseSetting(value as boolean),
-  show_tray_icon: (value) =>
-    commands.changeShowTrayIconSetting(value as boolean),
   whisper_accelerator: (value) =>
     commands.changeWhisperAcceleratorSetting(
       value as WhisperAcceleratorSetting,
@@ -155,8 +127,6 @@ const settingUpdaters: {
     commands.changeOrtAcceleratorSetting(value as OrtAcceleratorSetting),
   whisper_gpu_device: (value) =>
     commands.changeWhisperGpuDevice(value as number),
-  extra_recording_buffer_ms: (value) =>
-    commands.changeExtraRecordingBufferSetting(value as number),
   normalize_audio_on_export: (value) =>
     commands.changeNormalizeAudioSetting(value as boolean),
   export_volume_db: (value) =>
@@ -165,6 +135,14 @@ const settingUpdaters: {
     commands.changeExportFadeInMsSetting(value as number),
   export_fade_out_ms: (value) =>
     commands.changeExportFadeOutMsSetting(value as number),
+  caption_font_size: (value) =>
+    commands.changeCaptionFontSizeSetting(value as number),
+  caption_bg_color: (value) =>
+    commands.changeCaptionBgColorSetting(value as string),
+  caption_text_color: (value) =>
+    commands.changeCaptionTextColorSetting(value as string),
+  caption_position: (value) =>
+    commands.changeCaptionPositionSetting(value as number),
 };
 
 // Tracks pending values for keys that are currently mid-update (race dedup)
@@ -205,7 +183,6 @@ export const useSettingsStore = create<SettingsStore>()(
           const settings = result.data;
           const normalizedSettings: Settings = {
             ...settings,
-            always_on_microphone: settings.always_on_microphone ?? false,
             selected_microphone: settings.selected_microphone ?? "Default",
             clamshell_microphone: settings.clamshell_microphone ?? "Default",
             selected_output_device:
@@ -365,7 +342,7 @@ export const useSettingsStore = create<SettingsStore>()(
                 bindings: {
                   ...state.settings.bindings,
                   [id]: {
-                    ...state.settings.bindings[id]!,
+                    ...state.settings.bindings![id]!,
                     current_binding: binding,
                   },
                 },
@@ -396,7 +373,7 @@ export const useSettingsStore = create<SettingsStore>()(
                   bindings: {
                     ...state.settings.bindings,
                     [id]: {
-                      ...state.settings.bindings[id]!,
+                      ...state.settings.bindings![id]!,
                       current_binding: originalBinding,
                     },
                   },
