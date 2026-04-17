@@ -30,7 +30,7 @@ cd toaster
 ### 2. Install frontend dependencies
 
 ```bash
-npm install --ignore-scripts
+bun install --frozen-lockfile
 ```
 
 ### 3. Windows environment initialization

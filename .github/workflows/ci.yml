@@ -132,3 +132,15 @@ jobs:
       - name: Run Rust tests
         working-directory: src-tauri
         run: cargo test
+
+      - name: Run eval harness (precision; skip midstream/export in CI)
+        shell: pwsh
+        run: pwsh -NoProfile -File scripts/run-eval-harness.ps1 -SkipMidstream -SkipExportParity
+
+      - name: Upload eval harness report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-harness-report
+          path: .eval-output/eval-harness-report.json
+          if-no-files-found: warn

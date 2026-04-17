@@ -1,0 +1,47 @@
+{
+  "original": {
+    "path": "extras\\toaster_example.mp4",
+    "duration_s": 21.765,
+    "silence_gaps": 13,
+    "silence_total_s": 9.3,
+    "silence_pct": 42.7
+  },
+  "edited": {
+    "path": "extras\\toaster_example-edited.mp4",
+    "duration_s": 12.101,
+    "silence_gaps": 5,
+    "silence_total_s": 2.17,
+    "silence_pct": 17.9,
+    "leading_silence": 0.0,
+    "trailing_silence": 0.0
+  },
+  "reduction_pct": 44.4,
+  "worst_gap_ms": 1041,
+  "gaps_detail": [
+    {
+      "start_s": 0.998,
+      "end_s": 1.232,
+      "duration_ms": 234
+    },
+    {
+      "start_s": 1.824,
+      "end_s": 2.362,
+      "duration_ms": 538
+    },
+    {
+      "start_s": 2.393,
+      "end_s": 2.539,
+      "duration_ms": 146
+    },
+    {
+      "start_s": 3.629,
+      "end_s": 3.84,
+      "duration_ms": 211
+    },
+    {
+      "start_s": 7.652,
+      "end_s": 8.693,
+      "duration_ms": 1041
+    }
+  ]
+}

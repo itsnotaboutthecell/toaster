@@ -15,7 +15,7 @@ See [BUILD.md](BUILD.md) for full setup.
 Quick path:
 
 ```bash
-npm install --ignore-scripts
+bun install --frozen-lockfile
 ```
 
 Windows (same shell before Cargo/Tauri commands):

@@ -28,7 +28,7 @@ src-tauri/src/        Rust backend
 ## Development commands
 
 ```bash
-npm install --ignore-scripts
+bun install --frozen-lockfile
 cargo tauri dev
 cargo tauri build
 npm run dev

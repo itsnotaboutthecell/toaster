@@ -39,7 +39,7 @@ See [BUILD.md](BUILD.md) for platform setup.
 ### 1. Install deps
 
 ```bash
-npm install --ignore-scripts
+bun install --frozen-lockfile
 ```
 
 ### 2. Windows environment setup (required on Windows)

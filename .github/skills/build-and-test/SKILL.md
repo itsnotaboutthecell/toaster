@@ -18,7 +18,7 @@ Use this skill when compiling, linting, testing, or diagnosing build failures in
 1. Install frontend dependencies when needed:
 
 ```bash
-npm install --ignore-scripts
+bun install --frozen-lockfile
 ```
 
 2. On Windows, initialize environment in the same shell before Cargo/Tauri:
