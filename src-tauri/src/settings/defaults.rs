@@ -276,6 +276,22 @@ pub fn ensure_post_process_defaults(settings: &mut AppSettings) -> bool {
                     existing.requires_api_key = provider.requires_api_key;
                     changed = true;
                 }
+
+                // Local-only boundary enforcement (C2): if a local provider's
+                // base_url was tampered with (malicious/malformed settings
+                // import, manual JSON edit), reset it to the built-in default
+                // loopback URL so runtime calls cannot exfil transcripts.
+                if provider.local_only
+                    && provider.id != APPLE_INTELLIGENCE_PROVIDER_ID
+                    && !super::sanitize::base_url_is_loopback(&existing.base_url)
+                {
+                    debug!(
+                        "Local-only boundary: provider '{}' had non-loopback base_url '{}'; resetting to default '{}'",
+                        provider.id, existing.base_url, provider.base_url
+                    );
+                    existing.base_url = provider.base_url.clone();
+                    changed = true;
+                }
             }
             None => {
                 // Provider doesn't exist, add it

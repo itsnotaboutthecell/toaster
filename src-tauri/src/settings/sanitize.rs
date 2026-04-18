@@ -4,12 +4,33 @@ use super::types::PostProcessProvider;
 use super::APPLE_INTELLIGENCE_PROVIDER_ID;
 use std::net::IpAddr;
 
-pub(super) fn is_loopback_host(host: &str) -> bool {
+pub(crate) fn is_loopback_host(host: &str) -> bool {
     host.eq_ignore_ascii_case("localhost")
         || host
             .parse::<IpAddr>()
             .map(|ip| ip.is_loopback())
             .unwrap_or(false)
+}
+
+/// Returns true only when `base_url` parses as http(s) with a loopback host.
+/// Used to enforce the local-only inference boundary for providers that have
+/// `local_only: true`. The `apple-intelligence://local` scheme is not http(s)
+/// and must be checked separately by callers.
+pub(crate) fn base_url_is_loopback(base_url: &str) -> bool {
+    let trimmed = base_url.trim();
+    if trimmed.is_empty() {
+        return false;
+    }
+    let Ok(parsed) = reqwest::Url::parse(trimmed) else {
+        return false;
+    };
+    if !matches!(parsed.scheme(), "http" | "https") {
+        return false;
+    }
+    parsed
+        .host_str()
+        .map(is_loopback_host)
+        .unwrap_or(false)
 }
 
 pub fn is_local_post_process_provider(provider: &PostProcessProvider) -> bool {
