@@ -12,13 +12,12 @@
 
 use crate::settings::{get_settings, AppSettings};
 use ferrous_opencc::{config::BuiltinConfig, OpenCC};
-use log::{debug, error, warn};
+use log::{debug, error};
 use std::collections::{HashMap, HashSet};
 use std::fmt;
-use std::time::Duration;
 use tauri::AppHandle;
 
-const TRANSCRIPTION_FIELD: &str = "transcription";
+pub(super) const TRANSCRIPTION_FIELD: &str = "transcription";
 pub(super) const CLEANUP_CONTRACT_VERSION: &str = "transcript_cleanup_contract_v1";
 pub(super) const CLEANUP_TRANSCRIPTION_FIELD: &str = "cleaned_transcription";
 
@@ -44,7 +43,7 @@ struct CleanupInvariantClaims {
 
 #[derive(Debug, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
-struct CleanupContractResponse {
+pub(super) struct CleanupContractResponse {
     contract_version: String,
     cleaned_transcription: String,
     invariants: CleanupInvariantClaims,
@@ -127,11 +126,10 @@ fn dedupe_tokens(tokens: &[String]) -> Vec<String> {
     deduped
 }
 
+mod llm_dispatch;
 mod prompts;
-use prompts::{
-    build_cleanup_contract_schema, build_cleanup_contract_system_prompt,
-    build_cleanup_legacy_prompt,
-};
+
+use llm_dispatch::{try_llm_attempt, AttemptInputs, AttemptOutcome};
 
 fn classify_script(ch: char) -> Option<ScriptGroup> {
     let codepoint = ch as u32;
@@ -295,7 +293,7 @@ fn lexical_overlap_ratio(left: &str, right: &str) -> f32 {
     shared as f32 / left_set.len().max(right_set.len()) as f32
 }
 
-fn validate_cleanup_candidate(
+pub(super) fn validate_cleanup_candidate(
     original: &str,
     candidate: &str,
     contract: Option<&CleanupContractResponse>,
@@ -504,179 +502,31 @@ async fn post_process_transcription(settings: &AppSettings, transcription: &str)
             (None, None)
         };
 
+    let inputs = AttemptInputs {
+        provider: &provider,
+        api_key,
+        model: &model,
+        transcription,
+        prompt: &prompt,
+        protected_tokens_for_prompt: &protected_tokens_for_prompt,
+        local_openai_provider,
+        reasoning_effort,
+        reasoning,
+    };
+
     let should_attempt_structured = provider.supports_structured_output || local_openai_provider;
     if should_attempt_structured {
-        debug!("Using structured outputs for provider '{}'", provider.id);
-
-        let system_prompt =
-            build_cleanup_contract_system_prompt(&prompt, &protected_tokens_for_prompt);
-        let user_content = transcription.to_string();
-
-        let json_schema = build_cleanup_contract_schema();
-
-        match crate::llm_client::send_chat_completion_with_schema(
-            &provider,
-            api_key.clone(),
-            &model,
-            user_content,
-            Some(system_prompt),
-            Some(json_schema),
-            reasoning_effort.clone(),
-            reasoning.clone(),
-        )
-        .await
-        {
-            Ok(Some(content)) => match serde_json::from_str::<CleanupContractResponse>(&content) {
-                Ok(contract_response) => match validate_cleanup_candidate(
-                    transcription,
-                    &contract_response.cleaned_transcription,
-                    Some(&contract_response),
-                ) {
-                    Ok(validated) => {
-                        debug!(
-                                "Structured cleanup post-processing succeeded for provider '{}'. Output length: {} chars",
-                                provider.id,
-                                validated.len()
-                            );
-                        return Some(validated);
-                    }
-                    Err(validation_error) => {
-                        warn!(
-                                "Structured cleanup output rejected for provider '{}': {}. Falling back to legacy mode.",
-                                provider.id, validation_error
-                            );
-                    }
-                },
-                Err(contract_parse_error) => {
-                    warn!(
-                            "Structured cleanup contract parse failed for provider '{}': {}. Attempting compatibility fallback.",
-                            provider.id, contract_parse_error
-                        );
-
-                    let fallback_candidate = serde_json::from_str::<serde_json::Value>(&content)
-                        .ok()
-                        .and_then(|json| {
-                            json.get(CLEANUP_TRANSCRIPTION_FIELD)
-                                .and_then(|value| value.as_str())
-                                .map(ToString::to_string)
-                                .or_else(|| {
-                                    json.get(TRANSCRIPTION_FIELD)
-                                        .and_then(|value| value.as_str())
-                                        .map(ToString::to_string)
-                                })
-                        });
-
-                    if let Some(candidate) = fallback_candidate {
-                        match validate_cleanup_candidate(transcription, &candidate, None) {
-                            Ok(validated) => {
-                                debug!(
-                                        "Structured compatibility fallback succeeded for provider '{}'. Output length: {} chars",
-                                        provider.id,
-                                        validated.len()
-                                    );
-                                return Some(validated);
-                            }
-                            Err(validation_error) => {
-                                warn!(
-                                        "Structured compatibility fallback rejected for provider '{}': {}. Falling back to legacy mode.",
-                                        provider.id, validation_error
-                                    );
-                            }
-                        }
-                    } else {
-                        warn!(
-                                "Structured response from provider '{}' did not contain '{}' or '{}'; falling back to legacy mode.",
-                                provider.id, CLEANUP_TRANSCRIPTION_FIELD, TRANSCRIPTION_FIELD
-                            );
-                    }
-                }
-            },
-            Ok(None) => {
-                warn!(
-                    "Structured output API returned no content for provider '{}'; falling back to legacy mode.",
-                    provider.id
-                );
-            }
-            Err(e) => {
-                warn!(
-                    "Structured output call failed for provider '{}': {}. Falling back to legacy mode.",
-                    provider.id, e
-                );
-            }
+        if let AttemptOutcome::Success(validated) = try_llm_attempt(&inputs, true).await {
+            return Some(validated);
         }
     }
 
-    // Legacy mode fallback for providers without structured output compatibility.
-    let processed_prompt =
-        build_cleanup_legacy_prompt(&prompt, transcription, &protected_tokens_for_prompt);
-    debug!("Processed prompt length: {} chars", processed_prompt.len());
-
-    let max_attempts = if local_openai_provider { 2 } else { 1 };
-    for attempt in 1..=max_attempts {
-        match crate::llm_client::send_chat_completion(
-            &provider,
-            api_key.clone(),
-            &model,
-            processed_prompt.clone(),
-            reasoning_effort.clone(),
-            reasoning.clone(),
-        )
-        .await
-        {
-            Ok(Some(content)) => match validate_cleanup_candidate(transcription, &content, None) {
-                Ok(validated) => {
-                    debug!(
-                        "LLM post-processing succeeded for provider '{}'. Output length: {} chars",
-                        provider.id,
-                        validated.len()
-                    );
-                    return Some(validated);
-                }
-                Err(validation_error) => {
-                    if local_openai_provider && attempt < max_attempts {
-                        warn!(
-                                "Legacy cleanup output rejected for local provider '{}' (attempt {}): {}. Retrying once.",
-                                provider.id, attempt, validation_error
-                            );
-                        tokio::time::sleep(Duration::from_millis(250)).await;
-                        continue;
-                    }
-
-                    warn!(
-                            "Legacy cleanup output rejected for provider '{}': {}. Preserving original transcription.",
-                            provider.id, validation_error
-                        );
-                    return None;
-                }
-            },
-            Ok(None) => {
-                error!(
-                    "LLM post-processing returned no content for provider '{}'; preserving original transcription",
-                    provider.id
-                );
-                return None;
-            }
-            Err(e) => {
-                if local_openai_provider && attempt < max_attempts {
-                    warn!(
-                        "Transient local LLM error for provider '{}' (attempt {}): {}. Retrying once.",
-                        provider.id, attempt, e
-                    );
-                    tokio::time::sleep(Duration::from_millis(250)).await;
-                    continue;
-                }
-
-                error!(
-                    "LLM post-processing failed for provider '{}': {}. Falling back to original transcription.",
-                    provider.id,
-                    e
-                );
-                return None;
-            }
-        }
+    // Legacy mode fallback for providers without structured output compatibility,
+    // or when the structured attempt did not produce a usable result.
+    match try_llm_attempt(&inputs, false).await {
+        AttemptOutcome::Success(validated) => Some(validated),
+        AttemptOutcome::Fallback => None,
     }
-
-    None
 }
 
 async fn maybe_convert_chinese_variant(
