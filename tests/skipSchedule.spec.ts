@@ -30,7 +30,7 @@ async function loadHelper(page: import("@playwright/test").Page) {
   ): Promise<SkipResult> => {
     return page.evaluate(
       async ({ currentTime, ranges, playbackRate }) => {
-        const mod = await import("/src/components/player/MediaPlayer.tsx");
+        const mod = await import("@/components/player/MediaPlayer");
         const result = mod.computeNextDeletedSkip(currentTime, ranges, playbackRate);
         return result as SkipResult;
       },

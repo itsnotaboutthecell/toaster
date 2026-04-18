@@ -12,12 +12,8 @@ import EditorView from "./editor/EditorView";
 
 export type SidebarSection = keyof typeof SECTIONS_CONFIG;
 
-interface IconProps {
-  width?: number | string;
-  height?: number | string;
+interface IconProps extends React.SVGProps<SVGSVGElement> {
   size?: number | string;
-  className?: string;
-  [key: string]: any;
 }
 
 interface SectionConfig {
