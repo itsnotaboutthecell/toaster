@@ -1,5 +1,11 @@
 {
+  "download": {
+    "speed": "{{speed}} MB/s",
+    "downloading": "Downloading...",
+    "downloadingCount": "{{count}} downloading..."
+  },
   "sidebar": {
+    "editor": "Editor",
     "general": "Общие",
     "models": "Модели",
     "advanced": "Продвинутые",
@@ -110,39 +116,21 @@
     "noModelDownloadRequired": "Нет модели – требуется загрузка",
     "deleteModel": "Удалить {{modelName}}",
     "downloadSpeed": "{{speed}} МБ/с",
+    "cancel": "Отмена",
+    "cancelDownload": "Отменить загрузку",
     "capabilities": {
       "languageSelection": "Поддерживает несколько языков ввода",
-      "multiLanguage": "Многоязычная",
-      "translation": "Может переводить на английский",
-      "translate": "Перевод на английский",
       "singleLanguage": "Поддерживает только этот язык",
-      "languageOnly": "Только {{language}}"
-    },
-    "cancel": "Отмена",
-    "cancelDownload": "Отменить загрузку"
+      "multiLanguage": "Многоязычная",
+      "languageOnly": "Только {{language}}",
+      "translation": "Может переводить на английский",
+      "translate": "Перевод на английский"
+    }
   },
   "settings": {
     "modelSettings": {
       "title": "Настройки {{model}}",
       "noSettingsNeeded": "Эта модель работает автоматически без необходимости настройки."
-    },
-    "models": {
-      "title": "Модели транскрипции",
-      "description": "Выберите модель транскрипции или загрузите дополнительные модели. Разные модели предлагают разные уровни точности и скорости.",
-      "downloaded": "Загружено",
-      "available": "Доступные для загрузки",
-      "deleteConfirm": "Вы уверены, что хотите удалить {{modelName}}? Вам нужно будет загрузить её снова, чтобы использовать.",
-      "deleteActiveConfirm": "{{modelName}} — ваша активная модель. Удаление остановит транскрипцию, пока вы не выберете новую модель. Вы уверены?",
-      "deleteTitle": "Удалить модель",
-      "filters": {
-        "all": "Все",
-        "multiLanguage": "Многоязычные",
-        "translation": "Перевод",
-        "allLanguages": "Все языки"
-      },
-      "noModelsMatch": "Нет моделей, соответствующих этому фильтру.",
-      "yourModels": "Загруженные модели",
-      "availableModels": "Доступны для загрузки"
     },
     "general": {
       "title": "Общие",
@@ -155,18 +143,42 @@
         "auto": "Авто"
       }
     },
+    "models": {
+      "title": "Модели транскрипции",
+      "description": "Выберите модель транскрипции или загрузите дополнительные модели. Разные модели предлагают разные уровни точности и скорости.",
+      "yourModels": "Загруженные модели",
+      "availableModels": "Доступны для загрузки",
+      "downloaded": "Загружено",
+      "available": "Доступные для загрузки",
+      "deleteConfirm": "Вы уверены, что хотите удалить {{modelName}}? Вам нужно будет загрузить её снова, чтобы использовать.",
+      "deleteActiveConfirm": "{{modelName}} — ваша активная модель. Удаление остановит транскрипцию, пока вы не выберете новую модель. Вы уверены?",
+      "deleteTitle": "Удалить модель",
+      "filters": {
+        "all": "Все",
+        "multiLanguage": "Многоязычные",
+        "translation": "Перевод",
+        "allLanguages": "Все языки"
+      },
+      "noModelsMatch": "Нет моделей, соответствующих этому фильтру.",
+      "download": "Download"
+    },
     "advanced": {
       "title": "Продвинутые",
       "groups": {
         "app": "Приложение",
         "output": "Вывод",
         "transcription": "Транскрипция",
+        "captionSettings": "Caption Settings",
         "history": "История",
         "experimental": "Экспериментальное"
       },
       "experimentalToggle": {
         "label": "Экспериментальные функции",
         "description": "Включить экспериментальные функции, которые находятся в разработке."
+      },
+      "experimentalSimplifyModeToggle": {
+        "label": "Simplify media timing path (experimental)",
+        "description": "Use a simplified preview/export segment path while still enforcing timing-contract validation. Disabled by default."
       },
       "lazyStreamClose": {
         "label": "Оставлять микрофон включённым между транскрипциями",
@@ -214,7 +226,36 @@
         "remove": "Удалить {{word}}",
         "duplicate": "\"{{word}}\" уже существует"
       },
+      "discardWords": {
+        "title": "Discard Words",
+        "description": "Words and phrases that will be automatically removed during transcription cleanup (filler words, verbal tics).",
+        "placeholder": "Add word or phrase",
+        "add": "Add",
+        "remove": "Remove {{word}}",
+        "duplicate": "\"{{word}}\" is already in the discard list",
+        "conflictWithAllow": "\"{{word}}\" is in the Allow Words list. Remove it there first."
+      },
+      "allowWords": {
+        "title": "Allow Words",
+        "description": "Brand names, technical terms, or unusual words to preserve exactly as-is during transcription.",
+        "placeholder": "Add word or phrase",
+        "add": "Add",
+        "remove": "Remove {{word}}",
+        "duplicate": "\"{{word}}\" is already in the allow list",
+        "conflictWithDiscard": "\"{{word}}\" is in the Discard Words list. Remove it there first."
+      },
       "captionSettings": {
+        "title": "Caption Settings",
+        "fontSize": "Font Size",
+        "fontSizeDescription": "How large the caption text appears (in pixels)",
+        "bgColor": "Background Color",
+        "bgColorDescription": "The color behind the caption text",
+        "bgTransparency": "Background Transparency",
+        "bgTransparencyDescription": "How opaque the caption background is (0% = fully transparent, 100% = solid)",
+        "textColor": "Text Color",
+        "textColorDescription": "The color of the caption text",
+        "position": "Vertical Position",
+        "positionDescription": "Where captions appear on screen — 0% is the top, 100% is the bottom",
         "fontFamily": "Caption font",
         "fontFamilyDescription": "Typeface used for burned-in captions. Inter and Roboto are bundled so the preview and export render identically on every machine.",
         "fontInter": "Inter (default)",
@@ -367,13 +408,15 @@
         "description": "Просмотреть исходный код и внести свой вклад",
         "button": "Посмотреть на GitHub"
       },
-      "supportDevelopment": {
-        "title": "Поддержка развития",
-        "description": "Помогите нам продолжать развитие Toaster",
-        "button": "Поддержать"
-      },
       "acknowledgments": {
         "title": "Благодарности",
+        "intro": "Toaster extends its engine with transcript-first video and audio editing capabilities from the following projects.",
+        "handy": {
+          "title": "Handy",
+          "description": "Handy is built on the foundation of Handy by cjpais",
+          "details": "Handy is an open-source, local-first speech-to-text application. Thank you to cjpais and all Handy contributors.",
+          "button": "View Handy on GitHub"
+        },
         "whisper": {
           "title": "Whisper.cpp",
           "description": "Высокопроизводительная модель автоматического распознавания речи OpenAI Whisper",
@@ -445,5 +488,104 @@
   "overlay": {
     "transcribing": "Расшифровка...",
     "processing": "Обработка..."
+  },
+  "player": {
+    "play": "Play",
+    "pause": "Pause",
+    "restart": "Restart",
+    "rewind": "Rewind 5s",
+    "volume": "Volume",
+    "mute": "Mute",
+    "speed": "Speed",
+    "noMedia": "No media loaded",
+    "previewEdits": "Preview Edits",
+    "preview": "Preview",
+    "previewCached": "Using cached preview",
+    "previewEditsOn": "Preview edits: On",
+    "previewEditsOff": "Preview edits: Off",
+    "cacheModeBuilding": "Cache: building",
+    "cacheModeReady": "Cache: ready",
+    "cacheModeFallback": "Cache: fallback",
+    "cacheModeSimplified": "Cache: simplified"
+  },
+  "editor": {
+    "sections": {
+      "project": "Project",
+      "media": "Media",
+      "transcription": "Transcription",
+      "exportTools": "Export & Tools",
+      "edit": "Edit"
+    },
+    "deleteWord": "Delete Word",
+    "restoreWord": "Restore Word",
+    "silenceWord": "Silence Word",
+    "splitWord": "Split Word",
+    "undo": "Undo",
+    "redo": "Redo",
+    "restoreAll": "Restore All",
+    "deleteRange": "Delete Range",
+    "noTranscript": "Import a media file to begin",
+    "importMedia": "Click to import a video or audio file",
+    "supportedFormats": "MP4, MKV, WebM, AVI, MOV, MP3, WAV, FLAC, OGG, and more",
+    "mediaFiles": "Media Files",
+    "changeFile": "Change file",
+    "transcribe": "Transcribe",
+    "transcribing": "Transcribing...",
+    "modelNotLoaded": "No transcription model loaded. Go to the Models tab to download and select one.",
+    "transcriptionError": "Transcription failed. Please try again or check the console for details.",
+    "transcriptionPlaceholder": "Import a media file and click Transcribe to begin editing",
+    "script": "Script",
+    "fillers": "Fillers",
+    "analyzeFillers": "Clean up transcript",
+    "analyzing": "Analyzing...",
+    "detectFillers": "Clean up",
+    "fillerWord": "Filler word",
+    "duplicateWord": "Duplicate word",
+    "duplicateWords": "Duplicate Words",
+    "pauseDetected": "Pause detected after this word",
+    "deleteFillers": "Remove {{count}} fillers",
+    "deleteDuplicates": "Remove {{count}} duplicates",
+    "silencePauses": "Trim {{count}} pauses",
+    "fillerResults": "{{fillers}} fillers · {{duplicates}} duplicates · {{pauses}} pauses",
+    "cleanupMetrics": "{{fillers}} fillers · {{duplicates}} duplicates · {{pauses}} pauses",
+    "removeAll": "Remove all {{count}} issues",
+    "noIssuesFound": "No issues found",
+    "fillerWords": "Filler Words",
+    "fillerGroupChip": "\"{{text}}\" x {{count}}",
+    "clickToLocate": "Click to locate",
+    "pausesDetected": "Pauses Detected",
+    "pauseChip": "{{duration}}s",
+    "pauseChipWithWord": "{{duration}}s after \"{{word}}\"",
+    "ffmpegScript": "Copy FFmpeg edit command to clipboard",
+    "ffmpegShortLabel": "FFmpeg",
+    "exportFormats": "Export Formats",
+    "exportEditedMedia": "Export Edited Media",
+    "exportingEditedMedia": "Exporting edited media...",
+    "normalizeAudio": "Normalize Audio",
+    "burnCaptions": "Burn captions into video",
+    "exportVolume": "Volume adjustment",
+    "exportFadeIn": "Fade in",
+    "exportFadeOut": "Fade out",
+    "exportVolumeFmt": "{{value}} dB",
+    "exportFadeNone": "None",
+    "exportFadeMs": "{{value}}ms",
+    "editedVideo": "Edited Video",
+    "editedAudio": "Edited Audio",
+    "tools": "Tools",
+    "copyTranscript": "Copy clean transcript to clipboard",
+    "copyText": "Copy Text",
+    "confidence": "Confidence",
+    "speaker": "Speaker {{id}}",
+    "findPlaceholder": "Search words...",
+    "deleteAll": "Delete All",
+    "open": "Open",
+    "save": "Save",
+    "loadProject": "Open a .toaster project",
+    "saveProject": "Save project as .toaster file",
+    "close": "Close",
+    "export": "Export",
+    "exporting": "Exporting...",
+    "addCaptions": "Add Captions",
+    "cleanup": "Clean up"
   }
 }

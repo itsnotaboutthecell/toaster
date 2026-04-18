@@ -117,7 +117,7 @@ i18n.on("languageChanged", (lng) => {
   updateDocumentLanguage(lng);
 });
 
-// Re-export RTL utilities for convenience
-export { getLanguageDirection, isRTLLanguage } from "@/lib/utils/rtl";
+// Re-export RTL helpers consumed by App.tsx / overlay (single source of truth in rtl.ts)
+export { getLanguageDirection } from "@/lib/utils/rtl";
 
 export default i18n;
