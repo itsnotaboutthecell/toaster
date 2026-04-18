@@ -50,10 +50,18 @@ if [ "$tool_name" = "bash" ] || [ "$tool_name" = "powershell" ]; then
     # Supports toolchain selector (e.g. `cargo +nightly clippy`) and both the
     # space-separated and equals-separated scope forms (`-p foo`, `--package=foo`).
     # Info queries (`--help`/`-h`/`--version`/`-V`) are allowed through.
+    #
+    # We strip quoted segments first so commit messages, echo strings, etc.
+    # that mention "cargo check"/"cargo clippy" don't trigger the gate, and
+    # require `cargo` to sit at a shell-command boundary (start of line,
+    # after `;`, `&&`, `||`, `|`, backtick, or `$(`).
     if [ "${COPILOT_ALLOW_FULL_CLIPPY:-}" != "1" ]; then
-      if printf '%s' "$lc" | grep -Eq 'cargo([[:space:]]+\+[^[:space:]]+)?[[:space:]]+(clippy|check)\b'; then
-        if ! printf '%s' "$lc" | grep -Eq '(^|[[:space:]])(--help|-h|--version|-V)([[:space:]]|$)'; then
-          if ! printf '%s' "$lc" | grep -Eq '(^|[[:space:]])(-p|--package)([[:space:]]|=)'; then
+      scan=$(printf '%s' "$lc" \
+        | sed -E 's/"(\\.|[^"\\])*"/ /g' \
+        | sed -E "s/'(\\\\.|[^'\\\\])*'/ /g")
+      if printf '%s' "$scan" | grep -Eq '(^|[;&|`]|\$\()[[:space:]]*cargo([[:space:]]+\+[^[:space:]]+)?[[:space:]]+(clippy|check)\b'; then
+        if ! printf '%s' "$scan" | grep -Eq '(^|[[:space:]])(--help|-h|--version|-V)([[:space:]]|$)'; then
+          if ! printf '%s' "$scan" | grep -Eq '(^|[[:space:]])(-p|--package)([[:space:]]|=)'; then
             deny "AGENTS.md cargo runtime: cold full-workspace cargo clippy/check on this tree takes 2-10+ minutes. During iteration, scope with -p <crate>. Override with COPILOT_ALLOW_FULL_CLIPPY=1."
           fi
         fi

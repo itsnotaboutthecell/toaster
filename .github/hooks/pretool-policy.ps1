@@ -56,10 +56,21 @@ if ($toolName -eq 'bash' -or $toolName -eq 'powershell') {
     # Supports toolchain selector (e.g. `cargo +nightly clippy`) and both the
     # space-separated and equals-separated scope forms (`-p foo`, `--package=foo`).
     # Info queries (`--help`/`-h`/`--version`/`-V`) are allowed through.
+    #
+    # We strip quoted segments first so commit messages, echo strings, etc.
+    # that mention "cargo check" or "cargo clippy" don't trigger the gate.
+    # Then we require `cargo` to sit at a shell-command boundary (start of
+    # line, after `;`, `&&`, `||`, `|`, or `$(`/backtick) so that text like
+    # `git commit -m "...cargo check..."` cannot match even before stripping.
     if ($env:COPILOT_ALLOW_FULL_CLIPPY -ne '1') {
-        if ($lc -match 'cargo(\s+\+\S+)?\s+(clippy|check)\b') {
-            $isInfoQuery = ($lc -match '(?:^|\s)(?:--help|-h|--version|-V)(?:\s|$)')
-            $hasScope    = ($lc -match '(?:^|\s)(?:-p|--package)(?:\s|=)')
+        # Strip "..." and '...' segments (including escaped quotes inside)
+        # before scanning. Non-greedy, multi-pass.
+        $scan = $lc
+        $scan = [regex]::Replace($scan, '"(?:\\.|[^"\\])*"', ' ')
+        $scan = [regex]::Replace($scan, "'(?:\\.|[^'\\])*'", ' ')
+        if ($scan -match '(?:^|[;&|`]|\$\()\s*cargo(\s+\+\S+)?\s+(clippy|check)\b') {
+            $isInfoQuery = ($scan -match '(?:^|\s)(?:--help|-h|--version|-V)(?:\s|$)')
+            $hasScope    = ($scan -match '(?:^|\s)(?:-p|--package)(?:\s|=)')
             if (-not $isInfoQuery -and -not $hasScope) {
                 Emit-Deny "AGENTS.md cargo runtime: cold full-workspace cargo clippy/check on this tree takes 2-10+ minutes. During iteration, scope with -p <crate>. Override with COPILOT_ALLOW_FULL_CLIPPY=1."
             }
