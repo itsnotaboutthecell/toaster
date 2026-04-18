@@ -52,7 +52,7 @@ fn test_discover_custom_whisper_models() {
     );
 
     // Discover custom models
-    ModelManager::discover_custom_whisper_models(&models_dir, &mut models).unwrap();
+    super::catalog::discover_custom_whisper_models(&models_dir, &mut models).unwrap();
 
     // Should have discovered 2 custom models (my-custom-model and whisper_medical_v2)
     assert!(models.contains_key("my-custom-model"));
@@ -87,7 +87,7 @@ fn test_discover_custom_models_empty_dir() {
     let mut models = HashMap::new();
     let count_before = models.len();
 
-    ModelManager::discover_custom_whisper_models(&models_dir, &mut models).unwrap();
+    super::catalog::discover_custom_whisper_models(&models_dir, &mut models).unwrap();
 
     // No new models should be added
     assert_eq!(models.len(), count_before);
@@ -101,7 +101,7 @@ fn test_discover_custom_models_nonexistent_dir() {
     let count_before = models.len();
 
     // Should not error, just return Ok
-    let result = ModelManager::discover_custom_whisper_models(&models_dir, &mut models);
+    let result = super::catalog::discover_custom_whisper_models(&models_dir, &mut models);
     assert!(result.is_ok());
     assert_eq!(models.len(), count_before);
 }
@@ -122,7 +122,7 @@ fn write_temp_file(data: &[u8]) -> (TempDir, std::path::PathBuf) {
 fn test_verify_sha256_skipped_when_none() {
     // Custom models have no expected hash — verification must be a no-op.
     let (_dir, path) = write_temp_file(b"anything");
-    assert!(ModelManager::verify_sha256(&path, None, "custom").is_ok());
+    assert!(super::hash::verify_sha256(&path, None, "custom").is_ok());
     assert!(
         path.exists(),
         "file must be untouched when verification is skipped"
@@ -135,7 +135,7 @@ fn test_verify_sha256_passes_on_correct_hash() {
     let (_dir, path) = write_temp_file(b"hello world");
     let actual = super::hash::compute_sha256(&path).unwrap();
     assert!(
-        ModelManager::verify_sha256(&path, Some(&actual), "test_model").is_ok(),
+        super::hash::verify_sha256(&path, Some(&actual), "test_model").is_ok(),
         "should pass when hash matches"
     );
     assert!(
@@ -149,7 +149,7 @@ fn test_verify_sha256_fails_and_deletes_partial_on_mismatch() {
     let (_dir, path) = write_temp_file(b"this is not the real model");
     let wrong_hash = "0000000000000000000000000000000000000000000000000000000000000000";
 
-    let result = ModelManager::verify_sha256(&path, Some(wrong_hash), "bad_model");
+    let result = super::hash::verify_sha256(&path, Some(wrong_hash), "bad_model");
 
     assert!(result.is_err(), "mismatch must return an error");
     assert!(
@@ -170,7 +170,7 @@ fn test_verify_sha256_fails_and_deletes_partial_when_file_missing() {
     // Don't create the file — it should not exist.
 
     let result =
-        ModelManager::verify_sha256(&missing_path, Some("anyexpectedhash"), "missing_model");
+        super::hash::verify_sha256(&missing_path, Some("anyexpectedhash"), "missing_model");
 
     assert!(result.is_err(), "missing file must return an error");
 }
