@@ -1,0 +1,24 @@
+# Monolith allowlist — files currently exceeding the 800-line cap enforced
+# by scripts/check-file-sizes.ts. Every entry here is a tracked monolith
+# that must be split per the monolith-split plan; each phase removes its
+# entry from this list so the guardrail gets strictly tighter over time.
+#
+# Format: one repo-relative POSIX path per line. Comments start with `#`.
+# Do NOT add new entries without an accompanying tracking issue and
+# explicit approval — "it's just one big file" is not a reason.
+
+# Phase 1 — waveform split (completed; commands + tests/ extracted)
+
+# Phase 2 — editor split (completed; mod.rs now 625 lines)
+
+# Phase 3 — transcribe_file split (completed; alignment + word_builder extracted)
+
+# Phase 4 — model split (completed; catalog + download extracted)
+
+# Phase 5 — transcription split (completed; inline tests extracted)
+
+# Phase 6 — history split (completed)
+
+# Phase 7 — filler split (completed; tests extracted)
+
+# Phase 8 — cleanup split (completed; prompts extracted)
