@@ -184,7 +184,7 @@ pub async fn transcribe_media_file(
     }
 
     // Populate the editor
-    let mut state = editor_store.0.lock().unwrap();
+    let mut state = crate::lock_recovery::try_lock(editor_store.0.lock()).map_err(|e| e.to_string())?;
     state.set_words(words.clone());
 
     Ok(state.get_words().to_vec())

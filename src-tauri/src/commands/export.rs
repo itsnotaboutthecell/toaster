@@ -24,7 +24,7 @@ pub fn export_transcript(
     max_chars_per_line: Option<usize>,
     include_silenced: Option<bool>,
 ) -> Result<String, String> {
-    let state = store.0.lock().unwrap();
+    let state = crate::lock_recovery::try_lock(store.0.lock()).map_err(|e| e.to_string())?;
     let words = state.get_words();
     let config = ExportConfig {
         max_chars_per_line: max_chars_per_line.unwrap_or(42),
@@ -43,7 +43,7 @@ pub fn export_transcript_to_file(
     max_chars_per_line: Option<usize>,
     include_silenced: Option<bool>,
 ) -> Result<(), String> {
-    let state = store.0.lock().unwrap();
+    let state = crate::lock_recovery::try_lock(store.0.lock()).map_err(|e| e.to_string())?;
     let words = state.get_words();
     let config = ExportConfig {
         max_chars_per_line: max_chars_per_line.unwrap_or(42),
@@ -62,7 +62,7 @@ pub fn export_transcript_to_file(
 #[tauri::command]
 #[specta::specta]
 pub fn get_caption_segments(store: State<EditorStore>) -> Vec<CaptionSegment> {
-    let state = store.0.lock().unwrap();
+    let state = crate::lock_recovery::recover_lock(store.0.lock());
     let words = state.get_words();
     let config = ExportConfig::default();
     export::build_segments(words, &config)
@@ -83,8 +83,8 @@ pub fn get_caption_blocks(
     media: State<MediaStore>,
     domain: TimelineDomain,
 ) -> Vec<LayoutBlock> {
-    let state = store.0.lock().unwrap();
-    let media_state = media.0.lock().unwrap();
+    let state = crate::lock_recovery::recover_lock(store.0.lock());
+    let media_state = crate::lock_recovery::recover_lock(media.0.lock());
     let frame_size = media_state
         .current()
         .and_then(|m| probe_video_dimensions_cached(&m.path.to_string_lossy()))

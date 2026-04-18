@@ -32,7 +32,7 @@ pub fn analyze_fillers(
     store: State<EditorStore>,
     min_pause_us: Option<i64>,
 ) -> Result<FillerAnalysis, String> {
-    let state = store.0.lock().unwrap();
+    let state = crate::lock_recovery::try_lock(store.0.lock()).map_err(|e| e.to_string())?;
     let mut words = state.get_words().to_vec();
 
     let settings = crate::settings::get_settings(&app);
@@ -112,7 +112,7 @@ pub fn delete_fillers(app: tauri::AppHandle, store: State<EditorStore>) -> Resul
         ..Default::default()
     };
 
-    let mut state = store.0.lock().unwrap();
+    let mut state = crate::lock_recovery::try_lock(store.0.lock()).map_err(|e| e.to_string())?;
     let indices = filler::detect_fillers(state.get_words(), &config);
     let count = indices.len();
 
@@ -136,7 +136,7 @@ pub fn delete_fillers(app: tauri::AppHandle, store: State<EditorStore>) -> Resul
 #[tauri::command]
 #[specta::specta]
 pub fn delete_duplicates(store: State<EditorStore>) -> Result<usize, String> {
-    let mut state = store.0.lock().unwrap();
+    let mut state = crate::lock_recovery::try_lock(store.0.lock()).map_err(|e| e.to_string())?;
     let duplicates = filler::detect_duplicates(state.get_words());
     let count = duplicates.len();
 
@@ -168,7 +168,7 @@ pub fn silence_pauses(
         config.pause_threshold_us = threshold;
     }
 
-    let mut state = store.0.lock().unwrap();
+    let mut state = crate::lock_recovery::try_lock(store.0.lock()).map_err(|e| e.to_string())?;
     let pauses = filler::detect_pauses(state.get_words(), &config);
     let count = pauses.len();
 
@@ -202,7 +202,7 @@ pub fn trim_pauses(
     let threshold = min_pause_us.unwrap_or(filler::DEFAULT_PAUSE_THRESHOLD_US);
     let max_gap = max_gap_us.unwrap_or(filler::DEFAULT_MAX_GAP_US);
 
-    let mut state = store.0.lock().unwrap();
+    let mut state = crate::lock_recovery::try_lock(store.0.lock()).map_err(|e| e.to_string())?;
     state.push_undo_snapshot();
 
     let words = state.get_words_mut();
@@ -224,7 +224,7 @@ pub fn tighten_gaps(
     target_gap_us: Option<i64>,
 ) -> Result<usize, String> {
     let target = target_gap_us.unwrap_or(filler::DEFAULT_TIGHTEN_TARGET_US);
-    let mut state = store.0.lock().unwrap();
+    let mut state = crate::lock_recovery::try_lock(store.0.lock()).map_err(|e| e.to_string())?;
     state.push_undo_snapshot();
     let words = state.get_words_mut();
     let count = filler::tighten_gaps(words, target);
@@ -276,7 +276,7 @@ pub fn cleanup_all(
     // loaded, so this is the expected path in practice.
     let smart_audio: Option<(Vec<f32>, u32)> = {
         let media_path = {
-            let media = media_store.0.lock().unwrap();
+            let media = crate::lock_recovery::try_lock(media_store.0.lock()).map_err(|e| e.to_string())?;
             media.current().map(|m| m.path.clone())
         };
         match media_path {
@@ -294,7 +294,7 @@ pub fn cleanup_all(
         }
     };
 
-    let mut state = store.0.lock().unwrap();
+    let mut state = crate::lock_recovery::try_lock(store.0.lock()).map_err(|e| e.to_string())?;
     state.push_undo_snapshot();
 
     let mut total_fillers: usize = 0;

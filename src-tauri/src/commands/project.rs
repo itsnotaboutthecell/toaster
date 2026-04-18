@@ -13,8 +13,8 @@ pub fn save_project(
     path: String,
     name: Option<String>,
 ) -> Result<(), String> {
-    let editor = editor_store.0.lock().unwrap();
-    let media = media_store.0.lock().unwrap();
+    let editor = crate::lock_recovery::try_lock(editor_store.0.lock()).map_err(|e| e.to_string())?;
+    let media = crate::lock_recovery::try_lock(media_store.0.lock()).map_err(|e| e.to_string())?;
 
     let project_name = name.unwrap_or_else(|| {
         media
@@ -41,13 +41,13 @@ pub fn load_project(
     let project = ToasterProject::load(std::path::Path::new(&path))?;
 
     // Restore editor words
-    let mut editor = editor_store.0.lock().unwrap();
+    let mut editor = crate::lock_recovery::try_lock(editor_store.0.lock()).map_err(|e| e.to_string())?;
     editor.set_words(project.words);
 
     // Restore media if path exists
     if let Some(ref media_path) = project.source_media {
         if media_path.exists() {
-            let mut media = media_store.0.lock().unwrap();
+            let mut media = crate::lock_recovery::try_lock(media_store.0.lock()).map_err(|e| e.to_string())?;
             media.import(media_path)?;
         }
     }

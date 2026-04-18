@@ -123,7 +123,7 @@ pub fn cleanup_smart_duplicates(
     media_store: State<'_, MediaStore>,
 ) -> Result<SmartCleanupResult, String> {
     let media_path = {
-        let media = media_store.0.lock().unwrap();
+        let media = crate::lock_recovery::try_lock(media_store.0.lock()).map_err(|e| e.to_string())?;
         media
             .current()
             .map(|m| m.path.clone())
@@ -133,7 +133,7 @@ pub fn cleanup_smart_duplicates(
     let samples = decode_media_audio(&media_path)?;
     let sample_rate = 16_000u32;
 
-    let mut state = store.0.lock().unwrap();
+    let mut state = crate::lock_recovery::try_lock(store.0.lock()).map_err(|e| e.to_string())?;
     let (decisions, indices_to_delete) =
         plan_smart_collapse(state.get_words(), &samples, sample_rate);
 

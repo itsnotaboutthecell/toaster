@@ -116,7 +116,7 @@ pub fn get_keep_segments(
     store: State<EditorStore>,
 ) -> Result<Vec<KeepSegment>, String> {
     let experimental_simplify_mode = settings_experimental_simplify_mode_enabled(&app);
-    let state = store.0.lock().unwrap();
+    let state = crate::lock_recovery::try_lock(store.0.lock()).map_err(|e| e.to_string())?;
     let segments = canonical_keep_segments_for_media(&state, experimental_simplify_mode)
         .into_iter()
         .map(|(start_us, end_us)| KeepSegment { start_us, end_us })
@@ -144,7 +144,7 @@ pub fn generate_ffmpeg_edit_script(
     input_path: String,
 ) -> Result<String, String> {
     let experimental_simplify_mode = settings_experimental_simplify_mode_enabled(&app);
-    let state = store.0.lock().unwrap();
+    let state = crate::lock_recovery::try_lock(store.0.lock()).map_err(|e| e.to_string())?;
     let segments = canonical_keep_segments_for_media(&state, experimental_simplify_mode);
 
     if segments.is_empty() {
@@ -219,7 +219,7 @@ pub fn map_edit_to_source_time(
     edit_time_us: i64,
 ) -> Result<i64, String> {
     let experimental_simplify_mode = settings_experimental_simplify_mode_enabled(&app);
-    let state = store.0.lock().unwrap();
+    let state = crate::lock_recovery::try_lock(store.0.lock()).map_err(|e| e.to_string())?;
     let segments = canonical_keep_segments_for_media(&state, experimental_simplify_mode);
     Ok(map_edit_time_to_source_time_from_segments(
         edit_time_us,
@@ -238,7 +238,7 @@ pub async fn render_temp_preview_audio(
     let experimental_simplify_mode = settings_experimental_simplify_mode_enabled(&app);
     let render_started_at = Instant::now();
     let (segments, silenced_ranges) = {
-        let state = store.0.lock().unwrap();
+        let state = crate::lock_recovery::try_lock(store.0.lock()).map_err(|e| e.to_string())?;
         (
             canonical_keep_segments_for_media(&state, experimental_simplify_mode),
             state.get_silenced_ranges(),
@@ -248,7 +248,7 @@ pub async fn render_temp_preview_audio(
     let edit_version = edit_version_token(&segments, &silenced_ranges);
 
     let media_info = {
-        let state = media_store.0.lock().unwrap();
+        let state = crate::lock_recovery::try_lock(media_store.0.lock()).map_err(|e| e.to_string())?;
         state.current().cloned()
     };
 
@@ -395,7 +395,7 @@ pub async fn export_edited_media(
 ) -> Result<String, String> {
     let experimental_simplify_mode = settings_experimental_simplify_mode_enabled(&app);
     let (segments, words, silenced_ranges) = {
-        let state = store.0.lock().unwrap();
+        let state = crate::lock_recovery::try_lock(store.0.lock()).map_err(|e| e.to_string())?;
         let segs = canonical_keep_segments_for_media(&state, experimental_simplify_mode);
         let w = state.get_words().to_vec();
         let silenced = state.get_silenced_ranges();

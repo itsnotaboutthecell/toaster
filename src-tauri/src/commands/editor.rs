@@ -31,7 +31,7 @@ fn build_projection(state: &EditorState) -> EditorProjection {
 #[tauri::command]
 #[specta::specta]
 pub fn editor_set_words(store: State<EditorStore>, words: Vec<Word>) -> Vec<Word> {
-    let mut state = store.0.lock().unwrap();
+    let mut state = crate::lock_recovery::recover_lock(store.0.lock());
     state.set_words(words);
     state.get_words().to_vec()
 }
@@ -42,7 +42,7 @@ pub fn editor_apply_local_llm_proposals(
     store: State<EditorStore>,
     proposals: Vec<LocalLlmWordProposal>,
 ) -> LocalLlmApplyResponse {
-    let mut state = store.0.lock().unwrap();
+    let mut state = crate::lock_recovery::recover_lock(store.0.lock());
     let apply_result = state.apply_local_llm_word_proposals(&proposals);
     let projection = build_projection(&state);
     LocalLlmApplyResponse {
@@ -54,70 +54,70 @@ pub fn editor_apply_local_llm_proposals(
 #[tauri::command]
 #[specta::specta]
 pub fn editor_get_words(store: State<EditorStore>) -> Vec<Word> {
-    let state = store.0.lock().unwrap();
+    let state = crate::lock_recovery::recover_lock(store.0.lock());
     state.get_words().to_vec()
 }
 
 #[tauri::command]
 #[specta::specta]
 pub fn editor_delete_word(store: State<EditorStore>, index: usize) -> bool {
-    let mut state = store.0.lock().unwrap();
+    let mut state = crate::lock_recovery::recover_lock(store.0.lock());
     state.delete_word(index)
 }
 
 #[tauri::command]
 #[specta::specta]
 pub fn editor_restore_word(store: State<EditorStore>, index: usize) -> bool {
-    let mut state = store.0.lock().unwrap();
+    let mut state = crate::lock_recovery::recover_lock(store.0.lock());
     state.restore_word(index)
 }
 
 #[tauri::command]
 #[specta::specta]
 pub fn editor_delete_range(store: State<EditorStore>, start: usize, end: usize) -> bool {
-    let mut state = store.0.lock().unwrap();
+    let mut state = crate::lock_recovery::recover_lock(store.0.lock());
     state.delete_range(start, end)
 }
 
 #[tauri::command]
 #[specta::specta]
 pub fn editor_restore_all(store: State<EditorStore>) -> bool {
-    let mut state = store.0.lock().unwrap();
+    let mut state = crate::lock_recovery::recover_lock(store.0.lock());
     state.restore_all()
 }
 
 #[tauri::command]
 #[specta::specta]
 pub fn editor_split_word(store: State<EditorStore>, index: usize, position: usize) -> bool {
-    let mut state = store.0.lock().unwrap();
+    let mut state = crate::lock_recovery::recover_lock(store.0.lock());
     state.split_word(index, position)
 }
 
 #[tauri::command]
 #[specta::specta]
 pub fn editor_silence_word(store: State<EditorStore>, index: usize) -> bool {
-    let mut state = store.0.lock().unwrap();
+    let mut state = crate::lock_recovery::recover_lock(store.0.lock());
     state.silence_word(index)
 }
 
 #[tauri::command]
 #[specta::specta]
 pub fn editor_undo(store: State<EditorStore>) -> bool {
-    let mut state = store.0.lock().unwrap();
+    let mut state = crate::lock_recovery::recover_lock(store.0.lock());
     state.undo()
 }
 
 #[tauri::command]
 #[specta::specta]
 pub fn editor_redo(store: State<EditorStore>) -> bool {
-    let mut state = store.0.lock().unwrap();
+    let mut state = crate::lock_recovery::recover_lock(store.0.lock());
     state.redo()
 }
 
 #[tauri::command]
 #[specta::specta]
 pub fn editor_get_keep_segments(store: State<EditorStore>) -> Vec<(i64, i64)> {
-    let state = store.0.lock().unwrap();
+    let state = crate::lock_recovery::recover_lock(store.0.lock());
     let snapshot = state.timing_contract_snapshot();
     if snapshot.keep_segments_valid {
         snapshot
@@ -139,14 +139,14 @@ pub fn editor_get_keep_segments(store: State<EditorStore>) -> Vec<(i64, i64)> {
 #[tauri::command]
 #[specta::specta]
 pub fn editor_get_timing_contract(store: State<EditorStore>) -> TimingContractSnapshot {
-    let state = store.0.lock().unwrap();
+    let state = crate::lock_recovery::recover_lock(store.0.lock());
     state.timing_contract_snapshot()
 }
 
 #[tauri::command]
 #[specta::specta]
 pub fn editor_get_projection(store: State<EditorStore>) -> EditorProjection {
-    let state = store.0.lock().unwrap();
+    let state = crate::lock_recovery::recover_lock(store.0.lock());
     build_projection(&state)
 }
 
