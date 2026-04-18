@@ -2,6 +2,7 @@ pub mod audio_toolkit;
 pub mod cli;
 mod commands;
 mod llm_client;
+pub mod lock_recovery;
 mod managers;
 pub mod portable;
 mod settings;
