@@ -23,6 +23,7 @@ use transcribe_rs::{
 
 mod accelerators;
 pub mod adapter;
+mod adapter_normalize;
 mod job;
 #[allow(unused_imports)]
 pub use accelerators::{
