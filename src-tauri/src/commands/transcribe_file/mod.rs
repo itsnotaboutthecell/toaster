@@ -1,11 +1,7 @@
-use log::{info, warn};
+use log::info;
 use std::sync::Arc;
 use tauri::{AppHandle, Manager, State};
-use transcribe_rs::TranscriptionSegment;
 
-use crate::audio_toolkit::timing::{
-    round_f64_to_i64, seconds_to_us as timing_seconds_to_us, us_to_sample as timing_us_to_sample,
-};
 use crate::commands::editor::EditorStore;
 use crate::managers::editor::Word;
 use crate::managers::transcription::TranscriptionManager;
@@ -27,10 +23,7 @@ pub(super) struct WordAlignmentMeta {
 
 mod alignment;
 mod word_builder;
-use alignment::{
-    align_onset_boundaries, correct_short_word_boundaries, realign_suspicious_spans,
-    refine_word_boundaries,
-};
+use alignment::realign_suspicious_spans;
 use word_builder::{build_words_from_segments, sanitize_word_timestamps};
 
 /// Transcribe any audio or video file and populate the editor with word-level results.

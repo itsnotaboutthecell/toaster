@@ -28,7 +28,7 @@ export const CustomWords: React.FC<CustomWordsProps> = React.memo(
       ) {
         if (customWords.includes(sanitizedWord)) {
           toast.error(
-            t("settings.advanced.customWords.duplicate", {
+            t("settings.controls.customWords.duplicate", {
               word: sanitizedWord,
             }),
           );
@@ -56,8 +56,8 @@ export const CustomWords: React.FC<CustomWordsProps> = React.memo(
     return (
       <>
         <SettingContainer
-          title={t("settings.advanced.customWords.title")}
-          description={t("settings.advanced.customWords.description")}
+          title={t("settings.controls.customWords.title")}
+          description={t("settings.controls.customWords.description")}
           descriptionMode={descriptionMode}
           grouped={grouped}
         >
@@ -68,7 +68,7 @@ export const CustomWords: React.FC<CustomWordsProps> = React.memo(
               value={newWord}
               onChange={(e) => setNewWord(e.target.value)}
               onKeyDown={handleKeyPress}
-              placeholder={t("settings.advanced.customWords.placeholder")}
+              placeholder={t("settings.controls.customWords.placeholder")}
               variant="compact"
               disabled={isUpdating("custom_words")}
             />
@@ -83,7 +83,7 @@ export const CustomWords: React.FC<CustomWordsProps> = React.memo(
               variant="primary"
               size="md"
             >
-              {t("settings.advanced.customWords.add")}
+              {t("settings.controls.customWords.add")}
             </Button>
           </div>
         </SettingContainer>
@@ -99,7 +99,7 @@ export const CustomWords: React.FC<CustomWordsProps> = React.memo(
                 variant="secondary"
                 size="sm"
                 className="inline-flex items-center gap-1 cursor-pointer"
-                aria-label={t("settings.advanced.customWords.remove", { word })}
+                aria-label={t("settings.controls.customWords.remove", { word })}
               >
                 <span>{word}</span>
                 <svg

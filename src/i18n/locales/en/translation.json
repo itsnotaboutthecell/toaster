@@ -6,13 +6,11 @@
   },
   "sidebar": {
     "editor": "Editor",
-    "general": "General",
     "models": "Models",
-    "advanced": "Advanced",
     "postProcessing": "Post Process",
-    "history": "History",
     "debug": "Debug",
-    "about": "About"
+    "about": "About",
+    "advanced": "Advanced"
   },
   "onboarding": {
     "subtitle": "To get started, choose a transcription model",
@@ -160,44 +158,151 @@
         "allLanguages": "All Languages"
       },
       "noModelsMatch": "No models match this filter.",
-      "download": "Download"
-    },
-    "advanced": {
-      "title": "Advanced",
+      "download": "Download",
       "groups": {
-        "app": "App",
-        "output": "Output",
-        "transcription": "Transcription",
-        "captionSettings": "Caption Settings",
-        "history": "History",
-        "experimental": "Experimental"
+        "performance": "Performance",
+        "captions": "Captions"
+      }
+    },
+    "postProcessing": {
+      "title": "Post Process",
+      "hotkey": {
+        "title": "Hotkey"
       },
-      "experimentalToggle": {
-        "label": "Experimental Features",
-        "description": "Enable experimental features that are still in development."
+      "api": {
+        "title": "API (OpenAI Compatible)",
+        "provider": {
+          "title": "Provider",
+          "description": "Select an OpenAI-compatible provider."
+        },
+        "baseUrl": {
+          "title": "Base URL",
+          "description": "API base URL for the selected provider. Only the custom provider can be edited.",
+          "placeholder": "https://api.openai.com/v1"
+        },
+        "apiKey": {
+          "title": "API Key",
+          "description": "API key for the selected provider.",
+          "placeholder": "sk-..."
+        },
+        "model": {
+          "title": "Model",
+          "descriptionCustom": "Provide the model identifier expected by your custom endpoint.",
+          "descriptionDefault": "Choose a model exposed by the selected provider.",
+          "placeholderWithOptions": "Search or select a model",
+          "placeholderNoOptions": "Type a model name",
+          "refreshModels": "Refresh models"
+        }
       },
-      "experimentalSimplifyModeToggle": {
-        "label": "Simplify media timing path (experimental)",
-        "description": "Use a simplified preview/export segment path while still enforcing timing-contract validation. Disabled by default."
+      "prompts": {
+        "title": "Prompt",
+        "selectedPrompt": {
+          "title": "Selected Prompt",
+          "description": "Select a template for refining transcriptions or create a new one. Use ${output} inside the prompt text to reference the captured transcript."
+        },
+        "noPrompts": "No prompts available",
+        "selectPrompt": "Select a prompt",
+        "createNew": "Create New Prompt",
+        "promptLabel": "Prompt Label",
+        "promptLabelPlaceholder": "Enter prompt name",
+        "promptInstructions": "Prompt Instructions",
+        "promptInstructionsPlaceholder": "Write the instructions to run after transcription. Example: Improve grammar and clarity for the following text: ${output}",
+        "promptTip": "Tip: Use <code>${output}</code> to insert the transcribed text in your prompt.",
+        "updatePrompt": "Update Prompt",
+        "deletePrompt": "Delete Prompt",
+        "createPrompt": "Create Prompt",
+        "cancel": "Cancel",
+        "selectToEdit": "Select a prompt above to view and edit its details.",
+        "createFirst": "Click 'Create New Prompt' above to create your first post-processing prompt."
       },
+      "localLlmAlert": {
+        "link": "Learn more",
+        "title": "Local LLM required",
+        "body": "Toaster post-processing runs against a local OpenAI-compatible endpoint. See docs/post-processing.md for setup."
+      },
+      "localModels": {
+        "title": "Local LLM model",
+        "description": "Toaster runs LLM cleanup in-process. Pick a model below to download and use locally.",
+        "defaultBadge": "Default",
+        "selectedBadge": "Active",
+        "download": "Download",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "select": "Use this model",
+        "empty": "No local models available.",
+        "requirementsFormat": "{{size}} · RAM ~{{ram}} MB · Disk ~{{disk}} MB",
+        "progressFormat": "{{percent}}% · {{speed}} MB/s"
+      },
+      "provider": {
+        "local": {
+          "label": "Local (in-process)",
+          "description": "Runs the cleanup model inside Toaster. No network calls."
+        }
+      }
+    },
+    "debug": {
+      "title": "Debug",
+      "logDirectory": {
+        "title": "Log Directory",
+        "description": "Location where log files are stored"
+      },
+      "logLevel": {
+        "title": "Log Level",
+        "description": "Set the verbosity of logging"
+      },
+      "updateChecks": {
+        "label": "Check for Updates",
+        "description": "Automatically check for new versions of Toaster"
+      },
+      "wordCorrectionThreshold": {
+        "title": "Word Correction Threshold",
+        "description": "Sensitivity for custom word corrections"
+      },
+      "postProcessingToggle": {
+        "label": "Post Processing",
+        "description": "Enable AI-powered text refinement after transcription"
+      },
+      "paths": {
+        "appData": "App Data:",
+        "models": "Models:",
+        "settings": "Settings:"
+      }
+    },
+    "about": {
+      "title": "About",
+      "version": {
+        "title": "Version",
+        "description": "Current version of Toaster"
+      },
+      "appDataDirectory": {
+        "title": "App Data Directory",
+        "description": "Location where Toaster stores its data"
+      },
+      "sourceCode": {
+        "title": "Source Code",
+        "description": "View source code and contribute",
+        "button": "View on GitHub"
+      },
+      "acknowledgments": {
+        "title": "Acknowledgments",
+        "intro": "Toaster extends its engine with transcript-first video and audio editing capabilities from the following projects.",
+        "handy": {
+          "title": "Handy",
+          "description": "Handy is built on the foundation of Handy by cjpais",
+          "details": "Handy is an open-source, local-first speech-to-text application. Thank you to cjpais and all Handy contributors.",
+          "button": "View Handy on GitHub"
+        },
+        "whisper": {
+          "title": "Whisper.cpp",
+          "description": "High-performance inference of OpenAI's Whisper automatic speech recognition model",
+          "details": "Toaster uses Whisper.cpp for fast, local speech-to-text processing. Thanks to the amazing work by Georgi Gerganov and contributors."
+        }
+      }
+    },
+    "controls": {
       "lazyStreamClose": {
         "label": "Keep Mic Open Between Transcriptions",
         "description": "Keeps the microphone stream open for 30 seconds after recording stops, reducing latency for back-to-back transcriptions. May degrade Bluetooth audio quality while active."
-      },
-      "acceleration": {
-        "whisper": {
-          "title": "Whisper Acceleration",
-          "description": "Hardware acceleration for Whisper models. Auto uses GPU if available (Metal on macOS, Vulkan on Windows/Linux)."
-        },
-        "ort": {
-          "title": "ONNX Acceleration",
-          "description": "Hardware acceleration for ONNX models (Parakeet, Canary, Moonshine, etc.). DirectML on Windows is experimental. Models may fail to transcribe."
-        },
-        "gpuDevice": {
-          "title": "GPU Device",
-          "description": "Select which GPU to use for Whisper inference. Auto picks the dedicated GPU.",
-          "auto": "Auto"
-        }
       },
       "translateToEnglish": {
         "label": "Translate to English",
@@ -271,157 +376,125 @@
         "maxWidthDescription": "How wide the caption is allowed to grow before it wraps onto a second line, as a percentage of the video frame."
       }
     },
-    "postProcessing": {
-      "title": "Post Process",
-      "hotkey": {
-        "title": "Hotkey"
+    "captions": {
+      "tabs": {
+        "ariaLabel": "Caption orientation",
+        "desktop": "Desktop",
+        "desktopDescription": "Styling for landscape videos (width \u2265 height).",
+        "mobile": "Mobile",
+        "mobileDescription": "Styling for portrait / square videos (width < height)."
       },
-      "api": {
-        "title": "API (OpenAI Compatible)",
-        "provider": {
-          "title": "Provider",
-          "description": "Select an OpenAI-compatible provider."
+      "preview": {
+        "heading": "Live preview",
+        "sampleLegend": "Sample text",
+        "sample": {
+          "short": "looking crispy",
+          "twoLine": "looking crispy\nand readable",
+          "long": "looking crispy and readable\neven when the caption text\nwraps onto a third line"
         },
-        "appleIntelligence": {
-          "title": "Apple Intelligence",
-          "description": "Runs fully on-device. No API key or network access is required.",
-          "requirements": "Requires an Apple Silicon Mac running macOS Tahoe (26.0) or later. Apple Intelligence must be enabled in System Settings.",
-          "unavailable": "Apple Intelligence is not available on this device. Requires an Apple Silicon Mac running macOS Tahoe (26.0) or later with Apple Intelligence enabled in System Settings."
-        },
-        "baseUrl": {
-          "title": "Base URL",
-          "description": "API base URL for the selected provider. Only the custom provider can be edited.",
-          "placeholder": "https://api.openai.com/v1"
-        },
-        "apiKey": {
-          "title": "API Key",
-          "description": "API key for the selected provider.",
-          "placeholder": "sk-..."
-        },
-        "model": {
-          "title": "Model",
-          "descriptionApple": "Provide an optional numeric token limit or keep the default on-device preset.",
-          "descriptionCustom": "Provide the model identifier expected by your custom endpoint.",
-          "descriptionDefault": "Choose a model exposed by the selected provider.",
-          "placeholderApple": "Apple Intelligence",
-          "placeholderWithOptions": "Search or select a model",
-          "placeholderNoOptions": "Type a model name",
-          "refreshModels": "Refresh models"
+        "orientation": {
+          "label": "Preview orientation",
+          "horizontal": "Horizontal",
+          "vertical": "Vertical"
         }
-      },
-      "prompts": {
-        "title": "Prompt",
-        "selectedPrompt": {
-          "title": "Selected Prompt",
-          "description": "Select a template for refining transcriptions or create a new one. Use ${output} inside the prompt text to reference the captured transcript."
-        },
-        "noPrompts": "No prompts available",
-        "selectPrompt": "Select a prompt",
-        "createNew": "Create New Prompt",
-        "promptLabel": "Prompt Label",
-        "promptLabelPlaceholder": "Enter prompt name",
-        "promptInstructions": "Prompt Instructions",
-        "promptInstructionsPlaceholder": "Write the instructions to run after transcription. Example: Improve grammar and clarity for the following text: ${output}",
-        "promptTip": "Tip: Use <code>${output}</code> to insert the transcribed text in your prompt.",
-        "updatePrompt": "Update Prompt",
-        "deletePrompt": "Delete Prompt",
-        "createPrompt": "Create Prompt",
-        "cancel": "Cancel",
-        "selectToEdit": "Select a prompt above to view and edit its details.",
-        "createFirst": "Click 'Create New Prompt' above to create your first post-processing prompt."
       }
     },
-    "history": {
-      "title": "History",
-      "openFolder": "Open Recordings Folder",
-      "loading": "Loading history...",
-      "empty": "No transcriptions yet. Start recording to build your history!",
-      "copyToClipboard": "Copy transcription to clipboard",
-      "save": "Save transcription",
-      "unsave": "Remove from saved",
-      "delete": "Delete entry",
-      "deleteError": "Failed to delete entry. Please try again.",
-      "retranscribe": "Re-transcribe",
-      "retranscribeError": "Failed to re-transcribe. Please try again.",
-      "transcribing": "Transcribing...",
-      "transcriptionFailed": "Transcription failed. You can re-transcribe using the retry icon."
+    "experimental": {
+      "title": "Experimental",
+      "banner": "These features are under active development and may change or be removed."
     },
-    "debug": {
-      "title": "Debug",
-      "logDirectory": {
-        "title": "Log Directory",
-        "description": "Location where log files are stored"
+    "export": {
+      "title": "Export",
+      "description": "Settings that apply when exporting your edited media.",
+      "loudness": {
+        "title": "Loudness normalization",
+        "description": "Match a target integrated loudness so exported videos sound consistent across players and platforms.",
+        "options": {
+          "off": {
+            "label": "Off",
+            "description": "No loudness normalization. Exported audio uses the source levels."
+          },
+          "podcast_-16": {
+            "label": "Podcast (-16 LUFS)",
+            "description": "Broadcast / podcast preset. Targets -16 LUFS integrated."
+          },
+          "streaming_-14": {
+            "label": "Streaming (-14 LUFS)",
+            "description": "Spotify / YouTube preset. Targets -14 LUFS integrated."
+          }
+        },
+        "preflight": {
+          "title": "Preflight measurement",
+          "description": "Measures the post-edit audio without exporting so you can preview how far off-target it is.",
+          "run": "Run preflight",
+          "running": "Measuring…",
+          "integrated": "Integrated",
+          "truePeak": "True peak",
+          "lra": "Loudness range",
+          "delta": "Delta to target",
+          "target": "Target",
+          "noMedia": "Open a project to run preflight.",
+          "noTarget": "—",
+          "warningOffTarget": "Measured loudness is more than 12 LU off the target. Consider re-recording or adjusting the source before export.",
+          "error": "Preflight failed: {{error}}"
+        }
       },
-      "logLevel": {
-        "title": "Log Level",
-        "description": "Set the verbosity of logging"
-      },
-      "updateChecks": {
-        "label": "Check for Updates",
-        "description": "Automatically check for new versions of Toaster"
-      },
-      "wordCorrectionThreshold": {
-        "title": "Word Correction Threshold",
-        "description": "Sensitivity for custom word corrections"
-      },
-      "historyLimit": {
-        "title": "History Limit",
-        "description": "Maximum number of recent projects to keep in your history",
-        "entries": "entries"
-      },
-      "recordingRetention": {
-        "title": "Auto-Delete Recordings",
-        "description": "Automatically delete old recordings to save space",
-        "never": "Never",
-        "preserveLimit": "Keep latest {{count}}",
-        "days3": "After 3 days",
-        "weeks2": "After 2 weeks",
-        "months3": "After 3 months",
-        "placeholder": "Select retention period..."
-      },
-      "clamshellMicrophone": {
-        "title": "Clamshell Microphone",
-        "description": "Microphone to use when laptop lid is closed"
-      },
-      "postProcessingToggle": {
-        "label": "Post Processing",
-        "description": "Enable AI-powered text refinement after transcription"
-      },
-      "paths": {
-        "appData": "App Data:",
-        "models": "Models:",
-        "settings": "Settings:"
+      "format": {
+        "title": "Format",
+        "label": "Output format",
+        "description": "Choose the container and codec for exported media. Audio-only presets drop the video stream.",
+        "options": {
+          "mp4": {
+            "label": "Video (mp4)",
+            "description": "Edited video with H.264 video and AAC audio in an mp4 container. Default."
+          },
+          "mp3": {
+            "label": "Audio - mp3",
+            "description": "Audio-only mp3 (libmp3lame) at 192 kbps. Most universally compatible audio format."
+          },
+          "wav": {
+            "label": "Audio - wav",
+            "description": "Uncompressed 16-bit PCM in a wav container. Largest file; lossless."
+          },
+          "m4a": {
+            "label": "Audio - m4a",
+            "description": "AAC audio in an m4a (audio-only mp4) container at 192 kbps. Good for Apple devices."
+          },
+          "opus": {
+            "label": "Audio - opus",
+            "description": "Opus audio (libopus) at 128 kbps. Best quality per bit; modern codec."
+          }
+        }
       }
     },
-    "about": {
-      "title": "About",
-      "version": {
-        "title": "Version",
-        "description": "Current version of Toaster"
-      },
-      "appDataDirectory": {
-        "title": "App Data Directory",
-        "description": "Location where Toaster stores its data"
-      },
-      "sourceCode": {
-        "title": "Source Code",
-        "description": "View source code and contribute",
-        "button": "View on GitHub"
-      },
-      "acknowledgments": {
-        "title": "Acknowledgments",
-        "intro": "Toaster extends its engine with transcript-first video and audio editing capabilities from the following projects.",
-        "handy": {
-          "title": "Handy",
-          "description": "Handy is built on the foundation of Handy by cjpais",
-          "details": "Handy is an open-source, local-first speech-to-text application. Thank you to cjpais and all Handy contributors.",
-          "button": "View Handy on GitHub"
+    "advanced": {
+      "title": "Advanced",
+      "description": "Configured-once controls like allow and discard word lists.",
+      "groups": {
+        "words": {
+          "title": "Words",
+          "description": "Discard and allow word lists used across the transcript editor."
         },
-        "whisper": {
-          "title": "Whisper.cpp",
-          "description": "High-performance inference of OpenAI's Whisper automatic speech recognition model",
-          "details": "Toaster uses Whisper.cpp for fast, local speech-to-text processing. Thanks to the amazing work by Georgi Gerganov and contributors."
+        "performance": {
+          "title": "Performance",
+          "description": "Model unload timing and related runtime behavior."
+        },
+        "captions": {
+          "title": "Captions",
+          "description": "Caption preview and export styling."
+        },
+        "export": {
+          "title": "Export",
+          "description": "Output format, loudness target, and preflight checks for exported media."
+        },
+        "experimental": {
+          "title": "Experimental",
+          "description": "Opt-in features that may change or be removed. Gated by the master toggle below."
         }
+      },
+      "experimentalMaster": {
+        "title": "Enable experimental features",
+        "description": "Master switch for every experiment. When off, individual experiment flags read as disabled even if they were previously turned on. Turning this back on restores your prior selections."
       }
     }
   },
@@ -485,10 +558,6 @@
     "title": "Application Language",
     "description": "Change the language of the Toaster interface"
   },
-  "overlay": {
-    "transcribing": "Transcribing...",
-    "processing": "Processing..."
-  },
   "player": {
     "play": "Play",
     "pause": "Pause",
@@ -509,12 +578,22 @@
     "cacheModeSimplified": "Cache: simplified"
   },
   "editor": {
+    "captionOrientation": {
+      "ariaLabel": "Caption orientation",
+      "label": "Captions",
+      "option": {
+        "desktop": "Desktop",
+        "mobile": "Mobile",
+        "auto": "Auto"
+      }
+    },
     "sections": {
       "project": "Project",
       "media": "Media",
       "transcription": "Transcription",
       "exportTools": "Export & Tools",
-      "edit": "Edit"
+      "edit": "Edit",
+      "words": "Words"
     },
     "deleteWord": "Delete Word",
     "restoreWord": "Restore Word",
@@ -587,5 +666,12 @@
     "exporting": "Exporting...",
     "addCaptions": "Add Captions",
     "cleanup": "Clean up"
+  },
+  "experiments": {
+    "simplifyMode": {
+      "label": "Simplify Mode",
+      "description": "Reduce visual density and hide secondary controls in the editor."
+    },
+    "feedbackLink": "Send feedback"
   }
 }

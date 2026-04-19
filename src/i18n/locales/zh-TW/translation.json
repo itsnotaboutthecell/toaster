@@ -6,13 +6,11 @@
   },
   "sidebar": {
     "editor": "Editor",
-    "general": "一般",
     "models": "模型",
-    "advanced": "進階",
     "postProcessing": "後處理",
-    "history": "歷史紀錄",
     "debug": "偵錯",
-    "about": "關於"
+    "about": "關於",
+    "advanced": "Advanced"
   },
   "onboarding": {
     "subtitle": "首先，請選擇一種模型",
@@ -160,44 +158,151 @@
         "allLanguages": "所有語言"
       },
       "noModelsMatch": "沒有符合此篩選條件的模型",
-      "download": "Download"
-    },
-    "advanced": {
-      "title": "進階",
+      "download": "Download",
       "groups": {
-        "app": "應用程式",
-        "output": "輸出",
-        "transcription": "轉錄",
-        "captionSettings": "Caption Settings",
-        "history": "歷史",
-        "experimental": "實驗性"
+        "performance": "Performance",
+        "captions": "Captions"
+      }
+    },
+    "postProcessing": {
+      "title": "後處理",
+      "hotkey": {
+        "title": "快捷鍵"
       },
-      "experimentalToggle": {
-        "label": "實驗性功能",
-        "description": "啟用仍在開發中的實驗性功能"
+      "api": {
+        "title": "API（相容 OpenAI）",
+        "provider": {
+          "title": "供應商",
+          "description": "選擇一個相容 OpenAI 的供應商"
+        },
+        "baseUrl": {
+          "title": "基礎網址",
+          "description": "所選供應商的 API 基礎網址，僅自訂供應商可編輯",
+          "placeholder": "https://api.openai.com/v1"
+        },
+        "apiKey": {
+          "title": "API 金鑰",
+          "description": "所選供應商的 API 金鑰",
+          "placeholder": "sk-..."
+        },
+        "model": {
+          "title": "模型",
+          "descriptionCustom": "輸入自訂端點所需的模型 ID",
+          "descriptionDefault": "從所選供應商的可用模型中選擇",
+          "placeholderWithOptions": "搜尋或選擇模型",
+          "placeholderNoOptions": "輸入模型名稱",
+          "refreshModels": "重新整理模型"
+        }
       },
-      "experimentalSimplifyModeToggle": {
-        "label": "Simplify media timing path (experimental)",
-        "description": "Use a simplified preview/export segment path while still enforcing timing-contract validation. Disabled by default."
+      "prompts": {
+        "title": "提示詞",
+        "selectedPrompt": {
+          "title": "已選提示詞",
+          "description": "選擇用於最佳化轉錄的範本或建立新範本。在提示詞文字中使用 ${output} 來引用轉錄結果"
+        },
+        "noPrompts": "沒有可用的提示詞",
+        "selectPrompt": "選擇提示詞",
+        "createNew": "建立新提示詞",
+        "promptLabel": "提示詞名稱",
+        "promptLabelPlaceholder": "輸入提示詞名稱",
+        "promptInstructions": "提示詞指令",
+        "promptInstructionsPlaceholder": "撰寫轉錄後要執行的指令。範例：改善以下文字的語法和清晰度: ${output}",
+        "promptTip": "提示：使用 <code>${output}</code> 將轉錄文字插入到您的提示詞中",
+        "updatePrompt": "更新提示詞",
+        "deletePrompt": "刪除提示詞",
+        "createPrompt": "建立提示詞",
+        "cancel": "取消",
+        "selectToEdit": "選擇上方的提示詞以檢視和編輯其詳細資訊",
+        "createFirst": "點選上方的「建立新提示詞」來建立您的第一個後處理提示詞"
       },
+      "localLlmAlert": {
+        "link": "Learn more",
+        "title": "Local LLM required",
+        "body": "Toaster post-processing runs against a local OpenAI-compatible endpoint. See docs/post-processing.md for setup."
+      },
+      "localModels": {
+        "title": "Local LLM model",
+        "description": "Toaster runs LLM cleanup in-process. Pick a model below to download and use locally.",
+        "defaultBadge": "Default",
+        "selectedBadge": "Active",
+        "download": "Download",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "select": "Use this model",
+        "empty": "No local models available.",
+        "requirementsFormat": "{{size}} · RAM ~{{ram}} MB · Disk ~{{disk}} MB",
+        "progressFormat": "{{percent}}% · {{speed}} MB/s"
+      },
+      "provider": {
+        "local": {
+          "label": "Local (in-process)",
+          "description": "Runs the cleanup model inside Toaster. No network calls."
+        }
+      }
+    },
+    "debug": {
+      "title": "偵錯",
+      "logDirectory": {
+        "title": "日誌目錄",
+        "description": "日誌檔案的儲存位置"
+      },
+      "logLevel": {
+        "title": "日誌等級",
+        "description": "設定日誌的詳細程度"
+      },
+      "updateChecks": {
+        "label": "檢查更新",
+        "description": "自動檢查 Toaster 的新版本"
+      },
+      "wordCorrectionThreshold": {
+        "title": "詞彙修正閾值",
+        "description": "自訂詞彙修正的靈敏度"
+      },
+      "postProcessingToggle": {
+        "label": "後處理",
+        "description": "啟用轉錄後的 AI 文字最佳化"
+      },
+      "paths": {
+        "appData": "應用程式資料:",
+        "models": "模型:",
+        "settings": "設定:"
+      }
+    },
+    "about": {
+      "title": "關於",
+      "version": {
+        "title": "版本",
+        "description": "Toaster 的目前版本"
+      },
+      "appDataDirectory": {
+        "title": "應用程式資料目錄",
+        "description": "Toaster 儲存資料的位置"
+      },
+      "sourceCode": {
+        "title": "原始碼",
+        "description": "檢視原始碼並參與貢獻",
+        "button": "在 GitHub 上檢視"
+      },
+      "acknowledgments": {
+        "title": "致謝",
+        "intro": "Toaster extends its engine with transcript-first video and audio editing capabilities from the following projects.",
+        "handy": {
+          "title": "Handy",
+          "description": "Handy is built on the foundation of Handy by cjpais",
+          "details": "Handy is an open-source, local-first speech-to-text application. Thank you to cjpais and all Handy contributors.",
+          "button": "View Handy on GitHub"
+        },
+        "whisper": {
+          "title": "Whisper.cpp",
+          "description": "針對 OpenAI Whisper 自動語音識別模型的高效能推理引擎",
+          "details": "Toaster 使用 Whisper.cpp 進行快速的本機語音轉文字處理。感謝 Georgi Gerganov 和貢獻者們的傑出工作"
+        }
+      }
+    },
+    "controls": {
       "lazyStreamClose": {
         "label": "在轉錄之間保持麥克風開啟",
         "description": "錄音停止後保持麥克風串流開啟30秒，減少連續轉錄時的延遲。啟用時可能會降低藍牙音訊品質。"
-      },
-      "acceleration": {
-        "whisper": {
-          "title": "Whisper 加速",
-          "description": "Whisper 模型的硬體加速。自動模式在可用時使用 GPU（macOS 上使用 Metal，Windows/Linux 上使用 Vulkan）。"
-        },
-        "ort": {
-          "title": "ONNX 加速",
-          "description": "ONNX 模型的硬體加速（Parakeet、Canary、Moonshine 等）。Windows 上的 DirectML 為實驗性功能。模型可能無法正常轉錄。"
-        },
-        "gpuDevice": {
-          "title": "GPU 裝置",
-          "description": "選擇用於 Whisper 推理的 GPU。自動選擇獨立 GPU。",
-          "auto": "自動"
-        }
       },
       "translateToEnglish": {
         "label": "翻譯為英語",
@@ -271,157 +376,124 @@
         "maxWidthDescription": "How wide the caption is allowed to grow before it wraps onto a second line, as a percentage of the video frame."
       }
     },
-    "postProcessing": {
-      "title": "後處理",
-      "hotkey": {
-        "title": "快捷鍵"
-      },
-      "api": {
-        "title": "API（相容 OpenAI）",
-        "provider": {
-          "title": "供應商",
-          "description": "選擇一個相容 OpenAI 的供應商"
+    "captions": {
+      "tabs": {
+        "ariaLabel": "Caption orientation",
+        "desktop": "Desktop",
+        "desktopDescription": "Styling for landscape videos (width \u2265 height).",
+        "mobile": "Mobile",
+        "mobileDescription": "Styling for portrait / square videos (width < height)."
+      },      "preview": {
+        "heading": "Live preview",
+        "sampleLegend": "Sample text",
+        "sample": {
+          "short": "looking crispy",
+          "twoLine": "looking crispy\nand readable",
+          "long": "looking crispy and readable\neven when the caption text\nwraps onto a third line"
         },
-        "appleIntelligence": {
-          "title": "Apple Intelligence",
-          "description": "完全在裝置上運行，無需 API 金鑰或網路存取",
-          "requirements": "需要執行 macOS Tahoe（26.0）或更高版本的 Apple Silicon Mac。必須在系統設定中啟用 Apple Intelligence",
-          "unavailable": "Apple Intelligence 在此裝置上不可用。需要執行 macOS Tahoe（26.0）或更高版本的 Apple Silicon Mac，並在系統設定中啟用 Apple Intelligence"
-        },
-        "baseUrl": {
-          "title": "基礎網址",
-          "description": "所選供應商的 API 基礎網址，僅自訂供應商可編輯",
-          "placeholder": "https://api.openai.com/v1"
-        },
-        "apiKey": {
-          "title": "API 金鑰",
-          "description": "所選供應商的 API 金鑰",
-          "placeholder": "sk-..."
-        },
-        "model": {
-          "title": "模型",
-          "descriptionApple": "可設定 token 數量上限，或保持裝置預設值",
-          "descriptionCustom": "輸入自訂端點所需的模型 ID",
-          "descriptionDefault": "從所選供應商的可用模型中選擇",
-          "placeholderApple": "Apple Intelligence",
-          "placeholderWithOptions": "搜尋或選擇模型",
-          "placeholderNoOptions": "輸入模型名稱",
-          "refreshModels": "重新整理模型"
+        "orientation": {
+          "label": "預覽方向",
+          "horizontal": "橫向",
+          "vertical": "縱向"
         }
-      },
-      "prompts": {
-        "title": "提示詞",
-        "selectedPrompt": {
-          "title": "已選提示詞",
-          "description": "選擇用於最佳化轉錄的範本或建立新範本。在提示詞文字中使用 ${output} 來引用轉錄結果"
-        },
-        "noPrompts": "沒有可用的提示詞",
-        "selectPrompt": "選擇提示詞",
-        "createNew": "建立新提示詞",
-        "promptLabel": "提示詞名稱",
-        "promptLabelPlaceholder": "輸入提示詞名稱",
-        "promptInstructions": "提示詞指令",
-        "promptInstructionsPlaceholder": "撰寫轉錄後要執行的指令。範例：改善以下文字的語法和清晰度: ${output}",
-        "promptTip": "提示：使用 <code>${output}</code> 將轉錄文字插入到您的提示詞中",
-        "updatePrompt": "更新提示詞",
-        "deletePrompt": "刪除提示詞",
-        "createPrompt": "建立提示詞",
-        "cancel": "取消",
-        "selectToEdit": "選擇上方的提示詞以檢視和編輯其詳細資訊",
-        "createFirst": "點選上方的「建立新提示詞」來建立您的第一個後處理提示詞"
       }
     },
-    "history": {
-      "title": "歷史紀錄",
-      "openFolder": "開啟錄音資料夾",
-      "loading": "載入歷史紀錄中...",
-      "empty": "還沒有轉錄紀錄。開始錄製以建立您的歷史紀錄！",
-      "copyToClipboard": "複製轉錄到剪貼簿",
-      "save": "儲存轉錄",
-      "unsave": "從已儲存中移除",
-      "delete": "刪除條目",
-      "deleteError": "刪除條目失敗，請重試",
-      "retranscribe": "重新轉錄",
-      "retranscribeError": "重新轉錄失敗，請重試。",
-      "transcribing": "轉錄中...",
-      "transcriptionFailed": "轉錄失敗。您可以使用重試圖示重新轉錄。"
+    "experimental": {
+      "title": "Experimental",
+      "banner": "These features are under active development and may change or be removed."
     },
-    "debug": {
-      "title": "偵錯",
-      "logDirectory": {
-        "title": "日誌目錄",
-        "description": "日誌檔案的儲存位置"
+    "export": {
+      "title": "Export",
+      "description": "Settings that apply when exporting your edited media.",
+      "loudness": {
+        "title": "Loudness normalization",
+        "description": "Match a target integrated loudness so exported videos sound consistent across players and platforms.",
+        "options": {
+          "off": {
+            "label": "Off",
+            "description": "No loudness normalization. Exported audio uses the source levels."
+          },
+          "podcast_-16": {
+            "label": "Podcast (-16 LUFS)",
+            "description": "Broadcast / podcast preset. Targets -16 LUFS integrated."
+          },
+          "streaming_-14": {
+            "label": "Streaming (-14 LUFS)",
+            "description": "Spotify / YouTube preset. Targets -14 LUFS integrated."
+          }
+        },
+        "preflight": {
+          "title": "Preflight measurement",
+          "description": "Measures the post-edit audio without exporting so you can preview how far off-target it is.",
+          "run": "Run preflight",
+          "running": "Measuring…",
+          "integrated": "Integrated",
+          "truePeak": "True peak",
+          "lra": "Loudness range",
+          "delta": "Delta to target",
+          "target": "Target",
+          "noMedia": "Open a project to run preflight.",
+          "noTarget": "—",
+          "warningOffTarget": "Measured loudness is more than 12 LU off the target. Consider re-recording or adjusting the source before export.",
+          "error": "Preflight failed: {{error}}"
+        }
       },
-      "logLevel": {
-        "title": "日誌等級",
-        "description": "設定日誌的詳細程度"
-      },
-      "updateChecks": {
-        "label": "檢查更新",
-        "description": "自動檢查 Toaster 的新版本"
-      },
-      "wordCorrectionThreshold": {
-        "title": "詞彙修正閾值",
-        "description": "自訂詞彙修正的靈敏度"
-      },
-      "historyLimit": {
-        "title": "歷史紀錄上限",
-        "description": "歷史紀錄的最大保留筆數",
-        "entries": "筆"
-      },
-      "recordingRetention": {
-        "title": "自動刪除錄音",
-        "description": "自動刪除舊錄音以節省空間",
-        "never": "從不",
-        "preserveLimit": "保留最新 {{count}} 筆",
-        "days3": "3 天後",
-        "weeks2": "2 週後",
-        "months3": "3 個月後",
-        "placeholder": "選擇保留期限..."
-      },
-      "clamshellMicrophone": {
-        "title": "闔蓋麥克風",
-        "description": "筆記型電腦闔蓋時使用的麥克風"
-      },
-      "postProcessingToggle": {
-        "label": "後處理",
-        "description": "啟用轉錄後的 AI 文字最佳化"
-      },
-      "paths": {
-        "appData": "應用程式資料:",
-        "models": "模型:",
-        "settings": "設定:"
+      "format": {
+        "title": "Format",
+        "label": "Output format",
+        "description": "Choose the container and codec for exported media. Audio-only presets drop the video stream.",
+        "options": {
+          "mp4": {
+            "label": "Video (mp4)",
+            "description": "Edited video with H.264 video and AAC audio in an mp4 container. Default."
+          },
+          "mp3": {
+            "label": "Audio - mp3",
+            "description": "Audio-only mp3 (libmp3lame) at 192 kbps. Most universally compatible audio format."
+          },
+          "wav": {
+            "label": "Audio - wav",
+            "description": "Uncompressed 16-bit PCM in a wav container. Largest file; lossless."
+          },
+          "m4a": {
+            "label": "Audio - m4a",
+            "description": "AAC audio in an m4a (audio-only mp4) container at 192 kbps. Good for Apple devices."
+          },
+          "opus": {
+            "label": "Audio - opus",
+            "description": "Opus audio (libopus) at 128 kbps. Best quality per bit; modern codec."
+          }
+        }
       }
     },
-    "about": {
-      "title": "關於",
-      "version": {
-        "title": "版本",
-        "description": "Toaster 的目前版本"
-      },
-      "appDataDirectory": {
-        "title": "應用程式資料目錄",
-        "description": "Toaster 儲存資料的位置"
-      },
-      "sourceCode": {
-        "title": "原始碼",
-        "description": "檢視原始碼並參與貢獻",
-        "button": "在 GitHub 上檢視"
-      },
-      "acknowledgments": {
-        "title": "致謝",
-        "intro": "Toaster extends its engine with transcript-first video and audio editing capabilities from the following projects.",
-        "handy": {
-          "title": "Handy",
-          "description": "Handy is built on the foundation of Handy by cjpais",
-          "details": "Handy is an open-source, local-first speech-to-text application. Thank you to cjpais and all Handy contributors.",
-          "button": "View Handy on GitHub"
+    "advanced": {
+      "title": "Advanced",
+      "description": "Configured-once controls like allow and discard word lists.",
+      "groups": {
+        "words": {
+          "title": "Words",
+          "description": "Discard and allow word lists used across the transcript editor."
         },
-        "whisper": {
-          "title": "Whisper.cpp",
-          "description": "針對 OpenAI Whisper 自動語音識別模型的高效能推理引擎",
-          "details": "Toaster 使用 Whisper.cpp 進行快速的本機語音轉文字處理。感謝 Georgi Gerganov 和貢獻者們的傑出工作"
+        "performance": {
+          "title": "Performance",
+          "description": "Model unload timing and related runtime behavior."
+        },
+        "captions": {
+          "title": "Captions",
+          "description": "Caption preview and export styling."
+        },
+        "export": {
+          "title": "Export",
+          "description": "Output format, loudness target, and preflight checks for exported media."
+        },
+        "experimental": {
+          "title": "Experimental",
+          "description": "Opt-in features that may change or be removed. Gated by the master toggle below."
         }
+      },
+      "experimentalMaster": {
+        "title": "Enable experimental features",
+        "description": "Master switch for every experiment. When off, individual experiment flags read as disabled even if they were previously turned on. Turning this back on restores your prior selections."
       }
     }
   },
@@ -485,10 +557,6 @@
     "title": "應用程式語言",
     "description": "變更 Toaster 介面的語言"
   },
-  "overlay": {
-    "transcribing": "正在轉錄...",
-    "processing": "處理中..."
-  },
   "player": {
     "play": "Play",
     "pause": "Pause",
@@ -509,12 +577,22 @@
     "cacheModeSimplified": "Cache: simplified"
   },
   "editor": {
+    "captionOrientation": {
+      "ariaLabel": "Caption orientation",
+      "label": "Captions",
+      "option": {
+        "desktop": "Desktop",
+        "mobile": "Mobile",
+        "auto": "Auto"
+      }
+    },
     "sections": {
       "project": "Project",
       "media": "Media",
       "transcription": "Transcription",
       "exportTools": "Export & Tools",
-      "edit": "Edit"
+      "edit": "Edit",
+      "words": "Words"
     },
     "deleteWord": "Delete Word",
     "restoreWord": "Restore Word",
@@ -587,5 +665,12 @@
     "exporting": "Exporting...",
     "addCaptions": "Add Captions",
     "cleanup": "Clean up"
+  },
+  "experiments": {
+    "simplifyMode": {
+      "label": "Simplify Mode",
+      "description": "Reduce visual density and hide secondary controls in the editor."
+    },
+    "feedbackLink": "Send feedback"
   }
 }

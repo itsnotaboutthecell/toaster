@@ -6,14 +6,11 @@
 //! smaller helpers.
 
 use super::types::{
-    AppSettings, CaptionFontFamily, LLMPrompt, LogLevel, ModelUnloadTimeout, OrtAcceleratorSetting,
-    PostProcessProvider, RecordingRetentionPeriod, SecretMap, ShortcutBinding,
+    AppSettings, CaptionFontFamily, CaptionProfile, CaptionProfileSet, LLMPrompt, LogLevel,
+    ModelUnloadTimeout, OrtAcceleratorSetting, PostProcessProvider, SecretMap, ShortcutBinding,
     WhisperAcceleratorSetting,
 };
-use super::{
-    APPLE_INTELLIGENCE_DEFAULT_MODEL_ID, APPLE_INTELLIGENCE_PROVIDER_ID, CUSTOM_LOCAL_PROVIDER_ID,
-    LM_STUDIO_PROVIDER_ID, OLLAMA_PROVIDER_ID,
-};
+use super::{CUSTOM_LOCAL_PROVIDER_ID, LM_STUDIO_PROVIDER_ID, LOCAL_GGUF_PROVIDER_ID, OLLAMA_PROVIDER_ID};
 use log::debug;
 use std::collections::HashMap;
 
@@ -26,7 +23,10 @@ pub(super) fn default_settings_version() -> u32 {
 }
 
 pub(super) fn default_caption_font_size() -> u32 {
-    24
+    // 40 px on a 1080p frame is ~3.7 % of frame height, aligning with
+    // broadcast/YouTube caption norms. The previous 24 px (~2.2 %) was
+    // readable but felt tiny on the default export size.
+    40
 }
 
 pub(super) fn default_caption_bg_color() -> String {
@@ -42,7 +42,10 @@ pub(super) fn default_caption_position() -> u32 {
 }
 
 pub(super) fn default_caption_radius_px() -> u32 {
-    4
+    // Export uses libass BorderStyle=3 (opaque rectangle); preview
+    // matches with `borderRadius: 0`. Radius is kept as a settable
+    // field for forward compatibility but defaults to 0.
+    0
 }
 
 pub(super) fn default_caption_padding_x_px() -> u32 {
@@ -55,6 +58,47 @@ pub(super) fn default_caption_padding_y_px() -> u32 {
 
 pub(super) fn default_caption_max_width_percent() -> u32 {
     90
+}
+
+/// Default desktop profile. Matches the existing flat-field defaults so
+/// users upgrading don't see a visual change on landscape content.
+pub fn default_desktop_profile() -> CaptionProfile {
+    CaptionProfile {
+        font_size: default_caption_font_size(),
+        bg_color: default_caption_bg_color(),
+        text_color: default_caption_text_color(),
+        position: default_caption_position(),
+        font_family: CaptionFontFamily::default(),
+        radius_px: default_caption_radius_px(),
+        padding_x_px: default_caption_padding_x_px(),
+        padding_y_px: default_caption_padding_y_px(),
+        max_width_percent: default_caption_max_width_percent(),
+    }
+}
+
+/// Default mobile profile. Differs from desktop on several axes
+/// (Blueprint §Default profile values): bigger text, higher anchor
+/// (thumbs sit at the bottom), narrower max-width, rounded box,
+/// slightly more padding.
+pub fn default_mobile_profile() -> CaptionProfile {
+    CaptionProfile {
+        font_size: 48,
+        bg_color: default_caption_bg_color(),
+        text_color: default_caption_text_color(),
+        position: 80,
+        font_family: CaptionFontFamily::default(),
+        radius_px: 8,
+        padding_x_px: 14,
+        padding_y_px: 6,
+        max_width_percent: 80,
+    }
+}
+
+pub(super) fn default_caption_profiles() -> CaptionProfileSet {
+    CaptionProfileSet {
+        desktop: default_desktop_profile(),
+        mobile: default_mobile_profile(),
+    }
 }
 
 pub(super) fn default_preferred_output_sample_rate() -> u32 {
@@ -89,14 +133,6 @@ pub(super) fn default_word_correction_threshold() -> f64 {
     0.18
 }
 
-pub(super) fn default_history_limit() -> usize {
-    5
-}
-
-pub(super) fn default_recording_retention_period() -> RecordingRetentionPeriod {
-    RecordingRetentionPeriod::PreserveLimit
-}
-
 pub(super) fn default_post_process_enabled() -> bool {
     false
 }
@@ -112,14 +148,29 @@ pub(super) fn default_app_language() -> String {
 }
 
 pub(super) fn default_post_process_provider_id() -> String {
-    OLLAMA_PROVIDER_ID.to_string()
+    // Default to the in-process local-GGUF provider; users can swap to
+    // Ollama / LM Studio / llama.cpp via the selector. See PRD R-008 and
+    // docs/post-processing.md.
+    LOCAL_GGUF_PROVIDER_ID.to_string()
 }
 
 pub(super) fn default_post_process_providers() -> Vec<PostProcessProvider> {
-    let providers = vec![
+    vec![
+        PostProcessProvider {
+            id: LOCAL_GGUF_PROVIDER_ID.to_string(),
+            label: "Local (in-process)".to_string(),
+            // base_url is unused for the in-process path but we keep the
+            // field non-empty so stored settings round-trip cleanly.
+            base_url: "local://in-process".to_string(),
+            allow_base_url_edit: false,
+            models_endpoint: None,
+            supports_structured_output: true,
+            local_only: true,
+            requires_api_key: false,
+        },
         PostProcessProvider {
             id: OLLAMA_PROVIDER_ID.to_string(),
-            label: "Ollama (Local)".to_string(),
+            label: "Ollama (HTTP)".to_string(),
             base_url: "http://127.0.0.1:11434/v1".to_string(),
             allow_base_url_edit: false,
             models_endpoint: Some("/models".to_string()),
@@ -129,7 +180,7 @@ pub(super) fn default_post_process_providers() -> Vec<PostProcessProvider> {
         },
         PostProcessProvider {
             id: LM_STUDIO_PROVIDER_ID.to_string(),
-            label: "LM Studio (Local)".to_string(),
+            label: "LM Studio (HTTP)".to_string(),
             base_url: "http://127.0.0.1:1234/v1".to_string(),
             allow_base_url_edit: false,
             models_endpoint: Some("/models".to_string()),
@@ -139,7 +190,7 @@ pub(super) fn default_post_process_providers() -> Vec<PostProcessProvider> {
         },
         PostProcessProvider {
             id: CUSTOM_LOCAL_PROVIDER_ID.to_string(),
-            label: "OpenAI-Compatible (Local)".to_string(),
+            label: "OpenAI-Compatible (HTTP)".to_string(),
             base_url: "http://127.0.0.1:11434/v1".to_string(),
             allow_base_url_edit: true,
             models_endpoint: Some("/models".to_string()),
@@ -147,25 +198,7 @@ pub(super) fn default_post_process_providers() -> Vec<PostProcessProvider> {
             local_only: true,
             requires_api_key: false,
         },
-    ];
-
-    // Note: We always include Apple Intelligence on macOS ARM64 without checking availability
-    // at startup. The availability check is deferred to when the user actually tries to use it.
-    #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
-    {
-        providers.push(PostProcessProvider {
-            id: APPLE_INTELLIGENCE_PROVIDER_ID.to_string(),
-            label: "Apple Intelligence".to_string(),
-            base_url: "apple-intelligence://local".to_string(),
-            allow_base_url_edit: false,
-            models_endpoint: None,
-            supports_structured_output: true,
-            local_only: true,
-            requires_api_key: false,
-        });
-    }
-
-    providers
+    ]
 }
 
 pub(super) fn default_post_process_api_keys() -> SecretMap {
@@ -176,20 +209,10 @@ pub(super) fn default_post_process_api_keys() -> SecretMap {
     SecretMap(map)
 }
 
-fn default_model_for_provider(provider_id: &str) -> String {
-    if provider_id == APPLE_INTELLIGENCE_PROVIDER_ID {
-        return APPLE_INTELLIGENCE_DEFAULT_MODEL_ID.to_string();
-    }
-    String::new()
-}
-
 pub(super) fn default_post_process_models() -> HashMap<String, String> {
     let mut map = HashMap::new();
     for provider in default_post_process_providers() {
-        map.insert(
-            provider.id.clone(),
-            default_model_for_provider(&provider.id),
-        );
+        map.insert(provider.id.clone(), String::new());
     }
     map
 }
@@ -198,7 +221,7 @@ pub(super) fn default_post_process_prompts() -> Vec<LLMPrompt> {
     vec![LLMPrompt {
         id: "default_improve_transcriptions".to_string(),
         name: "Improve Transcriptions".to_string(),
-        prompt: "Clean this transcript:\n1. Fix spelling, capitalization, and punctuation errors\n2. Convert number words to digits (twenty-five → 25, ten percent → 10%, five dollars → $5)\n3. Replace spoken punctuation with symbols (period → ., comma → ,, question mark → ?)\n4. Remove filler words (um, uh, like as filler)\n5. Keep the language in the original version (if it was french, keep it in french for example)\n6. Preserve numbers/currency/symbol tokens exactly when they already exist in the transcript\n\nPreserve exact meaning and word order. Do not paraphrase or reorder content.\n\nReturn only the cleaned transcript.\n\nTranscript:\n${output}".to_string(),
+        prompt: "Clean this transcript:\n1. Fix spelling, capitalization, and punctuation errors\n2. Convert number words to digits (twenty-five → 25, ten percent → 10%, five dollars → $5)\n3. Replace spoken punctuation with symbols (period → ., comma → ,, question mark → ?)\n4. Remove filler words from the configured Discard Words list: ${filler_words}\n5. Keep the language in the original version (if it was french, keep it in french for example)\n6. Preserve numbers/currency/symbol tokens exactly when they already exist in the transcript\n\nPreserve exact meaning and word order. Do not paraphrase or reorder content.\n\nReturn only the cleaned transcript.\n\nTranscript:\n${output}".to_string(),
     }]
 }
 
@@ -213,8 +236,9 @@ pub fn ensure_post_process_defaults(settings: &mut AppSettings) -> bool {
 
     // Migration: Toaster is local-only for post-processing. Strip any cloud
     // providers inherited from Handy's defaults (openai, anthropic, groq,
-    // cerebras, openrouter, zai, bedrock_mantle). The seed loop below will
-    // re-add only the ones in default_post_process_providers().
+    // cerebras, openrouter, zai, bedrock_mantle), plus the deprecated
+    // apple_intelligence stub provider (Toaster is desktop-only). The seed
+    // loop below will re-add only the ones in default_post_process_providers().
     const LEGACY_CLOUD_PROVIDER_IDS: &[&str] = &[
         "openai",
         "anthropic",
@@ -223,6 +247,7 @@ pub fn ensure_post_process_defaults(settings: &mut AppSettings) -> bool {
         "openrouter",
         "zai",
         "bedrock_mantle",
+        "apple_intelligence",
     ];
     let before_len = settings.post_process_providers.len();
     settings
@@ -282,7 +307,6 @@ pub fn ensure_post_process_defaults(settings: &mut AppSettings) -> bool {
                 // import, manual JSON edit), reset it to the built-in default
                 // loopback URL so runtime calls cannot exfil transcripts.
                 if provider.local_only
-                    && provider.id != APPLE_INTELLIGENCE_PROVIDER_ID
                     && !super::sanitize::base_url_is_loopback(&existing.base_url)
                 {
                     debug!(
@@ -307,20 +331,11 @@ pub fn ensure_post_process_defaults(settings: &mut AppSettings) -> bool {
             changed = true;
         }
 
-        let default_model = default_model_for_provider(&provider.id);
-        match settings.post_process_models.get_mut(&provider.id) {
-            Some(existing) => {
-                if existing.is_empty() && !default_model.is_empty() {
-                    *existing = default_model.clone();
-                    changed = true;
-                }
-            }
-            None => {
-                settings
-                    .post_process_models
-                    .insert(provider.id.clone(), default_model);
-                changed = true;
-            }
+        if !settings.post_process_models.contains_key(&provider.id) {
+            settings
+                .post_process_models
+                .insert(provider.id.clone(), String::new());
+            changed = true;
         }
     }
 
@@ -334,6 +349,39 @@ pub fn ensure_post_process_defaults(settings: &mut AppSettings) -> bool {
     }
 
     changed
+}
+
+/// Seed `caption_profiles` from the legacy flat `caption_*` fields on
+/// first load after upgrade. Idempotent via
+/// `caption_profiles_was_migrated`. Returns `true` if any mutation
+/// happened (caller persists).
+pub fn ensure_caption_defaults(settings: &mut AppSettings) -> bool {
+    if settings.caption_profiles_was_migrated {
+        return false;
+    }
+
+    // Snapshot the current flat fields into a profile — this is what
+    // the user saw before the upgrade. Seed both orientations with the
+    // same values so nothing visually changes; the user tweaks the
+    // mobile profile later and the migration latch prevents overwrite.
+    let flat = CaptionProfile {
+        font_size: settings.caption_font_size,
+        bg_color: settings.caption_bg_color.clone(),
+        text_color: settings.caption_text_color.clone(),
+        position: settings.caption_position,
+        font_family: settings.caption_font_family,
+        radius_px: settings.caption_radius_px,
+        padding_x_px: settings.caption_padding_x_px,
+        padding_y_px: settings.caption_padding_y_px,
+        max_width_percent: settings.caption_max_width_percent,
+    };
+
+    settings.caption_profiles = CaptionProfileSet {
+        desktop: flat.clone(),
+        mobile: flat,
+    };
+    settings.caption_profiles_was_migrated = true;
+    true
 }
 
 pub fn get_default_settings() -> AppSettings {
@@ -402,8 +450,6 @@ pub fn get_default_settings() -> AppSettings {
         custom_words: Vec::new(),
         model_unload_timeout: ModelUnloadTimeout::default(),
         word_correction_threshold: default_word_correction_threshold(),
-        history_limit: default_history_limit(),
-        recording_retention_period: default_recording_retention_period(),
         post_process_enabled: default_post_process_enabled(),
         post_process_provider_id: default_post_process_provider_id(),
         post_process_providers: default_post_process_providers(),
@@ -439,9 +485,11 @@ pub fn get_default_settings() -> AppSettings {
         ort_accelerator: OrtAcceleratorSetting::default(),
         whisper_gpu_device: default_whisper_gpu_device(),
         normalize_audio_on_export: false,
+        loudness_target: crate::managers::splice::loudness::LoudnessTarget::Off,
         export_volume_db: 0.0,
         export_fade_in_ms: 0,
         export_fade_out_ms: 0,
+        export_format: crate::commands::waveform::AudioExportFormat::Mp4,
         caption_font_size: default_caption_font_size(),
         caption_bg_color: default_caption_bg_color(),
         caption_text_color: default_caption_text_color(),
@@ -451,7 +499,10 @@ pub fn get_default_settings() -> AppSettings {
         caption_padding_x_px: default_caption_padding_x_px(),
         caption_padding_y_px: default_caption_padding_y_px(),
         caption_max_width_percent: default_caption_max_width_percent(),
+        caption_profiles: default_caption_profiles(),
+        caption_profiles_was_migrated: true,
         settings_version: default_settings_version(),
+        local_llm_model_id: None,
     }
 }
 

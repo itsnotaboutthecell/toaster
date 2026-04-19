@@ -1,6 +1,10 @@
 //! Extracted from the inline mod tests block (monolith-split).
 
 use super::*;
+use super::alignment::{
+    align_onset_boundaries, correct_short_word_boundaries, refine_word_boundaries,
+};
+use transcribe_rs::TranscriptionSegment;
 
 fn make_word(text: &str, start_us: i64, end_us: i64, confidence: f32) -> Word {
     Word {

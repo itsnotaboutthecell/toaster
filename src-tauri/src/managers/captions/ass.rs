@@ -2,20 +2,37 @@
 //!
 //! Takes the authoritative `CaptionBlock` stream from `layout` and
 //! produces an ASS document that libass (via FFmpeg's `subtitles=` filter)
-//! renders identically to the preview. Two events are emitted per block:
+//! renders to a pixel-correct burn-in.
 //!
-//! 1. A background event on `Layer=0` containing a `\p1` vector shape —
-//!    a rounded rectangle sized to wrap the text with `padding_x/y_px`
-//!    gutters — filled with the block's background color + alpha.
-//! 2. A text event on `Layer=1` positioned inside the same rectangle,
-//!    with `\N` between visual lines.
+//! **Box sizing — single source of truth per renderer.** The earlier
+//! revision emitted a `\p1` vector-drawn rounded rectangle sized from
+//! `fontdue`-measured advance widths, then let libass/FreeType render the
+//! text on top. libass glyph advance widths differ from fontdue's
+//! (different hinter, kerning, feature tables), so the pill drifted ~15 %
+//! wider and text rendered ~20 % narrower than predicted — a ~35 %
+//! visible mismatch. This violated AGENTS.md's "single source of truth
+//! for dual-path logic" rule because the pill and the text were being
+//! sized by two different metric engines.
 //!
-//! This replaces the old SRT + `force_style` flow whose hard-edged
-//! `BorderStyle=3` rectangle had no way to carry the preview's rounded
-//! corners, Inter font, pixel-width wrap, or proportional padding.
+//! Now the export uses libass's native `BorderStyle=3` (Opaque Box). The
+//! box is filled with `OutlineColour` and auto-sizes to the glyphs that
+//! libass itself just measured, with `Outline` acting as symmetric
+//! padding on all four sides. The preview's CSS `padding` around
+//! auto-sized text produces the same geometric contract: the pill hugs
+//! whatever glyphs its own renderer drew. Rounded corners were dropped —
+//! libass BorderStyle=3 is a hard rectangle, and the preview follows
+//! suit. See `managers/captions/layout.rs` for the upstream layout.
 
 use super::layout::{CaptionBlock, Rgba};
 use std::fmt::Write;
+
+/// Resolve the padding value used as libass `Outline` for BorderStyle=3.
+/// The max of `padding_x_px` and `padding_y_px` ensures the opaque box
+/// always has at least the larger of the two configured gutters on every
+/// side.
+fn box_padding_px(block: &CaptionBlock) -> u32 {
+    block.padding_x_px.max(block.padding_y_px)
+}
 
 /// Serialize `CaptionBlock`s into a complete ASS document string.
 pub fn blocks_to_ass(blocks: &[CaptionBlock]) -> String {
@@ -24,13 +41,25 @@ pub fn blocks_to_ass(blocks: &[CaptionBlock]) -> String {
         .map(|b| (b.frame_width, b.frame_height))
         .unwrap_or((1920, 1080));
 
-    // The ASS font name for the *style* — every block in one run uses the
-    // same family (the user's selected `caption_font_family`).
+    // Style values come from the first block — every block in one run
+    // shares the same caption settings (font family, size, colors, padding).
     let font_name = blocks
         .first()
         .map(|b| b.font_ass_name.as_str())
         .unwrap_or("Arial");
     let font_size = blocks.first().map(|b| b.font_size_px).unwrap_or(24);
+    let text_c = blocks
+        .first()
+        .map(|b| b.text_color)
+        .unwrap_or(Rgba { r: 255, g: 255, b: 255, a: 255 });
+    let bg_c = blocks
+        .first()
+        .map(|b| b.background)
+        .unwrap_or(Rgba { r: 0, g: 0, b: 0, a: 0xB3 });
+    let padding = blocks.first().map(box_padding_px).unwrap_or(4);
+
+    let primary = ass_color_abgr(text_c);
+    let outline = ass_color_abgr(bg_c);
 
     let mut out = String::new();
     let _ = writeln!(out, "[Script Info]");
@@ -46,12 +75,13 @@ pub fn blocks_to_ass(blocks: &[CaptionBlock]) -> String {
         out,
         "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding"
     );
-    // BorderStyle=1 (outline + shadow, but Outline=0/Shadow=0 means no
-    // outline or shadow). We do backgrounds via the drawing event, not
-    // ASS's built-in box — so the style is otherwise neutral.
+    // BorderStyle=3 = Opaque Box. libass fills the box with
+    // `OutlineColour` (sized to the rendered glyphs + `Outline` px
+    // padding on every side). `Alignment=2` = bottom-center; `MarginV`
+    // is set per-event below so each block lands at its own position.
     let _ = writeln!(
         out,
-        "Style: Default,{font_name},{font_size},&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,7,0,0,0,1"
+        "Style: Default,{font_name},{font_size},{primary},&H000000FF,{outline},&H00000000,0,0,0,0,100,100,0,0,3,{padding},0,2,0,0,0,1"
     );
     let _ = writeln!(out);
 
@@ -61,83 +91,33 @@ pub fn blocks_to_ass(blocks: &[CaptionBlock]) -> String {
         "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text"
     );
     for block in blocks {
-        let num_lines = block.lines.len().max(1) as u32;
-        let box_w = block.text_width_px + 2 * block.padding_x_px;
-        let box_h = num_lines * block.line_height_px + 2 * block.padding_y_px;
-        // Top-left of the rect (frame-pixel coords).
-        let tx = block.frame_width.saturating_sub(box_w) / 2;
-        let ty = block
-            .frame_height
-            .saturating_sub(block.margin_v_px)
-            .saturating_sub(box_h);
-
         let start = format_ass_time(block.start_us);
         let end = format_ass_time(block.end_us);
-
-        // ── Layer 0: rounded-rect background ───────────────────────
-        let bg_color = ass_color_bgr(block.background);
-        let bg_alpha = ass_alpha(block.background.a);
-        let path = rounded_rect_path(box_w, box_h, block.radius_px.min(box_w / 2).min(box_h / 2));
-        // `\an7` = top-left anchor so `\pos` refers to the rect's top-left.
-        // `\bord0\shad0` kills any residual outline/shadow.
-        // `\1c` + `\1a` paint the drawing fill.
-        let _ = writeln!(
-            out,
-            "Dialogue: 0,{start},{end},Default,,0,0,0,,{{\\an7\\pos({tx},{ty})\\bord0\\shad0\\1c{bg_color}\\1a{bg_alpha}\\p1}}{path}{{\\p0}}"
-        );
-        // ── Layer 1: text ──────────────────────────────────────────
-        let text_color = ass_color_bgr(block.text_color);
-        let text_alpha = ass_alpha(block.text_color.a);
-        let text_x = tx + block.padding_x_px;
-        let text_y = ty + block.padding_y_px;
         let joined = block
             .lines
             .iter()
             .map(|l| escape_ass_text(l))
             .collect::<Vec<_>>()
             .join("\\N");
+        // MarginV column overrides the style MarginV per-block. With
+        // Alignment=2 it's the distance from the bottom of the frame to
+        // the baseline of the last line.
+        let mv = block.margin_v_px;
         let _ = writeln!(
             out,
-            "Dialogue: 1,{start},{end},Default,,0,0,0,,{{\\an7\\pos({text_x},{text_y})\\bord0\\shad0\\1c{text_color}\\1a{text_alpha}}}{joined}"
+            "Dialogue: 0,{start},{end},Default,,0,0,{mv},,{joined}"
         );
     }
 
     out
 }
 
-/// Draw a rounded rectangle using ASS vector drawing commands.
-/// Origin is `(0, 0)`, size is `w × h`, corner radius `r`.
-fn rounded_rect_path(w: u32, h: u32, r: u32) -> String {
-    let r = r.min(w / 2).min(h / 2);
-    if r == 0 {
-        // Square rect — skip the bezier arcs.
-        return format!("m 0 0 l {w} 0 l {w} {h} l 0 {h} l 0 0");
-    }
-    // `b x1 y1 x2 y2 x3 y3` draws a cubic bezier; repeating the end
-    // points flattens the curve for a smooth quarter-arc approximation.
-    let mut s = String::new();
-    let _ = write!(s, "m {r} 0 ");
-    let _ = write!(s, "l {} 0 ", w - r);
-    let _ = write!(s, "b {w} 0 {w} 0 {w} {r} ");
-    let _ = write!(s, "l {w} {} ", h - r);
-    let _ = write!(s, "b {w} {h} {w} {h} {} {h} ", w - r);
-    let _ = write!(s, "l {r} {h} ");
-    let _ = write!(s, "b 0 {h} 0 {h} 0 {} ", h - r);
-    let _ = write!(s, "l 0 {r} ");
-    let _ = write!(s, "b 0 0 0 0 {r} 0");
-    s
-}
-
-/// Format `Rgba` as `&HBBGGRR&` (ASS color format — RGB channels only).
-fn ass_color_bgr(c: Rgba) -> String {
-    format!("&H{:02X}{:02X}{:02X}&", c.b, c.g, c.r)
-}
-
-/// Format an 8-bit CSS alpha as an ASS `\1a` override value.
-/// ASS alpha is inverted relative to CSS: `00` = fully opaque,
-/// `FF` = fully transparent.
-fn ass_alpha(css_alpha: u8) -> String {
-    format!("&H{:02X}&", 255 - css_alpha)
+/// Format `Rgba` as `&HAABBGGRR` (ASS color format with alpha). ASS
+/// alpha is inverted relative to CSS: `00` = fully opaque, `FF` = fully
+/// transparent.
+fn ass_color_abgr(c: Rgba) -> String {
+    let a = 255 - c.a;
+    format!("&H{:02X}{:02X}{:02X}{:02X}", a, c.b, c.g, c.r)
 }
 
 /// Escape an ASS text literal. ASS uses `\` for override tags and
@@ -203,16 +183,16 @@ mod tests {
     }
 
     #[test]
-    fn rgba_to_ass_color_swaps_to_bgr() {
-        let c = Rgba { r: 0xAA, g: 0xBB, b: 0xCC, a: 0xFF };
-        assert_eq!(ass_color_bgr(c), "&HCCBBAA&");
-    }
-
-    #[test]
-    fn alpha_inverts_from_css_convention() {
-        assert_eq!(ass_alpha(0xFF), "&H00&"); // fully opaque CSS → 00 ASS
-        assert_eq!(ass_alpha(0x00), "&HFF&"); // fully transparent CSS → FF
-        assert_eq!(ass_alpha(0xB3), "&H4C&");
+    fn rgba_to_abgr_encodes_alpha_and_bgr() {
+        // Fully opaque white → alpha 00, BGR FFFFFF.
+        let c = Rgba { r: 0xFF, g: 0xFF, b: 0xFF, a: 0xFF };
+        assert_eq!(ass_color_abgr(c), "&H00FFFFFF");
+        // 0xB3 CSS alpha → 0x4C ASS alpha.
+        let d = Rgba { r: 0x00, g: 0x00, b: 0x00, a: 0xB3 };
+        assert_eq!(ass_color_abgr(d), "&H4C000000");
+        // Distinct channels confirm BGR byte order (not RGB).
+        let e = Rgba { r: 0xAA, g: 0xBB, b: 0xCC, a: 0xFF };
+        assert_eq!(ass_color_abgr(e), "&H00CCBBAA");
     }
 
     #[test]
@@ -222,35 +202,44 @@ mod tests {
     }
 
     #[test]
-    fn rounded_rect_path_has_four_arcs() {
-        let p = rounded_rect_path(200, 80, 4);
-        // One `m`, four `l`, four `b` commands.
-        assert_eq!(p.matches(" b ").count() + p.starts_with("b ") as usize, 4);
-        assert_eq!(p.matches(" l ").count(), 4);
+    fn box_padding_takes_the_max_of_xy() {
+        let b = mk_block(1, 0, 1);
+        // padding_x=12, padding_y=4 → max = 12.
+        assert_eq!(box_padding_px(&b), 12);
     }
 
     #[test]
-    fn square_rect_when_radius_is_zero() {
-        let p = rounded_rect_path(200, 80, 0);
-        assert!(!p.contains("b "));
-        assert_eq!(p.matches(" l ").count(), 4); // m 0 0 l w 0 l w h l 0 h l 0 0
-    }
-
-    #[test]
-    fn document_contains_script_info_and_events() {
+    fn document_uses_border_style_3_opaque_box() {
         let blocks = vec![mk_block(1, 0, 2_000_000), mk_block(2, 2_000_000, 4_000_000)];
         let doc = blocks_to_ass(&blocks);
         assert!(doc.contains("[Script Info]"));
         assert!(doc.contains("PlayResX: 1280"));
         assert!(doc.contains("PlayResY: 720"));
         assert!(doc.contains("[V4+ Styles]"));
-        assert!(doc.contains("Style: Default,Inter,32,"));
+        // BorderStyle=3 (opaque box) + Outline=12 (max padding) + Shadow=0 +
+        // Alignment=2 (bottom-center). The exact substring pins the whole
+        // style row so regressions are caught.
+        assert!(
+            doc.contains("Style: Default,Inter,32,&H00FFFFFF,&H000000FF,&H4C000000,&H00000000,0,0,0,0,100,100,0,0,3,12,0,2,0,0,0,1"),
+            "style row mismatch: {doc}"
+        );
         assert!(doc.contains("[Events]"));
-        // Two blocks × two events (bg + text) = four dialogue lines.
-        assert_eq!(doc.matches("Dialogue: ").count(), 4);
-        assert!(doc.contains("\\p1"));
-        assert!(doc.contains("\\p0"));
+        // One dialogue per block — libass sizes the box itself, so we no
+        // longer emit a separate `\p1` background event per block.
+        assert_eq!(doc.matches("Dialogue: ").count(), 2);
+        assert!(!doc.contains("\\p1"), "must not emit \\p1 drawings");
+        assert!(!doc.contains("\\p0"), "must not emit \\p0 drawings");
         assert!(doc.contains("Hello world"));
+        // MarginV column carries the per-block bottom margin.
+        assert!(doc.contains(",108,,Hello world"));
+    }
+
+    #[test]
+    fn multi_line_block_joins_with_ass_newline() {
+        let mut block = mk_block(1, 0, 2_000_000);
+        block.lines = vec!["line one".into(), "line two".into()];
+        let doc = blocks_to_ass(&[block]);
+        assert!(doc.contains("line one\\Nline two"));
     }
 
     #[test]
@@ -260,5 +249,17 @@ mod tests {
         assert!(doc.contains("[V4+ Styles]"));
         assert!(doc.contains("[Events]"));
         assert_eq!(doc.matches("Dialogue: ").count(), 0);
+    }
+
+    #[test]
+    fn style_colors_come_from_first_block_not_defaults() {
+        let mut block = mk_block(1, 0, 1_000_000);
+        block.text_color = Rgba { r: 0xFF, g: 0x88, b: 0x00, a: 0xFF };
+        block.background = Rgba { r: 0x10, g: 0x20, b: 0x30, a: 0x80 };
+        let doc = blocks_to_ass(&[block]);
+        // PrimaryColour = orange text, fully opaque.
+        assert!(doc.contains("&H000088FF"));
+        // OutlineColour = bg, alpha 0x80 CSS → 0x7F ASS.
+        assert!(doc.contains("&H7F302010"));
     }
 }

@@ -126,16 +126,6 @@ pub enum ModelUnloadTimeout {
     Sec15, // Debug mode only
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Type)]
-#[serde(rename_all = "snake_case")]
-pub enum RecordingRetentionPeriod {
-    Never,
-    PreserveLimit,
-    Days3,
-    Weeks2,
-    Months3,
-}
-
 impl ModelUnloadTimeout {
     pub fn to_minutes(self) -> Option<u64> {
         match self {
@@ -240,10 +230,6 @@ pub struct AppSettings {
     pub model_unload_timeout: ModelUnloadTimeout,
     #[serde(default = "default_word_correction_threshold")]
     pub word_correction_threshold: f64,
-    #[serde(default = "default_history_limit")]
-    pub history_limit: usize,
-    #[serde(default = "default_recording_retention_period")]
-    pub recording_retention_period: RecordingRetentionPeriod,
     #[serde(default = "default_post_process_enabled")]
     pub post_process_enabled: bool,
     #[serde(default = "default_post_process_provider_id")]
@@ -260,6 +246,13 @@ pub struct AppSettings {
     pub post_process_selected_prompt_id: Option<String>,
     #[serde(default = "default_app_language")]
     pub app_language: String,
+    /// Master gate for the Experimental settings group. When `false`,
+    /// per-flag booleans still store whatever the user last set, but the
+    /// `is_experiment_enabled` getter (and the matching
+    /// `useExperiment` hook on the frontend) return `false` so no
+    /// experimental feature actually activates. Defence-in-depth:
+    /// stored values are preserved across master toggle flips so a
+    /// user's prior opt-in comes back when they re-enable the master.
     #[serde(default)]
     pub experimental_enabled: bool,
     #[serde(default)]
@@ -276,12 +269,31 @@ pub struct AppSettings {
     pub whisper_gpu_device: i32,
     #[serde(default)]
     pub normalize_audio_on_export: bool,
+    /// Loudness normalization target for export. Single source of truth
+    /// for the `loudnorm` filter — see
+    /// `managers::splice::loudness::build_loudnorm_filter`. Frontend
+    /// only stores this enum and renders a Select; it MUST NOT
+    /// hand-build a `loudnorm=...` string. Legacy
+    /// `normalize_audio_on_export` migrates to `PodcastMinus16` via
+    /// `settings::migrate_loudness_setting`.
+    #[serde(default)]
+    pub loudness_target: crate::managers::splice::loudness::LoudnessTarget,
     #[serde(default)]
     pub export_volume_db: f32,
     #[serde(default)]
     pub export_fade_in_ms: u32,
     #[serde(default)]
     pub export_fade_out_ms: u32,
+    /// Audio-only export format preset. Default `Mp4` preserves
+    /// current behavior (H.264 video + AAC audio in mp4). The four
+    /// audio-only variants drop the video stream and re-mux the
+    /// post-edit audio per
+    /// `crate::commands::waveform::export_format_codec_map` —
+    /// frontend only stores the enum and never builds `-c:a` /
+    /// `-b:a` strings (AGENTS.md "Single source of truth for
+    /// dual-path logic").
+    #[serde(default)]
+    pub export_format: crate::commands::waveform::AudioExportFormat,
     #[serde(default = "default_caption_font_size")]
     pub caption_font_size: u32,
     #[serde(default = "default_caption_bg_color")]
@@ -300,8 +312,88 @@ pub struct AppSettings {
     pub caption_padding_y_px: u32,
     #[serde(default = "default_caption_max_width_percent")]
     pub caption_max_width_percent: u32,
+    /// Per-orientation caption profiles. Slice B single-source-of-truth
+    /// for caption geometry — preview and export both read through
+    /// `managers::captions::compute_caption_layout(&profile, dims)`.
+    /// The flat `caption_*` fields above are retained one release for
+    /// backward-compat; on first load `defaults::ensure_caption_defaults`
+    /// seeds this from those flat fields.
+    #[serde(default = "default_caption_profiles")]
+    pub caption_profiles: CaptionProfileSet,
+    /// Idempotency latch for the flat-field → profiles migration. Once
+    /// true, `ensure_caption_defaults` is a no-op on subsequent loads.
+    #[serde(default)]
+    pub caption_profiles_was_migrated: bool,
     #[serde(default = "default_settings_version")]
     pub settings_version: u32,
+    /// ID of the catalog entry (see `managers::llm::catalog`) the user
+    /// selected for the in-process local-GGUF cleanup path. `None` means
+    /// no local model has been chosen yet; the dispatcher falls back to
+    /// the HTTP provider when this is unset, regardless of the provider
+    /// selector value. See PRD R-008.
+    #[serde(default)]
+    pub local_llm_model_id: Option<String>,
+}
+
+/// Per-orientation caption profile. Carries the 9 user-configurable
+/// caption geometry fields that persist in settings and projects.
+/// Preview and libass export both consume geometry derived from this
+/// via `managers::captions::compute_caption_layout` — the single
+/// source of truth for caption layout math (AGENTS.md, Slice B).
+#[derive(
+    Debug, Clone, PartialEq, Eq, Serialize, Deserialize, specta::Type,
+)]
+pub struct CaptionProfile {
+    pub font_size: u32,
+    pub bg_color: String,
+    pub text_color: String,
+    pub position: u32,
+    pub font_family: CaptionFontFamily,
+    pub radius_px: u32,
+    pub padding_x_px: u32,
+    pub padding_y_px: u32,
+    pub max_width_percent: u32,
+}
+
+/// Pair of caption profiles selected by orientation. Desktop is used
+/// for landscape (width/height > 1.0), Mobile for portrait or square.
+#[derive(
+    Debug, Clone, PartialEq, Eq, Serialize, Deserialize, specta::Type,
+)]
+pub struct CaptionProfileSet {
+    pub desktop: CaptionProfile,
+    pub mobile: CaptionProfile,
+}
+
+/// Orientation selector for caption commands. Auto-detection happens
+/// in the frontend editor radio; the Tauri surface only exposes the
+/// two concrete profiles.
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, specta::Type,
+)]
+pub enum Orientation {
+    Desktop,
+    Mobile,
+}
+
+/// Scope for `set_caption_profile` — whether the write lands on
+/// `AppSettings` (user-default) or the currently-open `ProjectSettings`
+/// (per-project override).
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, specta::Type,
+)]
+pub enum ProfileScope {
+    App,
+    Project,
+}
+
+/// Video dimensions in pixels. Input to `compute_caption_layout`.
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, specta::Type,
+)]
+pub struct VideoDims {
+    pub width: u32,
+    pub height: u32,
 }
 
 /// Font family choice for captions. The preview CSS and the exported ASS

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSettings } from "../../../hooks/useSettings";
-import { commands, type PostProcessProvider } from "@/bindings";
+import { type PostProcessProvider } from "@/bindings";
 import type { ModelOption } from "./types";
 import type { DropdownOption } from "../../ui/Dropdown";
 
@@ -9,8 +9,6 @@ type PostProcessProviderState = {
   selectedProviderId: string;
   selectedProvider: PostProcessProvider | undefined;
   isCustomProvider: boolean;
-  isAppleProvider: boolean;
-  appleIntelligenceUnavailable: boolean;
   providerValidationError: string | null;
   baseUrl: string;
   handleBaseUrlChange: (value: string) => void;
@@ -28,8 +26,6 @@ type PostProcessProviderState = {
   handleModelCreate: (value: string) => void;
   handleRefreshModels: () => void;
 };
-
-const APPLE_PROVIDER_ID = "apple_intelligence";
 
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) {
@@ -64,9 +60,6 @@ export const usePostProcessProviderState = (): PostProcessProviderState => {
     );
   }, [providers, selectedProviderId]);
 
-  const isAppleProvider = selectedProvider?.id === APPLE_PROVIDER_ID;
-  const [appleIntelligenceUnavailable, setAppleIntelligenceUnavailable] =
-    useState(false);
   const [providerValidationError, setProviderValidationError] = useState<
     string | null
   >(null);
@@ -85,21 +78,9 @@ export const usePostProcessProviderState = (): PostProcessProviderState => {
 
   const handleProviderSelect = useCallback(
     async (providerId: string) => {
-      // Clear error state on any selection attempt (allows dismissing the error)
-      setAppleIntelligenceUnavailable(false);
       setProviderValidationError(null);
 
       if (providerId === selectedProviderId) return;
-
-      // Check Apple Intelligence availability before selecting
-      if (providerId === APPLE_PROVIDER_ID) {
-        const available = await commands.checkAppleIntelligenceAvailable();
-        if (!available) {
-          setAppleIntelligenceUnavailable(true);
-          // Don't return - still set the provider so dropdown shows the selection
-          // The backend gracefully handles unavailable Apple Intelligence
-        }
-      }
 
       try {
         await setPostProcessProvider(providerId);
@@ -113,21 +94,20 @@ export const usePostProcessProviderState = (): PostProcessProviderState => {
       // a previous provider/base_url can persist and silently 404 at runtime.
       // Skip when the provider isn't configured yet (no API key / empty base URL)
       // to avoid unnecessary backend errors.
-      if (providerId !== APPLE_PROVIDER_ID) {
-        const provider = providers.find((p) => p.id === providerId);
-        const apiKey = settings?.post_process_api_keys?.[providerId] ?? "";
-        const hasBaseUrl = (provider?.base_url ?? "").trim() !== "";
-        const hasApiKey = apiKey.trim() !== "";
-        const requiresApiKey = provider?.requires_api_key ?? true;
-        const canFetchModels = requiresApiKey ? hasApiKey : hasBaseUrl;
+      const provider = providers.find((p) => p.id === providerId);
+      const apiKeyForProvider =
+        settings?.post_process_api_keys?.[providerId] ?? "";
+      const hasBaseUrl = (provider?.base_url ?? "").trim() !== "";
+      const hasApiKey = apiKeyForProvider.trim() !== "";
+      const requiresApiKey = provider?.requires_api_key ?? true;
+      const canFetchModels = requiresApiKey ? hasApiKey : hasBaseUrl;
 
-        if (canFetchModels) {
-          try {
-            await fetchPostProcessModels(providerId);
-            setProviderValidationError(null);
-          } catch (error) {
-            setProviderValidationError(getErrorMessage(error));
-          }
+      if (canFetchModels) {
+        try {
+          await fetchPostProcessModels(providerId);
+          setProviderValidationError(null);
+        } catch (error) {
+          setProviderValidationError(getErrorMessage(error));
         }
       }
     },
@@ -204,12 +184,11 @@ export const usePostProcessProviderState = (): PostProcessProviderState => {
   );
 
   const handleRefreshModels = useCallback(() => {
-    if (isAppleProvider) return;
     setProviderValidationError(null);
     void fetchPostProcessModels(selectedProviderId).catch((error) =>
       setProviderValidationError(getErrorMessage(error)),
     );
-  }, [fetchPostProcessModels, isAppleProvider, selectedProviderId]);
+  }, [fetchPostProcessModels, selectedProviderId]);
 
   useEffect(() => {
     setProviderValidationError(null);
@@ -254,15 +233,11 @@ export const usePostProcessProviderState = (): PostProcessProviderState => {
 
   const isCustomProvider = selectedProvider?.id === "custom";
 
-  // No automatic fetching - user must click refresh button
-
   return {
     providerOptions,
     selectedProviderId,
     selectedProvider,
     isCustomProvider,
-    isAppleProvider,
-    appleIntelligenceUnavailable,
     providerValidationError,
     baseUrl,
     handleBaseUrlChange,

@@ -3,8 +3,10 @@
 use super::*;
 
 use super::alignment::{
-    find_local_low_energy_boundary, sample_to_us, snap_to_zero_crossing, us_to_sample,
+    find_local_low_energy_boundary, refine_word_boundaries, sample_to_us, snap_to_zero_crossing,
+    us_to_sample,
 };
+use crate::audio_toolkit::timing::us_to_sample as timing_us_to_sample;
 use crate::managers::editor::{EditorState, Word as EdWord};
 
 // ── acceptance thresholds ────────────────────────────────────────────────

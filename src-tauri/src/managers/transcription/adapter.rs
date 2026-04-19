@@ -106,8 +106,8 @@ pub struct NormalizedTranscriptionResult {
     /// Final text blob — the engine's `TranscriptionResult::text` after the
     /// manager's text-level post-processing (fuzzy custom-word correction,
     /// filler/stutter cleanup). Carried alongside `words` so downstream
-    /// callers that still operate on the text blob (`commands::history`,
-    /// `commands::transcribe_file::build_words_from_segments`) don't have
+    /// callers that still operate on the text blob
+    /// (`commands::transcribe_file::build_words_from_segments`) don't have
     /// to round-trip through `words` and lose punctuation/case.
     pub text: String,
     /// Raw engine-reported segment timings, preserved for downstream forced

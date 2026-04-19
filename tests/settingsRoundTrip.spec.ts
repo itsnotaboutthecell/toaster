@@ -33,11 +33,8 @@ const INIT_SCRIPT = `
     app_language: "en",
     show_tray_icon: true,
     model_unload_timeout: 300,
-    experimental_enabled: false,
     acceleration: "auto",
     simplify_mode: "basic",
-    history_limit: 50,
-    recording_retention_period: 30,
     debug_mode: false,
     discard_words: "",
     allow_words: "",
@@ -67,10 +64,6 @@ const INIT_SCRIPT = `
       }
       if (cmd === "change_theme_setting") {
         window.__mockSettings.theme = args.theme;
-        return null;
-      }
-      if (cmd === "update_history_limit") {
-        window.__mockSettings.history_limit = args.limit;
         return null;
       }
       // Catch-all: accept unrecognized mutator calls but do not mutate.
@@ -122,14 +115,14 @@ test.describe("Settings round-trip", () => {
         __mockSettings: Record<string, unknown>;
       };
       await w.__TAURI_INTERNALS__.invoke("update_app_settings", {
-        settings: { history_limit: 99, debug_mode: true },
+        settings: { app_language: "es", debug_mode: true },
       });
       const after = await w.__TAURI_INTERNALS__.invoke("get_app_settings");
       return after;
     });
 
-    const after = result as { history_limit: number; debug_mode: boolean };
-    expect(after.history_limit).toBe(99);
+    const after = result as { app_language: string; debug_mode: boolean };
+    expect(after.app_language).toBe("es");
     expect(after.debug_mode).toBe(true);
   });
 
@@ -138,17 +131,17 @@ test.describe("Settings round-trip", () => {
   }) => {
     await setup(page);
 
-    const history = await page.evaluate(async () => {
+    const language = await page.evaluate(async () => {
       const { useSettingsStore } = await import("@/stores/settingsStore");
       await useSettingsStore.getState().initialize();
-      await useSettingsStore.getState().updateSetting("history_limit", 77);
+      await useSettingsStore.getState().updateSetting("app_language", "de");
       const { commands } = await import("@/bindings");
       const s = await commands.getAppSettings();
       if (s.status !== "ok") throw new Error(s.error);
-      return s.data.history_limit;
+      return s.data.app_language;
     });
 
-    expect(history).toBe(77);
+    expect(language).toBe("de");
   });
 
   // TODO: cross-reload persistence requires a backend-backed settings store.

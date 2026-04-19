@@ -6,13 +6,11 @@
   },
   "sidebar": {
     "editor": "Editor",
-    "general": "Allmänt",
     "models": "Modeller",
-    "advanced": "Avancerat",
     "postProcessing": "Efterbearbetning",
-    "history": "Historik",
     "debug": "Felsökning",
-    "about": "Om"
+    "about": "Om",
+    "advanced": "Advanced"
   },
   "onboarding": {
     "subtitle": "För att komma igång, välj en transkriptionsmodell",
@@ -160,44 +158,151 @@
         "allLanguages": "Alla språk"
       },
       "noModelsMatch": "Inga modeller matchar detta filter.",
-      "download": "Download"
-    },
-    "advanced": {
-      "title": "Avancerat",
+      "download": "Download",
       "groups": {
-        "app": "App",
-        "output": "Utmatning",
-        "transcription": "Transkription",
-        "captionSettings": "Caption Settings",
-        "history": "Historik",
-        "experimental": "Experimentellt"
+        "performance": "Performance",
+        "captions": "Captions"
+      }
+    },
+    "postProcessing": {
+      "title": "Efterbearbetning",
+      "hotkey": {
+        "title": "Snabbkommando"
       },
-      "experimentalToggle": {
-        "label": "Experimentella funktioner",
-        "description": "Aktivera experimentella funktioner som fortfarande är under utveckling."
+      "api": {
+        "title": "API (OpenAI-kompatibelt)",
+        "provider": {
+          "title": "Leverantör",
+          "description": "Välj en OpenAI-kompatibel leverantör."
+        },
+        "baseUrl": {
+          "title": "Bas-URL",
+          "description": "API-bas-URL för den valda leverantören. Endast den anpassade leverantören kan redigeras.",
+          "placeholder": "https://api.openai.com/v1"
+        },
+        "apiKey": {
+          "title": "API-nyckel",
+          "description": "API-nyckel för den valda leverantören.",
+          "placeholder": "sk-..."
+        },
+        "model": {
+          "title": "Modell",
+          "descriptionCustom": "Ange den modellidentifierare som förväntas av din anpassade slutpunkt.",
+          "descriptionDefault": "Välj en modell som exponeras av den valda leverantören.",
+          "placeholderWithOptions": "Sök eller välj en modell",
+          "placeholderNoOptions": "Ange ett modellnamn",
+          "refreshModels": "Uppdatera modeller"
+        }
       },
-      "experimentalSimplifyModeToggle": {
-        "label": "Simplify media timing path (experimental)",
-        "description": "Use a simplified preview/export segment path while still enforcing timing-contract validation. Disabled by default."
+      "prompts": {
+        "title": "Prompt",
+        "selectedPrompt": {
+          "title": "Vald prompt",
+          "description": "Välj en mall för att förfina transkriptioner eller skapa en ny. Använd ${output} inuti prompttexten för att referera till den fångade transkriptionen."
+        },
+        "noPrompts": "Inga prompter tillgängliga",
+        "selectPrompt": "Välj en prompt",
+        "createNew": "Skapa ny prompt",
+        "promptLabel": "Prompt-etikett",
+        "promptLabelPlaceholder": "Ange namn på prompt",
+        "promptInstructions": "Prompt-instruktioner",
+        "promptInstructionsPlaceholder": "Skriv instruktionerna som ska köras efter transkription. Exempel: Förbättra grammatik och tydlighet för följande text: ${output}",
+        "promptTip": "Tips: Använd <code>${output}</code> för att infoga den transkriberade texten i din prompt.",
+        "updatePrompt": "Uppdatera prompt",
+        "deletePrompt": "Ta bort prompt",
+        "createPrompt": "Skapa prompt",
+        "cancel": "Avbryt",
+        "selectToEdit": "Välj en prompt ovan för att visa och redigera dess detaljer.",
+        "createFirst": "Klicka på 'Skapa ny prompt' ovan för att skapa din första prompt för efterbearbetning."
       },
+      "localLlmAlert": {
+        "link": "Learn more",
+        "title": "Local LLM required",
+        "body": "Toaster post-processing runs against a local OpenAI-compatible endpoint. See docs/post-processing.md for setup."
+      },
+      "localModels": {
+        "title": "Local LLM model",
+        "description": "Toaster runs LLM cleanup in-process. Pick a model below to download and use locally.",
+        "defaultBadge": "Default",
+        "selectedBadge": "Active",
+        "download": "Download",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "select": "Use this model",
+        "empty": "No local models available.",
+        "requirementsFormat": "{{size}} · RAM ~{{ram}} MB · Disk ~{{disk}} MB",
+        "progressFormat": "{{percent}}% · {{speed}} MB/s"
+      },
+      "provider": {
+        "local": {
+          "label": "Local (in-process)",
+          "description": "Runs the cleanup model inside Toaster. No network calls."
+        }
+      }
+    },
+    "debug": {
+      "title": "Felsökning",
+      "logDirectory": {
+        "title": "Loggmapp",
+        "description": "Plats där loggfiler lagras"
+      },
+      "logLevel": {
+        "title": "Loggnivå",
+        "description": "Ställ in loggningens detaljrikedom"
+      },
+      "updateChecks": {
+        "label": "Sök efter uppdateringar",
+        "description": "Sök automatiskt efter nya versioner av Toaster"
+      },
+      "wordCorrectionThreshold": {
+        "title": "Tröskelvärde för ordkorrigering",
+        "description": "Känslighet för anpassade ordkorrigeringar"
+      },
+      "postProcessingToggle": {
+        "label": "Efterbearbetning",
+        "description": "Aktivera AI-driven textförfining efter transkription"
+      },
+      "paths": {
+        "appData": "Appdata:",
+        "models": "Modeller:",
+        "settings": "Inställningar:"
+      }
+    },
+    "about": {
+      "title": "Om",
+      "version": {
+        "title": "Version",
+        "description": "Nuvarande version av Toaster"
+      },
+      "appDataDirectory": {
+        "title": "Mapp för appdata",
+        "description": "Plats där Toaster lagrar sina data"
+      },
+      "sourceCode": {
+        "title": "Källkod",
+        "description": "Visa källkod och bidra",
+        "button": "Visa på GitHub"
+      },
+      "acknowledgments": {
+        "title": "Tack till",
+        "intro": "Toaster extends its engine with transcript-first video and audio editing capabilities from the following projects.",
+        "handy": {
+          "title": "Handy",
+          "description": "Handy is built on the foundation of Handy by cjpais",
+          "details": "Handy is an open-source, local-first speech-to-text application. Thank you to cjpais and all Handy contributors.",
+          "button": "View Handy on GitHub"
+        },
+        "whisper": {
+          "title": "Whisper.cpp",
+          "description": "Högpresterande inferens av OpenAI:s Whisper-modell för automatisk taligenkänning",
+          "details": "Toaster använder Whisper.cpp för snabb, lokal tal-till-text-behandling. Tack till det fantastiska arbete som utförts av Georgi Gerganov med medarbetare."
+        }
+      }
+    },
+    "controls": {
       "lazyStreamClose": {
         "label": "Håll mikrofonen öppen mellan transkriptioner",
         "description": "Håller mikrofonströmmen öppen i 30 sekunder efter att inspelningen avslutats, vilket minskar latensen för transkriptioner efter varandra. Kan försämra Bluetooth-ljudkvaliteten medan den är aktiv."
-      },
-      "acceleration": {
-        "whisper": {
-          "title": "Whisper-acceleration",
-          "description": "Hårdvaruacceleration för Whisper-modeller. Auto använder GPU om tillgängligt (Metal på macOS, Vulkan på Windows/Linux)."
-        },
-        "ort": {
-          "title": "ONNX-acceleration",
-          "description": "Hårdvaruacceleration för ONNX-modeller (Parakeet, Canary, Moonshine, etc.). DirectML på Windows är experimentellt. Modeller kan misslyckas med att transkribera."
-        },
-        "gpuDevice": {
-          "title": "GPU-enhet",
-          "description": "Välj vilken GPU som ska användas för Whisper-inferens. Auto väljer den dedikerade GPU:n.",
-          "auto": "Auto"
-        }
       },
       "translateToEnglish": {
         "label": "Översätt till engelska",
@@ -271,157 +376,124 @@
         "maxWidthDescription": "How wide the caption is allowed to grow before it wraps onto a second line, as a percentage of the video frame."
       }
     },
-    "postProcessing": {
-      "title": "Efterbearbetning",
-      "hotkey": {
-        "title": "Snabbkommando"
-      },
-      "api": {
-        "title": "API (OpenAI-kompatibelt)",
-        "provider": {
-          "title": "Leverantör",
-          "description": "Välj en OpenAI-kompatibel leverantör."
+    "captions": {
+      "tabs": {
+        "ariaLabel": "Caption orientation",
+        "desktop": "Desktop",
+        "desktopDescription": "Styling for landscape videos (width \u2265 height).",
+        "mobile": "Mobile",
+        "mobileDescription": "Styling for portrait / square videos (width < height)."
+      },      "preview": {
+        "heading": "Live preview",
+        "sampleLegend": "Sample text",
+        "sample": {
+          "short": "looking crispy",
+          "twoLine": "looking crispy\nand readable",
+          "long": "looking crispy and readable\neven when the caption text\nwraps onto a third line"
         },
-        "appleIntelligence": {
-          "title": "Apple Intelligence",
-          "description": "Körs helt lokalt på enheten. Ingen API-nyckel eller nätverksåtkomst krävs.",
-          "requirements": "Kräver en Apple Silicon Mac som kör macOS Tahoe (26.0) eller senare. Apple Intelligence måste vara aktiverat i systeminställningarna.",
-          "unavailable": "Apple Intelligence är inte tillgängligt på den här enheten. Kräver en Apple Silicon Mac som kör macOS Tahoe (26.0) eller senare med Apple Intelligence aktiverat i systeminställningarna."
-        },
-        "baseUrl": {
-          "title": "Bas-URL",
-          "description": "API-bas-URL för den valda leverantören. Endast den anpassade leverantören kan redigeras.",
-          "placeholder": "https://api.openai.com/v1"
-        },
-        "apiKey": {
-          "title": "API-nyckel",
-          "description": "API-nyckel för den valda leverantören.",
-          "placeholder": "sk-..."
-        },
-        "model": {
-          "title": "Modell",
-          "descriptionApple": "Ange en valfri numerisk tokengräns eller behåll standardinställningen på enheten.",
-          "descriptionCustom": "Ange den modellidentifierare som förväntas av din anpassade slutpunkt.",
-          "descriptionDefault": "Välj en modell som exponeras av den valda leverantören.",
-          "placeholderApple": "Apple Intelligence",
-          "placeholderWithOptions": "Sök eller välj en modell",
-          "placeholderNoOptions": "Ange ett modellnamn",
-          "refreshModels": "Uppdatera modeller"
+        "orientation": {
+          "label": "Förhandsgranskningens orientering",
+          "horizontal": "Horisontell",
+          "vertical": "Vertikal"
         }
-      },
-      "prompts": {
-        "title": "Prompt",
-        "selectedPrompt": {
-          "title": "Vald prompt",
-          "description": "Välj en mall för att förfina transkriptioner eller skapa en ny. Använd ${output} inuti prompttexten för att referera till den fångade transkriptionen."
-        },
-        "noPrompts": "Inga prompter tillgängliga",
-        "selectPrompt": "Välj en prompt",
-        "createNew": "Skapa ny prompt",
-        "promptLabel": "Prompt-etikett",
-        "promptLabelPlaceholder": "Ange namn på prompt",
-        "promptInstructions": "Prompt-instruktioner",
-        "promptInstructionsPlaceholder": "Skriv instruktionerna som ska köras efter transkription. Exempel: Förbättra grammatik och tydlighet för följande text: ${output}",
-        "promptTip": "Tips: Använd <code>${output}</code> för att infoga den transkriberade texten i din prompt.",
-        "updatePrompt": "Uppdatera prompt",
-        "deletePrompt": "Ta bort prompt",
-        "createPrompt": "Skapa prompt",
-        "cancel": "Avbryt",
-        "selectToEdit": "Välj en prompt ovan för att visa och redigera dess detaljer.",
-        "createFirst": "Klicka på 'Skapa ny prompt' ovan för att skapa din första prompt för efterbearbetning."
       }
     },
-    "history": {
-      "title": "Historik",
-      "openFolder": "Öppna mapp för inspelningar",
-      "loading": "Laddar historik...",
-      "empty": "Inga transkriptioner ännu. Börja spela in för att bygga upp din historik!",
-      "copyToClipboard": "Kopiera transkription till urklipp",
-      "save": "Spara transkription",
-      "unsave": "Ta bort från sparade",
-      "delete": "Ta bort post",
-      "deleteError": "Misslyckades med att ta bort post. Försök igen.",
-      "retranscribe": "Transkribera igen",
-      "retranscribeError": "Misslyckades med att transkribera igen. Försök igen.",
-      "transcribing": "Transkriberar...",
-      "transcriptionFailed": "Transkribering misslyckades. Du kan transkribera igen med hjälp av ikonen för nytt försök."
+    "experimental": {
+      "title": "Experimental",
+      "banner": "These features are under active development and may change or be removed."
     },
-    "debug": {
-      "title": "Felsökning",
-      "logDirectory": {
-        "title": "Loggmapp",
-        "description": "Plats där loggfiler lagras"
+    "export": {
+      "title": "Export",
+      "description": "Settings that apply when exporting your edited media.",
+      "loudness": {
+        "title": "Loudness normalization",
+        "description": "Match a target integrated loudness so exported videos sound consistent across players and platforms.",
+        "options": {
+          "off": {
+            "label": "Off",
+            "description": "No loudness normalization. Exported audio uses the source levels."
+          },
+          "podcast_-16": {
+            "label": "Podcast (-16 LUFS)",
+            "description": "Broadcast / podcast preset. Targets -16 LUFS integrated."
+          },
+          "streaming_-14": {
+            "label": "Streaming (-14 LUFS)",
+            "description": "Spotify / YouTube preset. Targets -14 LUFS integrated."
+          }
+        },
+        "preflight": {
+          "title": "Preflight measurement",
+          "description": "Measures the post-edit audio without exporting so you can preview how far off-target it is.",
+          "run": "Run preflight",
+          "running": "Measuring…",
+          "integrated": "Integrated",
+          "truePeak": "True peak",
+          "lra": "Loudness range",
+          "delta": "Delta to target",
+          "target": "Target",
+          "noMedia": "Open a project to run preflight.",
+          "noTarget": "—",
+          "warningOffTarget": "Measured loudness is more than 12 LU off the target. Consider re-recording or adjusting the source before export.",
+          "error": "Preflight failed: {{error}}"
+        }
       },
-      "logLevel": {
-        "title": "Loggnivå",
-        "description": "Ställ in loggningens detaljrikedom"
-      },
-      "updateChecks": {
-        "label": "Sök efter uppdateringar",
-        "description": "Sök automatiskt efter nya versioner av Toaster"
-      },
-      "wordCorrectionThreshold": {
-        "title": "Tröskelvärde för ordkorrigering",
-        "description": "Känslighet för anpassade ordkorrigeringar"
-      },
-      "historyLimit": {
-        "title": "Historikgräns",
-        "description": "Maximalt antal historikposter som ska sparas",
-        "entries": "poster"
-      },
-      "recordingRetention": {
-        "title": "Radera inspelningar automatiskt",
-        "description": "Radera gamla inspelningar automatiskt för att spara utrymme",
-        "never": "Aldrig",
-        "preserveLimit": "Behåll de senaste {{count}}",
-        "days3": "Efter 3 dagar",
-        "weeks2": "Efter 2 veckor",
-        "months3": "Efter 3 månader",
-        "placeholder": "Välj lagringsperiod..."
-      },
-      "clamshellMicrophone": {
-        "title": "Clamshell-mikrofon",
-        "description": "Mikrofon som ska användas när bärbara datorns lock är stängt"
-      },
-      "postProcessingToggle": {
-        "label": "Efterbearbetning",
-        "description": "Aktivera AI-driven textförfining efter transkription"
-      },
-      "paths": {
-        "appData": "Appdata:",
-        "models": "Modeller:",
-        "settings": "Inställningar:"
+      "format": {
+        "title": "Format",
+        "label": "Output format",
+        "description": "Choose the container and codec for exported media. Audio-only presets drop the video stream.",
+        "options": {
+          "mp4": {
+            "label": "Video (mp4)",
+            "description": "Edited video with H.264 video and AAC audio in an mp4 container. Default."
+          },
+          "mp3": {
+            "label": "Audio - mp3",
+            "description": "Audio-only mp3 (libmp3lame) at 192 kbps. Most universally compatible audio format."
+          },
+          "wav": {
+            "label": "Audio - wav",
+            "description": "Uncompressed 16-bit PCM in a wav container. Largest file; lossless."
+          },
+          "m4a": {
+            "label": "Audio - m4a",
+            "description": "AAC audio in an m4a (audio-only mp4) container at 192 kbps. Good for Apple devices."
+          },
+          "opus": {
+            "label": "Audio - opus",
+            "description": "Opus audio (libopus) at 128 kbps. Best quality per bit; modern codec."
+          }
+        }
       }
     },
-    "about": {
-      "title": "Om",
-      "version": {
-        "title": "Version",
-        "description": "Nuvarande version av Toaster"
-      },
-      "appDataDirectory": {
-        "title": "Mapp för appdata",
-        "description": "Plats där Toaster lagrar sina data"
-      },
-      "sourceCode": {
-        "title": "Källkod",
-        "description": "Visa källkod och bidra",
-        "button": "Visa på GitHub"
-      },
-      "acknowledgments": {
-        "title": "Tack till",
-        "intro": "Toaster extends its engine with transcript-first video and audio editing capabilities from the following projects.",
-        "handy": {
-          "title": "Handy",
-          "description": "Handy is built on the foundation of Handy by cjpais",
-          "details": "Handy is an open-source, local-first speech-to-text application. Thank you to cjpais and all Handy contributors.",
-          "button": "View Handy on GitHub"
+    "advanced": {
+      "title": "Advanced",
+      "description": "Configured-once controls like allow and discard word lists.",
+      "groups": {
+        "words": {
+          "title": "Words",
+          "description": "Discard and allow word lists used across the transcript editor."
         },
-        "whisper": {
-          "title": "Whisper.cpp",
-          "description": "Högpresterande inferens av OpenAI:s Whisper-modell för automatisk taligenkänning",
-          "details": "Toaster använder Whisper.cpp för snabb, lokal tal-till-text-behandling. Tack till det fantastiska arbete som utförts av Georgi Gerganov med medarbetare."
+        "performance": {
+          "title": "Performance",
+          "description": "Model unload timing and related runtime behavior."
+        },
+        "captions": {
+          "title": "Captions",
+          "description": "Caption preview and export styling."
+        },
+        "export": {
+          "title": "Export",
+          "description": "Output format, loudness target, and preflight checks for exported media."
+        },
+        "experimental": {
+          "title": "Experimental",
+          "description": "Opt-in features that may change or be removed. Gated by the master toggle below."
         }
+      },
+      "experimentalMaster": {
+        "title": "Enable experimental features",
+        "description": "Master switch for every experiment. When off, individual experiment flags read as disabled even if they were previously turned on. Turning this back on restores your prior selections."
       }
     }
   },
@@ -485,10 +557,6 @@
     "title": "Applikationsspråk",
     "description": "Ändra språket i Toaster-gränssnittet"
   },
-  "overlay": {
-    "transcribing": "Transkriberar...",
-    "processing": "Bearbetar..."
-  },
   "player": {
     "play": "Play",
     "pause": "Pause",
@@ -509,12 +577,22 @@
     "cacheModeSimplified": "Cache: simplified"
   },
   "editor": {
+    "captionOrientation": {
+      "ariaLabel": "Caption orientation",
+      "label": "Captions",
+      "option": {
+        "desktop": "Desktop",
+        "mobile": "Mobile",
+        "auto": "Auto"
+      }
+    },
     "sections": {
       "project": "Project",
       "media": "Media",
       "transcription": "Transcription",
       "exportTools": "Export & Tools",
-      "edit": "Edit"
+      "edit": "Edit",
+      "words": "Words"
     },
     "deleteWord": "Delete Word",
     "restoreWord": "Restore Word",
@@ -587,5 +665,12 @@
     "exporting": "Exporting...",
     "addCaptions": "Add Captions",
     "cleanup": "Clean up"
+  },
+  "experiments": {
+    "simplifyMode": {
+      "label": "Simplify Mode",
+      "description": "Reduce visual density and hide secondary controls in the editor."
+    },
+    "feedbackLink": "Send feedback"
   }
 }

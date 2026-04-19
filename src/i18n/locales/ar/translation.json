@@ -6,13 +6,11 @@
   },
   "sidebar": {
     "editor": "Editor",
-    "general": "عام",
     "models": "النماذج",
-    "advanced": "متقدم",
     "postProcessing": "معالجة لاحقة",
-    "history": "السجل",
     "debug": "تصحيح الأخطاء",
-    "about": "حول"
+    "about": "حول",
+    "advanced": "Advanced"
   },
   "onboarding": {
     "subtitle": "للبدء، اختر نموذج التفريغ الصوتي",
@@ -160,44 +158,151 @@
         "allLanguages": "جميع اللغات"
       },
       "noModelsMatch": "لا توجد نماذج مطابقة لهذا الفلتر.",
-      "download": "Download"
-    },
-    "advanced": {
-      "title": "متقدم",
+      "download": "Download",
       "groups": {
-        "app": "التطبيق",
-        "output": "الإخراج",
-        "transcription": "التفريغ الصوتي",
-        "captionSettings": "Caption Settings",
-        "history": "السجل",
-        "experimental": "تجريبي"
+        "performance": "Performance",
+        "captions": "Captions"
+      }
+    },
+    "postProcessing": {
+      "title": "معالجة لاحقة",
+      "hotkey": {
+        "title": "مفتاح الاختصار"
       },
-      "experimentalToggle": {
-        "label": "الميزات التجريبية",
-        "description": ".تمكين الميزات التجريبية التي لا تزال قيد التطوير"
+      "api": {
+        "title": "API (متوافق مع OpenAI)",
+        "provider": {
+          "title": "المزود",
+          "description": "اختر مزوداً متوافقاً مع OpenAI."
+        },
+        "baseUrl": {
+          "title": "URL الأساسي",
+          "description": "URL الأساسي لـ API للمزود المختار. يمكن تعديل المزود المخصص فقط.",
+          "placeholder": "https://api.openai.com/v1"
+        },
+        "apiKey": {
+          "title": "مفتاح API",
+          "description": "مفتاح API للمزود المختار.",
+          "placeholder": "sk-..."
+        },
+        "model": {
+          "title": "النموذج",
+          "descriptionCustom": "قدم معرف النموذج المتوقع من قبل نقطة النهاية المخصصة الخاصة بك.",
+          "descriptionDefault": "اختر نموذجاً يعرضه المزود المختار.",
+          "placeholderWithOptions": "ابحث عن نموذج أو اختره",
+          "placeholderNoOptions": "اكتب اسم النموذج",
+          "refreshModels": "تحديث النماذج"
+        }
       },
-      "experimentalSimplifyModeToggle": {
-        "label": "Simplify media timing path (experimental)",
-        "description": "Use a simplified preview/export segment path while still enforcing timing-contract validation. Disabled by default."
+      "prompts": {
+        "title": "المطالبة",
+        "selectedPrompt": {
+          "title": "المطالبة المختارة",
+          "description": ".اختر قالباً لتحسين التفريغ الصوتي أو أنشئ قالباً جديداً. استخدم ${output} داخل نص المطالبة للإشارة إلى النص الملتقط"
+        },
+        "noPrompts": "لا توجد مطالبات متاحة",
+        "selectPrompt": "اختر مطالبة",
+        "createNew": "إنشاء مطالبة جديدة",
+        "promptLabel": "تسمية المطالبة",
+        "promptLabelPlaceholder": "أدخل اسم المطالبة",
+        "promptInstructions": "تعليمات المطالبة",
+        "promptInstructionsPlaceholder": ".اكتب التعليمات المراد تشغيلها بعد التفريغ الصوتي. مثال: قم بتحسين القواعد والوضوح للنص التالي: ${output}",
+        "promptTip": "تلميح: استخدم <code>${output}</code> لإدراج النص المفرغ في مطالبتك.",
+        "updatePrompt": "تحديث المطالبة",
+        "deletePrompt": "حذف المطالبة",
+        "createPrompt": "إنشاء مطالبة",
+        "cancel": "إلغاء",
+        "selectToEdit": ".اختر مطالبة أعلاه لعرض وتعديل تفاصيلها",
+        "createFirst": ".انقر على 'إنشاء مطالبة جديدة' أعلاه لإنشاء أول مطالبة معالجة لاحقة لك"
       },
+      "localLlmAlert": {
+        "link": "Learn more",
+        "title": "Local LLM required",
+        "body": "Toaster post-processing runs against a local OpenAI-compatible endpoint. See docs/post-processing.md for setup."
+      },
+      "localModels": {
+        "title": "Local LLM model",
+        "description": "Toaster runs LLM cleanup in-process. Pick a model below to download and use locally.",
+        "defaultBadge": "Default",
+        "selectedBadge": "Active",
+        "download": "Download",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "select": "Use this model",
+        "empty": "No local models available.",
+        "requirementsFormat": "{{size}} · RAM ~{{ram}} MB · Disk ~{{disk}} MB",
+        "progressFormat": "{{percent}}% · {{speed}} MB/s"
+      },
+      "provider": {
+        "local": {
+          "label": "Local (in-process)",
+          "description": "Runs the cleanup model inside Toaster. No network calls."
+        }
+      }
+    },
+    "debug": {
+      "title": "تصحيح الأخطاء",
+      "logDirectory": {
+        "title": "مجلد السجلات",
+        "description": "الموقع الذي يتم فيه تخزين ملفات السجل"
+      },
+      "logLevel": {
+        "title": "مستوى السجل",
+        "description": "ضبط درجة تفصيل السجلات"
+      },
+      "updateChecks": {
+        "label": "التحقق من وجود تحديثات",
+        "description": "التحقق تلقائياً من وجود إصدارات جديدة من Toaster"
+      },
+      "wordCorrectionThreshold": {
+        "title": "عتبة تصحيح الكلمات",
+        "description": "حساسية تصحيح الكلمات المخصصة"
+      },
+      "postProcessingToggle": {
+        "label": "معالجة لاحقة",
+        "description": "تمكين تحسين النص المدعوم بالذكاء الاصطناعي بعد التفريغ الصوتي"
+      },
+      "paths": {
+        "appData": "بيانات التطبيق:",
+        "models": "النماذج:",
+        "settings": "الإعدادات:"
+      }
+    },
+    "about": {
+      "title": "حول",
+      "version": {
+        "title": "الإصدار",
+        "description": "الإصدار الحالي من Toaster"
+      },
+      "appDataDirectory": {
+        "title": "مجلد بيانات التطبيق",
+        "description": "الموقع الذي يخزن فيه Toaster بياناته"
+      },
+      "sourceCode": {
+        "title": "كود المصدر",
+        "description": "عرض كود المصدر والمساهمة",
+        "button": "عرض على GitHub"
+      },
+      "acknowledgments": {
+        "title": "شكر وتقدير",
+        "intro": "Toaster extends its engine with transcript-first video and audio editing capabilities from the following projects.",
+        "handy": {
+          "title": "Handy",
+          "description": "Handy is built on the foundation of Handy by cjpais",
+          "details": "Handy is an open-source, local-first speech-to-text application. Thank you to cjpais and all Handy contributors.",
+          "button": "View Handy on GitHub"
+        },
+        "whisper": {
+          "title": "Whisper.cpp",
+          "description": "استنتاج عالي الأداء لنموذج التعرف التلقائي على الكلام Whisper من OpenAI",
+          "details": ".يستخدم Toaster برنامج Whisper.cpp لمعالجة سريعة ومحلية لتحويل الكلام إلى نص. شكراً للعمل الرائع الذي قام به Georgi Gerganov والمساهمون"
+        }
+      }
+    },
+    "controls": {
       "lazyStreamClose": {
         "label": "إبقاء الميكروفون مفتوحًا بين عمليات النسخ",
         "description": "يبقي بث الميكروفون مفتوحًا لمدة 30 ثانية بعد توقف التسجيل، مما يقلل التأخير عند النسخ المتتالي. قد يؤثر على جودة صوت البلوتوث أثناء التفعيل."
-      },
-      "acceleration": {
-        "whisper": {
-          "title": "تسريع Whisper",
-          "description": "تسريع الأجهزة لنماذج Whisper. الوضع التلقائي يستخدم GPU إن توفر (Metal على macOS، Vulkan على Windows/Linux)."
-        },
-        "ort": {
-          "title": "تسريع ONNX",
-          "description": "تسريع الأجهزة لنماذج ONNX (Parakeet، Canary، Moonshine، إلخ). DirectML على Windows تجريبي. قد تفشل النماذج في النسخ."
-        },
-        "gpuDevice": {
-          "title": "جهاز GPU",
-          "description": "حدد وحدة معالجة الرسومات المستخدمة لاستدلال Whisper. يختار تلقائي وحدة GPU المخصصة.",
-          "auto": "تلقائي"
-        }
       },
       "translateToEnglish": {
         "label": "الترجمة إلى الإنجليزية",
@@ -271,157 +376,124 @@
         "maxWidthDescription": "How wide the caption is allowed to grow before it wraps onto a second line, as a percentage of the video frame."
       }
     },
-    "postProcessing": {
-      "title": "معالجة لاحقة",
-      "hotkey": {
-        "title": "مفتاح الاختصار"
-      },
-      "api": {
-        "title": "API (متوافق مع OpenAI)",
-        "provider": {
-          "title": "المزود",
-          "description": "اختر مزوداً متوافقاً مع OpenAI."
+    "captions": {
+      "tabs": {
+        "ariaLabel": "Caption orientation",
+        "desktop": "Desktop",
+        "desktopDescription": "Styling for landscape videos (width \u2265 height).",
+        "mobile": "Mobile",
+        "mobileDescription": "Styling for portrait / square videos (width < height)."
+      },      "preview": {
+        "heading": "Live preview",
+        "sampleLegend": "Sample text",
+        "sample": {
+          "short": "looking crispy",
+          "twoLine": "looking crispy\nand readable",
+          "long": "looking crispy and readable\neven when the caption text\nwraps onto a third line"
         },
-        "appleIntelligence": {
-          "title": "Apple Intelligence",
-          "description": "يعمل بالكامل على الجهاز. لا يلزم وجود مفتاح API أو وصول إلى الشبكة.",
-          "requirements": "يتطلب جهاز Mac بمعالج Apple Silicon يعمل بنظام macOS Tahoe (26.0) أو أحدث. يجب تمكين Apple Intelligence في إعدادات النظام.",
-          "unavailable": "Apple Intelligence غير متاح على هذا الجهاز. يتطلب جهاز Mac بمعالج Apple Silicon يعمل بنظام macOS Tahoe (26.0) أو أحدث مع تمكين Apple Intelligence في إعدادات النظام."
-        },
-        "baseUrl": {
-          "title": "URL الأساسي",
-          "description": "URL الأساسي لـ API للمزود المختار. يمكن تعديل المزود المخصص فقط.",
-          "placeholder": "https://api.openai.com/v1"
-        },
-        "apiKey": {
-          "title": "مفتاح API",
-          "description": "مفتاح API للمزود المختار.",
-          "placeholder": "sk-..."
-        },
-        "model": {
-          "title": "النموذج",
-          "descriptionApple": "قدم حداً اختيارياً للرموز الرقمية أو احتفظ بالإعداد المسبق الافتراضي على الجهاز.",
-          "descriptionCustom": "قدم معرف النموذج المتوقع من قبل نقطة النهاية المخصصة الخاصة بك.",
-          "descriptionDefault": "اختر نموذجاً يعرضه المزود المختار.",
-          "placeholderApple": "Apple Intelligence",
-          "placeholderWithOptions": "ابحث عن نموذج أو اختره",
-          "placeholderNoOptions": "اكتب اسم النموذج",
-          "refreshModels": "تحديث النماذج"
+        "orientation": {
+          "label": "اتجاه المعاينة",
+          "horizontal": "أفقي",
+          "vertical": "عمودي"
         }
-      },
-      "prompts": {
-        "title": "المطالبة",
-        "selectedPrompt": {
-          "title": "المطالبة المختارة",
-          "description": ".اختر قالباً لتحسين التفريغ الصوتي أو أنشئ قالباً جديداً. استخدم ${output} داخل نص المطالبة للإشارة إلى النص الملتقط"
-        },
-        "noPrompts": "لا توجد مطالبات متاحة",
-        "selectPrompt": "اختر مطالبة",
-        "createNew": "إنشاء مطالبة جديدة",
-        "promptLabel": "تسمية المطالبة",
-        "promptLabelPlaceholder": "أدخل اسم المطالبة",
-        "promptInstructions": "تعليمات المطالبة",
-        "promptInstructionsPlaceholder": ".اكتب التعليمات المراد تشغيلها بعد التفريغ الصوتي. مثال: قم بتحسين القواعد والوضوح للنص التالي: ${output}",
-        "promptTip": "تلميح: استخدم <code>${output}</code> لإدراج النص المفرغ في مطالبتك.",
-        "updatePrompt": "تحديث المطالبة",
-        "deletePrompt": "حذف المطالبة",
-        "createPrompt": "إنشاء مطالبة",
-        "cancel": "إلغاء",
-        "selectToEdit": ".اختر مطالبة أعلاه لعرض وتعديل تفاصيلها",
-        "createFirst": ".انقر على 'إنشاء مطالبة جديدة' أعلاه لإنشاء أول مطالبة معالجة لاحقة لك"
       }
     },
-    "history": {
-      "title": "السجل",
-      "openFolder": "فتح مجلد التسجيلات",
-      "loading": "...جاري تحميل السجل",
-      "empty": "!لا يوجد تفريغ صوتي بعد. ابدأ التسجيل لبناء سجلك",
-      "copyToClipboard": "نسخ التفريغ إلى الحافظة",
-      "save": "حفظ التفريغ",
-      "unsave": "إزالة من المحفوظات",
-      "delete": "حذف الإدخال",
-      "deleteError": ".فشل حذف الإدخال. يرجى المحاولة مرة أخرى",
-      "retranscribe": "إعادة النسخ",
-      "retranscribeError": "فشلت إعادة النسخ. يرجى المحاولة مرة أخرى.",
-      "transcribing": "جارٍ النسخ...",
-      "transcriptionFailed": "فشل النسخ. يمكنك إعادة النسخ باستخدام أيقونة إعادة المحاولة."
+    "experimental": {
+      "title": "Experimental",
+      "banner": "These features are under active development and may change or be removed."
     },
-    "debug": {
-      "title": "تصحيح الأخطاء",
-      "logDirectory": {
-        "title": "مجلد السجلات",
-        "description": "الموقع الذي يتم فيه تخزين ملفات السجل"
+    "export": {
+      "title": "Export",
+      "description": "Settings that apply when exporting your edited media.",
+      "loudness": {
+        "title": "Loudness normalization",
+        "description": "Match a target integrated loudness so exported videos sound consistent across players and platforms.",
+        "options": {
+          "off": {
+            "label": "Off",
+            "description": "No loudness normalization. Exported audio uses the source levels."
+          },
+          "podcast_-16": {
+            "label": "Podcast (-16 LUFS)",
+            "description": "Broadcast / podcast preset. Targets -16 LUFS integrated."
+          },
+          "streaming_-14": {
+            "label": "Streaming (-14 LUFS)",
+            "description": "Spotify / YouTube preset. Targets -14 LUFS integrated."
+          }
+        },
+        "preflight": {
+          "title": "Preflight measurement",
+          "description": "Measures the post-edit audio without exporting so you can preview how far off-target it is.",
+          "run": "Run preflight",
+          "running": "Measuring…",
+          "integrated": "Integrated",
+          "truePeak": "True peak",
+          "lra": "Loudness range",
+          "delta": "Delta to target",
+          "target": "Target",
+          "noMedia": "Open a project to run preflight.",
+          "noTarget": "—",
+          "warningOffTarget": "Measured loudness is more than 12 LU off the target. Consider re-recording or adjusting the source before export.",
+          "error": "Preflight failed: {{error}}"
+        }
       },
-      "logLevel": {
-        "title": "مستوى السجل",
-        "description": "ضبط درجة تفصيل السجلات"
-      },
-      "updateChecks": {
-        "label": "التحقق من وجود تحديثات",
-        "description": "التحقق تلقائياً من وجود إصدارات جديدة من Toaster"
-      },
-      "wordCorrectionThreshold": {
-        "title": "عتبة تصحيح الكلمات",
-        "description": "حساسية تصحيح الكلمات المخصصة"
-      },
-      "historyLimit": {
-        "title": "حد السجل",
-        "description": "الحد الأقصى لعدد إدخالات السجل المراد الاحتفاظ بها",
-        "entries": "إدخالات"
-      },
-      "recordingRetention": {
-        "title": "حذف التسجيلات تلقائياً",
-        "description": "حذف التسجيلات القديمة تلقائياً لتوفير المساحة",
-        "never": "أبداً",
-        "preserveLimit": "الاحتفاظ بآخر {{count}}",
-        "days3": "بعد 3 أيام",
-        "weeks2": "بعد أسبوعين",
-        "months3": "بعد 3 أشهر",
-        "placeholder": "اختر فترة الاحتفاظ..."
-      },
-      "clamshellMicrophone": {
-        "title": "ميكروفون وضع الإغلاق",
-        "description": "الميكروفون المراد استخدامه عندما يكون غطاء المحمول مغلقاً"
-      },
-      "postProcessingToggle": {
-        "label": "معالجة لاحقة",
-        "description": "تمكين تحسين النص المدعوم بالذكاء الاصطناعي بعد التفريغ الصوتي"
-      },
-      "paths": {
-        "appData": "بيانات التطبيق:",
-        "models": "النماذج:",
-        "settings": "الإعدادات:"
+      "format": {
+        "title": "Format",
+        "label": "Output format",
+        "description": "Choose the container and codec for exported media. Audio-only presets drop the video stream.",
+        "options": {
+          "mp4": {
+            "label": "Video (mp4)",
+            "description": "Edited video with H.264 video and AAC audio in an mp4 container. Default."
+          },
+          "mp3": {
+            "label": "Audio - mp3",
+            "description": "Audio-only mp3 (libmp3lame) at 192 kbps. Most universally compatible audio format."
+          },
+          "wav": {
+            "label": "Audio - wav",
+            "description": "Uncompressed 16-bit PCM in a wav container. Largest file; lossless."
+          },
+          "m4a": {
+            "label": "Audio - m4a",
+            "description": "AAC audio in an m4a (audio-only mp4) container at 192 kbps. Good for Apple devices."
+          },
+          "opus": {
+            "label": "Audio - opus",
+            "description": "Opus audio (libopus) at 128 kbps. Best quality per bit; modern codec."
+          }
+        }
       }
     },
-    "about": {
-      "title": "حول",
-      "version": {
-        "title": "الإصدار",
-        "description": "الإصدار الحالي من Toaster"
-      },
-      "appDataDirectory": {
-        "title": "مجلد بيانات التطبيق",
-        "description": "الموقع الذي يخزن فيه Toaster بياناته"
-      },
-      "sourceCode": {
-        "title": "كود المصدر",
-        "description": "عرض كود المصدر والمساهمة",
-        "button": "عرض على GitHub"
-      },
-      "acknowledgments": {
-        "title": "شكر وتقدير",
-        "intro": "Toaster extends its engine with transcript-first video and audio editing capabilities from the following projects.",
-        "handy": {
-          "title": "Handy",
-          "description": "Handy is built on the foundation of Handy by cjpais",
-          "details": "Handy is an open-source, local-first speech-to-text application. Thank you to cjpais and all Handy contributors.",
-          "button": "View Handy on GitHub"
+    "advanced": {
+      "title": "Advanced",
+      "description": "Configured-once controls like allow and discard word lists.",
+      "groups": {
+        "words": {
+          "title": "Words",
+          "description": "Discard and allow word lists used across the transcript editor."
         },
-        "whisper": {
-          "title": "Whisper.cpp",
-          "description": "استنتاج عالي الأداء لنموذج التعرف التلقائي على الكلام Whisper من OpenAI",
-          "details": ".يستخدم Toaster برنامج Whisper.cpp لمعالجة سريعة ومحلية لتحويل الكلام إلى نص. شكراً للعمل الرائع الذي قام به Georgi Gerganov والمساهمون"
+        "performance": {
+          "title": "Performance",
+          "description": "Model unload timing and related runtime behavior."
+        },
+        "captions": {
+          "title": "Captions",
+          "description": "Caption preview and export styling."
+        },
+        "export": {
+          "title": "Export",
+          "description": "Output format, loudness target, and preflight checks for exported media."
+        },
+        "experimental": {
+          "title": "Experimental",
+          "description": "Opt-in features that may change or be removed. Gated by the master toggle below."
         }
+      },
+      "experimentalMaster": {
+        "title": "Enable experimental features",
+        "description": "Master switch for every experiment. When off, individual experiment flags read as disabled even if they were previously turned on. Turning this back on restores your prior selections."
       }
     }
   },
@@ -485,10 +557,6 @@
     "title": "لغة التطبيق",
     "description": "تغيير لغة واجهة Toaster"
   },
-  "overlay": {
-    "transcribing": "...جاري التفريغ",
-    "processing": "...جاري المعالجة"
-  },
   "player": {
     "play": "Play",
     "pause": "Pause",
@@ -509,12 +577,22 @@
     "cacheModeSimplified": "Cache: simplified"
   },
   "editor": {
+    "captionOrientation": {
+      "ariaLabel": "Caption orientation",
+      "label": "Captions",
+      "option": {
+        "desktop": "Desktop",
+        "mobile": "Mobile",
+        "auto": "Auto"
+      }
+    },
     "sections": {
       "project": "Project",
       "media": "Media",
       "transcription": "Transcription",
       "exportTools": "Export & Tools",
-      "edit": "Edit"
+      "edit": "Edit",
+      "words": "Words"
     },
     "deleteWord": "Delete Word",
     "restoreWord": "Restore Word",
@@ -587,5 +665,12 @@
     "exporting": "Exporting...",
     "addCaptions": "Add Captions",
     "cleanup": "Clean up"
+  },
+  "experiments": {
+    "simplifyMode": {
+      "label": "Simplify Mode",
+      "description": "Reduce visual density and hide secondary controls in the editor."
+    },
+    "feedbackLink": "Send feedback"
   }
 }

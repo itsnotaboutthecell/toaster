@@ -1,10 +1,11 @@
 pub mod app_settings;
 pub mod audio;
+pub mod captions;
 pub mod disfluency;
 pub mod editor;
 pub mod export;
 pub mod filler;
-pub mod history;
+pub mod llm_models;
 pub mod media;
 pub mod models;
 pub mod project;
@@ -118,12 +119,4 @@ pub fn open_app_data_dir(app: AppHandle) -> Result<(), String> {
         .map_err(|e| format!("Failed to open app data directory: {}", e))?;
 
     Ok(())
-}
-
-/// Apple Intelligence support was removed; the command is retained so the
-/// frontend keeps compiling and simply reports "not available" everywhere.
-#[specta::specta]
-#[tauri::command]
-pub fn check_apple_intelligence_available() -> bool {
-    false
 }

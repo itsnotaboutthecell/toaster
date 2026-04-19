@@ -6,13 +6,11 @@
   },
   "sidebar": {
     "editor": "Editor",
-    "general": "일반",
     "models": "모델",
-    "advanced": "고급",
     "postProcessing": "후처리",
-    "history": "히스토리",
     "debug": "디버그",
-    "about": "정보"
+    "about": "정보",
+    "advanced": "Advanced"
   },
   "onboarding": {
     "subtitle": "시작하려면 음성 인식 모델을 선택하세요",
@@ -160,44 +158,151 @@
         "allLanguages": "모든 언어"
       },
       "noModelsMatch": "이 필터에 맞는 모델이 없습니다.",
-      "download": "Download"
-    },
-    "advanced": {
-      "title": "고급",
+      "download": "Download",
       "groups": {
-        "app": "앱",
-        "output": "출력",
-        "transcription": "전사",
-        "captionSettings": "Caption Settings",
-        "history": "히스토리",
-        "experimental": "실험적"
+        "performance": "Performance",
+        "captions": "Captions"
+      }
+    },
+    "postProcessing": {
+      "title": "후처리",
+      "hotkey": {
+        "title": "단축키"
       },
-      "experimentalToggle": {
-        "label": "실험적 기능",
-        "description": "개발 중인 실험적 기능을 활성화합니다."
+      "api": {
+        "title": "API (OpenAI 호환)",
+        "provider": {
+          "title": "제공자",
+          "description": "OpenAI 호환 제공자를 선택하세요."
+        },
+        "baseUrl": {
+          "title": "기본 URL",
+          "description": "선택한 제공자의 API 기본 URL입니다. 사용자 정의 제공자만 편집할 수 있습니다.",
+          "placeholder": "https://api.openai.com/v1"
+        },
+        "apiKey": {
+          "title": "API 키",
+          "description": "선택한 제공자의 API 키입니다.",
+          "placeholder": "sk-..."
+        },
+        "model": {
+          "title": "모델",
+          "descriptionCustom": "사용자 정의 엔드포인트에서 예상하는 모델 식별자를 제공하세요.",
+          "descriptionDefault": "선택한 제공자가 제공하는 모델을 선택하세요.",
+          "placeholderWithOptions": "모델 검색 또는 선택",
+          "placeholderNoOptions": "모델 이름 입력",
+          "refreshModels": "모델 새로고침"
+        }
       },
-      "experimentalSimplifyModeToggle": {
-        "label": "Simplify media timing path (experimental)",
-        "description": "Use a simplified preview/export segment path while still enforcing timing-contract validation. Disabled by default."
+      "prompts": {
+        "title": "프롬프트",
+        "selectedPrompt": {
+          "title": "선택된 프롬프트",
+          "description": "텍스트 변환을 개선하기 위한 템플릿을 선택하거나 새로 만드세요. 프롬프트 텍스트 내에서 ${output}를 사용하여 캡처된 텍스트를 참조하세요."
+        },
+        "noPrompts": "사용 가능한 프롬프트 없음",
+        "selectPrompt": "프롬프트 선택",
+        "createNew": "새 프롬프트 만들기",
+        "promptLabel": "프롬프트 레이블",
+        "promptLabelPlaceholder": "프롬프트 이름 입력",
+        "promptInstructions": "프롬프트 지시사항",
+        "promptInstructionsPlaceholder": "텍스트 변환 후 실행할 지시사항을 작성하세요. 예: 다음 텍스트의 문법과 명확성을 개선하세요: ${output}",
+        "promptTip": "팁: 프롬프트에서 변환된 텍스트를 삽입하려면 <code>${output}</code>을 사용하세요.",
+        "updatePrompt": "프롬프트 업데이트",
+        "deletePrompt": "프롬프트 삭제",
+        "createPrompt": "프롬프트 만들기",
+        "cancel": "취소",
+        "selectToEdit": "세부 정보를 보고 편집하려면 위에서 프롬프트를 선택하세요.",
+        "createFirst": "첫 번째 후처리 프롬프트를 만들려면 위의 '새 프롬프트 만들기'를 클릭하세요."
       },
+      "localLlmAlert": {
+        "link": "Learn more",
+        "title": "Local LLM required",
+        "body": "Toaster post-processing runs against a local OpenAI-compatible endpoint. See docs/post-processing.md for setup."
+      },
+      "localModels": {
+        "title": "Local LLM model",
+        "description": "Toaster runs LLM cleanup in-process. Pick a model below to download and use locally.",
+        "defaultBadge": "Default",
+        "selectedBadge": "Active",
+        "download": "Download",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "select": "Use this model",
+        "empty": "No local models available.",
+        "requirementsFormat": "{{size}} · RAM ~{{ram}} MB · Disk ~{{disk}} MB",
+        "progressFormat": "{{percent}}% · {{speed}} MB/s"
+      },
+      "provider": {
+        "local": {
+          "label": "Local (in-process)",
+          "description": "Runs the cleanup model inside Toaster. No network calls."
+        }
+      }
+    },
+    "debug": {
+      "title": "디버그",
+      "logDirectory": {
+        "title": "로그 디렉토리",
+        "description": "로그 파일이 저장되는 위치"
+      },
+      "logLevel": {
+        "title": "로그 레벨",
+        "description": "로깅의 상세도 설정"
+      },
+      "updateChecks": {
+        "label": "업데이트 확인",
+        "description": "Toaster의 새 버전을 자동으로 확인합니다"
+      },
+      "wordCorrectionThreshold": {
+        "title": "단어 수정 임계값",
+        "description": "사용자 정의 단어 수정의 민감도"
+      },
+      "postProcessingToggle": {
+        "label": "후처리",
+        "description": "텍스트 변환 후 AI 기반 텍스트 개선 활성화"
+      },
+      "paths": {
+        "appData": "앱 데이터:",
+        "models": "모델:",
+        "settings": "설정:"
+      }
+    },
+    "about": {
+      "title": "정보",
+      "version": {
+        "title": "버전",
+        "description": "Toaster의 현재 버전"
+      },
+      "appDataDirectory": {
+        "title": "앱 데이터 디렉토리",
+        "description": "Toaster가 데이터를 저장하는 위치"
+      },
+      "sourceCode": {
+        "title": "소스 코드",
+        "description": "소스 코드 보기 및 기여",
+        "button": "GitHub에서 보기"
+      },
+      "acknowledgments": {
+        "title": "감사의 말",
+        "intro": "Toaster extends its engine with transcript-first video and audio editing capabilities from the following projects.",
+        "handy": {
+          "title": "Handy",
+          "description": "Handy is built on the foundation of Handy by cjpais",
+          "details": "Handy is an open-source, local-first speech-to-text application. Thank you to cjpais and all Handy contributors.",
+          "button": "View Handy on GitHub"
+        },
+        "whisper": {
+          "title": "Whisper.cpp",
+          "description": "OpenAI의 Whisper 자동 음성 인식 모델의 고성능 추론",
+          "details": "Toaster는 빠르고 로컬 음성-텍스트 처리를 위해 Whisper.cpp를 사용합니다. Georgi Gerganov와 기여자들의 놀라운 작업에 감사드립니다."
+        }
+      }
+    },
+    "controls": {
       "lazyStreamClose": {
         "label": "전사 사이에 마이크 열어 두기",
         "description": "녹음 중지 후 30초 동안 마이크 스트림을 열어 두어 연속 전사 시 지연을 줄입니다. 활성화 중 블루투스 오디오 품질이 저하될 수 있습니다."
-      },
-      "acceleration": {
-        "whisper": {
-          "title": "Whisper 가속",
-          "description": "Whisper 모델의 하드웨어 가속. 자동 모드는 GPU를 사용합니다 (macOS에서는 Metal, Windows/Linux에서는 Vulkan)."
-        },
-        "ort": {
-          "title": "ONNX 가속",
-          "description": "ONNX 모델의 하드웨어 가속 (Parakeet, Canary, Moonshine 등). Windows의 DirectML은 실험적입니다. 모델이 전사에 실패할 수 있습니다."
-        },
-        "gpuDevice": {
-          "title": "GPU 장치",
-          "description": "Whisper 추론에 사용할 GPU를 선택합니다. 자동은 전용 GPU를 선택합니다.",
-          "auto": "자동"
-        }
       },
       "translateToEnglish": {
         "label": "영어로 번역",
@@ -271,157 +376,124 @@
         "maxWidthDescription": "How wide the caption is allowed to grow before it wraps onto a second line, as a percentage of the video frame."
       }
     },
-    "postProcessing": {
-      "title": "후처리",
-      "hotkey": {
-        "title": "단축키"
-      },
-      "api": {
-        "title": "API (OpenAI 호환)",
-        "provider": {
-          "title": "제공자",
-          "description": "OpenAI 호환 제공자를 선택하세요."
+    "captions": {
+      "tabs": {
+        "ariaLabel": "Caption orientation",
+        "desktop": "Desktop",
+        "desktopDescription": "Styling for landscape videos (width \u2265 height).",
+        "mobile": "Mobile",
+        "mobileDescription": "Styling for portrait / square videos (width < height)."
+      },      "preview": {
+        "heading": "Live preview",
+        "sampleLegend": "Sample text",
+        "sample": {
+          "short": "looking crispy",
+          "twoLine": "looking crispy\nand readable",
+          "long": "looking crispy and readable\neven when the caption text\nwraps onto a third line"
         },
-        "appleIntelligence": {
-          "title": "Apple Intelligence",
-          "description": "완전히 기기에서 실행됩니다. API 키나 네트워크 접근이 필요하지 않습니다.",
-          "requirements": "macOS Tahoe (26.0) 이상을 실행하는 Apple Silicon Mac이 필요합니다. 시스템 설정에서 Apple Intelligence가 활성화되어 있어야 합니다.",
-          "unavailable": "이 기기에서는 Apple Intelligence를 사용할 수 없습니다. macOS Tahoe (26.0) 이상을 실행하고 시스템 설정에서 Apple Intelligence가 활성화된 Apple Silicon Mac이 필요합니다."
-        },
-        "baseUrl": {
-          "title": "기본 URL",
-          "description": "선택한 제공자의 API 기본 URL입니다. 사용자 정의 제공자만 편집할 수 있습니다.",
-          "placeholder": "https://api.openai.com/v1"
-        },
-        "apiKey": {
-          "title": "API 키",
-          "description": "선택한 제공자의 API 키입니다.",
-          "placeholder": "sk-..."
-        },
-        "model": {
-          "title": "모델",
-          "descriptionApple": "선택적 숫자 토큰 제한을 제공하거나 기본 기기 내 프리셋을 유지하세요.",
-          "descriptionCustom": "사용자 정의 엔드포인트에서 예상하는 모델 식별자를 제공하세요.",
-          "descriptionDefault": "선택한 제공자가 제공하는 모델을 선택하세요.",
-          "placeholderApple": "Apple Intelligence",
-          "placeholderWithOptions": "모델 검색 또는 선택",
-          "placeholderNoOptions": "모델 이름 입력",
-          "refreshModels": "모델 새로고침"
+        "orientation": {
+          "label": "미리보기 방향",
+          "horizontal": "가로",
+          "vertical": "세로"
         }
-      },
-      "prompts": {
-        "title": "프롬프트",
-        "selectedPrompt": {
-          "title": "선택된 프롬프트",
-          "description": "텍스트 변환을 개선하기 위한 템플릿을 선택하거나 새로 만드세요. 프롬프트 텍스트 내에서 ${output}를 사용하여 캡처된 텍스트를 참조하세요."
-        },
-        "noPrompts": "사용 가능한 프롬프트 없음",
-        "selectPrompt": "프롬프트 선택",
-        "createNew": "새 프롬프트 만들기",
-        "promptLabel": "프롬프트 레이블",
-        "promptLabelPlaceholder": "프롬프트 이름 입력",
-        "promptInstructions": "프롬프트 지시사항",
-        "promptInstructionsPlaceholder": "텍스트 변환 후 실행할 지시사항을 작성하세요. 예: 다음 텍스트의 문법과 명확성을 개선하세요: ${output}",
-        "promptTip": "팁: 프롬프트에서 변환된 텍스트를 삽입하려면 <code>${output}</code>을 사용하세요.",
-        "updatePrompt": "프롬프트 업데이트",
-        "deletePrompt": "프롬프트 삭제",
-        "createPrompt": "프롬프트 만들기",
-        "cancel": "취소",
-        "selectToEdit": "세부 정보를 보고 편집하려면 위에서 프롬프트를 선택하세요.",
-        "createFirst": "첫 번째 후처리 프롬프트를 만들려면 위의 '새 프롬프트 만들기'를 클릭하세요."
       }
     },
-    "history": {
-      "title": "히스토리",
-      "openFolder": "녹음 폴더 열기",
-      "loading": "히스토리 로딩 중...",
-      "empty": "아직 변환된 내용이 없습니다. 녹음을 시작하여 히스토리를 만드세요!",
-      "copyToClipboard": "녹음 내용을 클립보드에 복사",
-      "save": "변환된 텍스트 저장",
-      "unsave": "저장에서 제거",
-      "delete": "항목 삭제",
-      "deleteError": "항목 삭제에 실패했습니다. 다시 시도해주세요.",
-      "retranscribe": "다시 전사",
-      "retranscribeError": "다시 전사에 실패했습니다. 다시 시도해주세요.",
-      "transcribing": "전사 중...",
-      "transcriptionFailed": "전사에 실패했습니다. 재시도 아이콘을 사용하여 다시 전사할 수 있습니다."
+    "experimental": {
+      "title": "Experimental",
+      "banner": "These features are under active development and may change or be removed."
     },
-    "debug": {
-      "title": "디버그",
-      "logDirectory": {
-        "title": "로그 디렉토리",
-        "description": "로그 파일이 저장되는 위치"
+    "export": {
+      "title": "Export",
+      "description": "Settings that apply when exporting your edited media.",
+      "loudness": {
+        "title": "Loudness normalization",
+        "description": "Match a target integrated loudness so exported videos sound consistent across players and platforms.",
+        "options": {
+          "off": {
+            "label": "Off",
+            "description": "No loudness normalization. Exported audio uses the source levels."
+          },
+          "podcast_-16": {
+            "label": "Podcast (-16 LUFS)",
+            "description": "Broadcast / podcast preset. Targets -16 LUFS integrated."
+          },
+          "streaming_-14": {
+            "label": "Streaming (-14 LUFS)",
+            "description": "Spotify / YouTube preset. Targets -14 LUFS integrated."
+          }
+        },
+        "preflight": {
+          "title": "Preflight measurement",
+          "description": "Measures the post-edit audio without exporting so you can preview how far off-target it is.",
+          "run": "Run preflight",
+          "running": "Measuring…",
+          "integrated": "Integrated",
+          "truePeak": "True peak",
+          "lra": "Loudness range",
+          "delta": "Delta to target",
+          "target": "Target",
+          "noMedia": "Open a project to run preflight.",
+          "noTarget": "—",
+          "warningOffTarget": "Measured loudness is more than 12 LU off the target. Consider re-recording or adjusting the source before export.",
+          "error": "Preflight failed: {{error}}"
+        }
       },
-      "logLevel": {
-        "title": "로그 레벨",
-        "description": "로깅의 상세도 설정"
-      },
-      "updateChecks": {
-        "label": "업데이트 확인",
-        "description": "Toaster의 새 버전을 자동으로 확인합니다"
-      },
-      "wordCorrectionThreshold": {
-        "title": "단어 수정 임계값",
-        "description": "사용자 정의 단어 수정의 민감도"
-      },
-      "historyLimit": {
-        "title": "히스토리 제한",
-        "description": "보관할 최대 히스토리 항목 수",
-        "entries": "항목"
-      },
-      "recordingRetention": {
-        "title": "녹음 자동 삭제",
-        "description": "공간을 절약하기 위해 오래된 녹음을 자동으로 삭제합니다",
-        "never": "안 함",
-        "preserveLimit": "최근 {{count}}개 유지",
-        "days3": "3일 후",
-        "weeks2": "2주 후",
-        "months3": "3개월 후",
-        "placeholder": "보관 기간 선택..."
-      },
-      "clamshellMicrophone": {
-        "title": "클램셸 마이크",
-        "description": "노트북 덮개가 닫혀 있을 때 사용할 마이크"
-      },
-      "postProcessingToggle": {
-        "label": "후처리",
-        "description": "텍스트 변환 후 AI 기반 텍스트 개선 활성화"
-      },
-      "paths": {
-        "appData": "앱 데이터:",
-        "models": "모델:",
-        "settings": "설정:"
+      "format": {
+        "title": "Format",
+        "label": "Output format",
+        "description": "Choose the container and codec for exported media. Audio-only presets drop the video stream.",
+        "options": {
+          "mp4": {
+            "label": "Video (mp4)",
+            "description": "Edited video with H.264 video and AAC audio in an mp4 container. Default."
+          },
+          "mp3": {
+            "label": "Audio - mp3",
+            "description": "Audio-only mp3 (libmp3lame) at 192 kbps. Most universally compatible audio format."
+          },
+          "wav": {
+            "label": "Audio - wav",
+            "description": "Uncompressed 16-bit PCM in a wav container. Largest file; lossless."
+          },
+          "m4a": {
+            "label": "Audio - m4a",
+            "description": "AAC audio in an m4a (audio-only mp4) container at 192 kbps. Good for Apple devices."
+          },
+          "opus": {
+            "label": "Audio - opus",
+            "description": "Opus audio (libopus) at 128 kbps. Best quality per bit; modern codec."
+          }
+        }
       }
     },
-    "about": {
-      "title": "정보",
-      "version": {
-        "title": "버전",
-        "description": "Toaster의 현재 버전"
-      },
-      "appDataDirectory": {
-        "title": "앱 데이터 디렉토리",
-        "description": "Toaster가 데이터를 저장하는 위치"
-      },
-      "sourceCode": {
-        "title": "소스 코드",
-        "description": "소스 코드 보기 및 기여",
-        "button": "GitHub에서 보기"
-      },
-      "acknowledgments": {
-        "title": "감사의 말",
-        "intro": "Toaster extends its engine with transcript-first video and audio editing capabilities from the following projects.",
-        "handy": {
-          "title": "Handy",
-          "description": "Handy is built on the foundation of Handy by cjpais",
-          "details": "Handy is an open-source, local-first speech-to-text application. Thank you to cjpais and all Handy contributors.",
-          "button": "View Handy on GitHub"
+    "advanced": {
+      "title": "Advanced",
+      "description": "Configured-once controls like allow and discard word lists.",
+      "groups": {
+        "words": {
+          "title": "Words",
+          "description": "Discard and allow word lists used across the transcript editor."
         },
-        "whisper": {
-          "title": "Whisper.cpp",
-          "description": "OpenAI의 Whisper 자동 음성 인식 모델의 고성능 추론",
-          "details": "Toaster는 빠르고 로컬 음성-텍스트 처리를 위해 Whisper.cpp를 사용합니다. Georgi Gerganov와 기여자들의 놀라운 작업에 감사드립니다."
+        "performance": {
+          "title": "Performance",
+          "description": "Model unload timing and related runtime behavior."
+        },
+        "captions": {
+          "title": "Captions",
+          "description": "Caption preview and export styling."
+        },
+        "export": {
+          "title": "Export",
+          "description": "Output format, loudness target, and preflight checks for exported media."
+        },
+        "experimental": {
+          "title": "Experimental",
+          "description": "Opt-in features that may change or be removed. Gated by the master toggle below."
         }
+      },
+      "experimentalMaster": {
+        "title": "Enable experimental features",
+        "description": "Master switch for every experiment. When off, individual experiment flags read as disabled even if they were previously turned on. Turning this back on restores your prior selections."
       }
     }
   },
@@ -485,10 +557,6 @@
     "title": "애플리케이션 언어",
     "description": "Toaster 인터페이스의 언어를 변경하세요"
   },
-  "overlay": {
-    "transcribing": "텍스트로 변환 중...",
-    "processing": "처리 중..."
-  },
   "player": {
     "play": "Play",
     "pause": "Pause",
@@ -509,12 +577,22 @@
     "cacheModeSimplified": "Cache: simplified"
   },
   "editor": {
+    "captionOrientation": {
+      "ariaLabel": "Caption orientation",
+      "label": "Captions",
+      "option": {
+        "desktop": "Desktop",
+        "mobile": "Mobile",
+        "auto": "Auto"
+      }
+    },
     "sections": {
       "project": "Project",
       "media": "Media",
       "transcription": "Transcription",
       "exportTools": "Export & Tools",
-      "edit": "Edit"
+      "edit": "Edit",
+      "words": "Words"
     },
     "deleteWord": "Delete Word",
     "restoreWord": "Restore Word",
@@ -587,5 +665,12 @@
     "exporting": "Exporting...",
     "addCaptions": "Add Captions",
     "cleanup": "Clean up"
+  },
+  "experiments": {
+    "simplifyMode": {
+      "label": "Simplify Mode",
+      "description": "Reduce visual density and hide secondary controls in the editor."
+    },
+    "feedbackLink": "Send feedback"
   }
 }

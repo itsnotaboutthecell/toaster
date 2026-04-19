@@ -1,6 +1,6 @@
 {
   "fixture": "toaster_example_candidates",
-  "source_media": "extras/toaster_example.mp4",
+  "source_media": "eval/fixtures/toaster_example.mp4",
   "audio_path": "toaster_example_extracted.wav",
   "notes": [
     "Human oracle derived from user labeling captured on 2026-04-17.",

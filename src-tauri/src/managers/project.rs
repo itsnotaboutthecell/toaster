@@ -4,11 +4,17 @@
 /// metadata, the source media path, the full word list (transcript with
 /// edit states), filler-detection config, and export settings.
 use crate::managers::editor::Word;
+use crate::settings::CaptionProfileSet;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
-const PROJECT_VERSION: &str = "1.0.0";
+/// Current on-disk project format version. Bumped to 1.1.0 for
+/// `caption-profiles-persistence` (Slice B), which adds the optional
+/// `settings.caption_profiles` field. v1.0.0 files still load cleanly
+/// via `#[serde(default)]` on the new field; the next save rewrites
+/// them as 1.1.0 with the crystallized profiles.
+pub const PROJECT_VERSION: &str = "1.1.0";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ToasterProject {
@@ -32,6 +38,12 @@ pub struct ProjectSettings {
     pub pause_threshold_us: i64,
     /// Export format: "srt", "vtt", or "script".
     pub export_format: String,
+    /// Per-orientation caption profiles. `None` means "inherit from
+    /// app-level settings" (v1.0.0 projects load this way). On save,
+    /// the current profiles are crystallized into `Some(_)` so the
+    /// project file is self-describing going forward.
+    #[serde(default)]
+    pub caption_profiles: Option<CaptionProfileSet>,
 }
 
 impl Default for ProjectSettings {
@@ -47,6 +59,7 @@ impl Default for ProjectSettings {
             ],
             pause_threshold_us: 1_000_000, // 1 second
             export_format: "srt".into(),
+            caption_profiles: None,
         }
     }
 }
@@ -71,6 +84,7 @@ impl ToasterProject {
     /// Updates `modified_at` before writing.
     pub fn save(&mut self, path: &Path) -> Result<(), String> {
         self.modified_at = Utc::now().to_rfc3339();
+        self.version = PROJECT_VERSION.into();
 
         let json = serde_json::to_string_pretty(self)
             .map_err(|e| format!("Failed to serialize project: {e}"))?;
@@ -269,7 +283,113 @@ mod tests {
     #[test]
     fn version_field_is_correct() {
         let project = ToasterProject::new("Version Check");
+        assert_eq!(project.version, "1.1.0");
+    }
+
+    #[test]
+    fn project_v1_0_loads_with_none_profiles() {
+        // AC-003-a: v1.0.0 fixture deserializes cleanly; the new
+        // `caption_profiles` field is absent → defaults to `None`.
+        let path = temp_project_path("v1_0_loads");
+        let json = serde_json::json!({
+            "version": "1.0.0",
+            "name": "v1 Project",
+            "created_at": "2025-01-01T00:00:00Z",
+            "modified_at": "2025-01-01T00:00:00Z",
+            "source_media": null,
+            "words": [],
+            "settings": {
+                "filler_words": ["um"],
+                "pause_threshold_us": 1000000,
+                "export_format": "srt"
+            }
+        });
+        fs::write(&path, json.to_string()).expect("write should succeed");
+
+        let loaded = ToasterProject::load(&path).expect("v1.0.0 must load");
+        assert_eq!(loaded.version, "1.0.0");
+        assert!(loaded.settings.caption_profiles.is_none());
+
+        let _ = fs::remove_file(&path);
+    }
+
+    #[test]
+    fn project_save_bumps_version_to_1_1_0_and_writes_profiles() {
+        // AC-003-b: after save, the on-disk file has version 1.1.0
+        // and carries a populated `caption_profiles` block.
+        let path = temp_project_path("v1_saves_1_1_0");
+        let mut project = ToasterProject::new("Upgraded");
+        project.settings.caption_profiles = Some(CaptionProfileSet {
+            desktop: crate::settings::default_desktop_profile(),
+            mobile: crate::settings::default_mobile_profile(),
+        });
+        project.save(&path).expect("save should succeed");
+
+        let raw = fs::read_to_string(&path).expect("read-back");
+        let parsed: serde_json::Value =
+            serde_json::from_str(&raw).expect("valid json");
+        assert_eq!(parsed["version"], "1.1.0");
+        assert!(parsed["settings"]["caption_profiles"].is_object());
+        assert!(parsed["settings"]["caption_profiles"]["desktop"].is_object());
+        assert!(parsed["settings"]["caption_profiles"]["mobile"].is_object());
+
+        let _ = fs::remove_file(&path);
+    }
+
+    #[test]
+    fn project_import_preserves_caption_profiles_when_some() {
+        // AC-003-c: a project that explicitly sets caption_profiles
+        // round-trips without loss.
+        let path = temp_project_path("v1_preserves_profiles");
+        let mut project = ToasterProject::new("With Profiles");
+        let mut desktop = crate::settings::default_desktop_profile();
+        desktop.font_size = 55;
+        let mobile = crate::settings::default_mobile_profile();
+        project.settings.caption_profiles = Some(CaptionProfileSet {
+            desktop: desktop.clone(),
+            mobile: mobile.clone(),
+        });
+        project.save(&path).expect("save should succeed");
+
+        let loaded = ToasterProject::load(&path).expect("load should succeed");
+        let set = loaded
+            .settings
+            .caption_profiles
+            .expect("profiles round-trip");
+        assert_eq!(set.desktop.font_size, 55);
+        assert_eq!(set.mobile.font_size, mobile.font_size);
+
+        let _ = fs::remove_file(&path);
+    }
+
+    #[test]
+    fn project_v1_0_0_fixture_migrates_on_save() {
+        // AC-008-a: open the committed v1.0.0 fixture, save, verify
+        // the result is v1.1.0 with profiles populated.
+        let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("..")
+            .join("features")
+            .join("caption-profiles-persistence")
+            .join("fixtures")
+            .join("project_v1_0_0.toaster");
+        let mut project =
+            ToasterProject::load(&fixture).expect("v1.0.0 fixture must load");
         assert_eq!(project.version, "1.0.0");
+        assert!(project.settings.caption_profiles.is_none());
+
+        // Simulate the save-path crystallization.
+        project.settings.caption_profiles = Some(CaptionProfileSet {
+            desktop: crate::settings::default_desktop_profile(),
+            mobile: crate::settings::default_mobile_profile(),
+        });
+        let out = temp_project_path("v1_migrate_on_save");
+        project.save(&out).expect("save should succeed");
+
+        let saved = ToasterProject::load(&out).expect("resaved load");
+        assert_eq!(saved.version, "1.1.0");
+        assert!(saved.settings.caption_profiles.is_some());
+
+        let _ = fs::remove_file(&out);
     }
 
     #[test]

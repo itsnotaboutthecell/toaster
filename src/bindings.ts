@@ -45,22 +45,6 @@ async changePostProcessEnabledSetting(enabled: boolean) : Promise<Result<null, s
     else return { status: "error", error: e as string };
 }
 },
-async changeExperimentalEnabledSetting(enabled: boolean) : Promise<Result<null, string>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("change_experimental_enabled_setting", { enabled }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e as string };
-}
-},
-async changeExperimentalSimplifyModeSetting(enabled: boolean) : Promise<Result<null, string>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("change_experimental_simplify_mode_setting", { enabled }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e as string };
-}
-},
 async changePostProcessBaseUrlSetting(providerId: string, baseUrl: string) : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("change_post_process_base_url_setting", { providerId, baseUrl }) };
@@ -192,6 +176,22 @@ async changeLazyStreamCloseSetting(enabled: boolean) : Promise<Result<null, stri
 async changeNormalizeAudioSetting(enabled: boolean) : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("change_normalize_audio_setting", { enabled }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e as string };
+}
+},
+/**
+ * Update the export `loudness_target` setting (R-003 / AC-001-a).
+ * 
+ * Frontend sends the enum string ("off" / "podcast_-16" /
+ * "streaming_-14"); the backend never receives a `loudnorm=...` filter
+ * from TS — that is built only by
+ * `managers::splice::loudness::build_loudnorm_filter`.
+ */
+async changeLoudnessTargetSetting(target: LoudnessTarget) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("change_loudness_target_setting", { target }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e as string };
@@ -349,13 +349,6 @@ async openAppDataDir() : Promise<Result<null, string>> {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e as string };
 }
-},
-/**
- * Apple Intelligence support was removed; the command is retained so the
- * frontend keeps compiling and simply reports "not available" everywhere.
- */
-async checkAppleIntelligenceAvailable() : Promise<boolean> {
-    return await TAURI_INVOKE("check_apple_intelligence_available");
 },
 async getAvailableModels() : Promise<Result<ModelInfo[], string>> {
     try {
@@ -726,6 +719,26 @@ async exportEditedMedia(inputPath: string, outputPath: string, burnCaptions: boo
     else return { status: "error", error: e as string };
 }
 },
+/**
+ * Loudness preflight: render the post-edit audio (same keep-segments
+ * + seam-fade chain that preview/export use) into PCM and run an EBU
+ * R128 measurement against the selected target.
+ * 
+ * AGENTS.md "Single source of truth for dual-path logic": the
+ * underlying measurement and target lookup live in
+ * `managers::splice::loudness`; this command only orchestrates the
+ * FFmpeg decode and forwards the buffer.
+ * 
+ * AC-002-a / AC-002-b / AC-002-c.
+ */
+async loudnessPreflight(target: LoudnessTarget) : Promise<Result<LoudnessPreflight, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("loudness_preflight", { target }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e as string };
+}
+},
 async analyzeFillers(minPauseUs: number | null) : Promise<Result<FillerAnalysis, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("analyze_fillers", { minPauseUs }) };
@@ -842,6 +855,47 @@ async loadProject(path: string) : Promise<Result<string, string>> {
     else return { status: "error", error: e as string };
 }
 },
+/**
+ * Read the effective caption profile for the given orientation.
+ * 
+ * Prefers project-level overrides; falls back to app-level settings.
+ * Slice B R-005 / AC-005-a / AC-005-b.
+ */
+async getCaptionProfile(orientation: Orientation) : Promise<Result<CaptionProfile, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_caption_profile", { orientation }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e as string };
+}
+},
+/**
+ * Write a caption profile to either the app settings or the currently
+ * open project. Slice B R-005 / AC-005-c / AC-005-d.
+ */
+async setCaptionProfile(orientation: Orientation, profile: CaptionProfile, scope: ProfileScope) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("set_caption_profile", { orientation, profile, scope }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e as string };
+}
+},
+/**
+ * Compute the authoritative [`CaptionLayout`] for the given orientation
+ * + frame dimensions. Both the live-preview React code and the libass
+ * export composer invoke this same function (directly here, or via
+ * `CaptionLayoutConfig::from_profile` in the export path), so results
+ * are byte-identical. Slice B R-004-a / AC-004-b.
+ */
+async getCaptionLayout(orientation: Orientation, videoDims: VideoDims) : Promise<Result<CaptionLayout, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_caption_layout", { orientation, videoDims }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e as string };
+}
+},
 async setModelUnloadTimeout(timeout: ModelUnloadTimeout) : Promise<void> {
     await TAURI_INVOKE("set_model_unload_timeout", { timeout });
 },
@@ -861,57 +915,41 @@ async unloadModelManually() : Promise<Result<null, string>> {
     else return { status: "error", error: e as string };
 }
 },
-async getHistoryEntries(cursor: number | null, limit: number | null) : Promise<Result<PaginatedHistory, string>> {
+async listLlmModels() : Promise<Result<LlmModelInfo[], string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("get_history_entries", { cursor, limit }) };
+    return { status: "ok", data: await TAURI_INVOKE("list_llm_models") };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e as string };
 }
 },
-async toggleHistoryEntrySaved(id: number) : Promise<Result<null, string>> {
+async downloadLlmModel(modelId: string) : Promise<Result<null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("toggle_history_entry_saved", { id }) };
+    return { status: "ok", data: await TAURI_INVOKE("download_llm_model", { modelId }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e as string };
 }
 },
-async getAudioFilePath(fileName: string) : Promise<Result<string, string>> {
+async cancelLlmDownload(modelId: string) : Promise<Result<null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("get_audio_file_path", { fileName }) };
+    return { status: "ok", data: await TAURI_INVOKE("cancel_llm_download", { modelId }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e as string };
 }
 },
-async deleteHistoryEntry(id: number) : Promise<Result<null, string>> {
+async deleteLlmModel(modelId: string) : Promise<Result<null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("delete_history_entry", { id }) };
+    return { status: "ok", data: await TAURI_INVOKE("delete_llm_model", { modelId }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e as string };
 }
 },
-async retryHistoryEntryTranscription(id: number) : Promise<Result<null, string>> {
+async setSelectedLlmModel(modelId: string | null) : Promise<Result<null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("retry_history_entry_transcription", { id }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e as string };
-}
-},
-async updateHistoryLimit(limit: number) : Promise<Result<null, string>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("update_history_limit", { limit }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e as string };
-}
-},
-async updateRecordingRetentionPeriod(period: string) : Promise<Result<null, string>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("update_recording_retention_period", { period }) };
+    return { status: "ok", data: await TAURI_INVOKE("set_selected_llm_model", { modelId }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e as string };
@@ -922,11 +960,6 @@ async updateRecordingRetentionPeriod(period: string) : Promise<Result<null, stri
 /** user-defined events **/
 
 
-export const events = __makeEvents__<{
-historyUpdatePayload: HistoryUpdatePayload
-}>({
-historyUpdatePayload: "history-update-payload"
-})
 
 /** user-defined constants **/
 
@@ -934,8 +967,71 @@ historyUpdatePayload: "history-update-payload"
 
 /** user-defined types **/
 
-export type AppSettings = { bindings?: Partial<{ [key in string]: ShortcutBinding }>; start_hidden?: boolean; update_checks_enabled?: boolean; selected_model?: string; selected_output_device?: string | null; preferred_output_sample_rate?: number; translate_to_english?: boolean; selected_language?: string; debug_mode?: boolean; log_level?: LogLevel; custom_words?: string[]; model_unload_timeout?: ModelUnloadTimeout; word_correction_threshold?: number; history_limit?: number; recording_retention_period?: RecordingRetentionPeriod; post_process_enabled?: boolean; post_process_provider_id?: string; post_process_providers?: PostProcessProvider[]; post_process_api_keys?: SecretMap; post_process_models?: Partial<{ [key in string]: string }>; post_process_prompts?: LLMPrompt[]; post_process_selected_prompt_id?: string | null; app_language?: string; experimental_enabled?: boolean; experimental_simplify_mode?: boolean; lazy_stream_close?: boolean; custom_filler_words?: string[] | null; whisper_accelerator?: WhisperAcceleratorSetting; ort_accelerator?: OrtAcceleratorSetting; whisper_gpu_device?: number; normalize_audio_on_export?: boolean; export_volume_db?: number; export_fade_in_ms?: number; export_fade_out_ms?: number; caption_font_size?: number; caption_bg_color?: string; caption_text_color?: string; caption_position?: number; caption_font_family?: CaptionFontFamily; caption_radius_px?: number; caption_padding_x_px?: number; caption_padding_y_px?: number; caption_max_width_percent?: number; settings_version?: number }
+export type AppSettings = { bindings?: Partial<{ [key in string]: ShortcutBinding }>; start_hidden?: boolean; update_checks_enabled?: boolean; selected_model?: string; selected_output_device?: string | null; preferred_output_sample_rate?: number; translate_to_english?: boolean; selected_language?: string; debug_mode?: boolean; log_level?: LogLevel; custom_words?: string[]; model_unload_timeout?: ModelUnloadTimeout; word_correction_threshold?: number; post_process_enabled?: boolean; post_process_provider_id?: string; post_process_providers?: PostProcessProvider[]; post_process_api_keys?: SecretMap; post_process_models?: Partial<{ [key in string]: string }>; post_process_prompts?: LLMPrompt[]; post_process_selected_prompt_id?: string | null; app_language?: string; 
+/**
+ * Master gate for the Experimental settings group. When `false`,
+ * per-flag booleans still store whatever the user last set, but the
+ * `is_experiment_enabled` getter (and the matching
+ * `useExperiment` hook on the frontend) return `false` so no
+ * experimental feature actually activates. Defence-in-depth:
+ * stored values are preserved across master toggle flips so a
+ * user's prior opt-in comes back when they re-enable the master.
+ */
+experimental_enabled?: boolean; experimental_simplify_mode?: boolean; lazy_stream_close?: boolean; custom_filler_words?: string[] | null; whisper_accelerator?: WhisperAcceleratorSetting; ort_accelerator?: OrtAcceleratorSetting; whisper_gpu_device?: number; normalize_audio_on_export?: boolean; 
+/**
+ * Loudness normalization target for export. Single source of truth
+ * for the `loudnorm` filter — see
+ * `managers::splice::loudness::build_loudnorm_filter`. Frontend
+ * only stores this enum and renders a Select; it MUST NOT
+ * hand-build a `loudnorm=...` string. Legacy
+ * `normalize_audio_on_export` migrates to `PodcastMinus16` via
+ * `settings::migrate_loudness_setting`.
+ */
+loudness_target?: LoudnessTarget; export_volume_db?: number; export_fade_in_ms?: number; export_fade_out_ms?: number; 
+/**
+ * Audio-only export format preset. Default `Mp4` preserves
+ * current behavior (H.264 video + AAC audio in mp4). The four
+ * audio-only variants drop the video stream and re-mux the
+ * post-edit audio per
+ * `crate::commands::waveform::export_format_codec_map` —
+ * frontend only stores the enum and never builds `-c:a` /
+ * `-b:a` strings (AGENTS.md "Single source of truth for
+ * dual-path logic").
+ */
+export_format?: AudioExportFormat; caption_font_size?: number; caption_bg_color?: string; caption_text_color?: string; caption_position?: number; caption_font_family?: CaptionFontFamily; caption_radius_px?: number; caption_padding_x_px?: number; caption_padding_y_px?: number; caption_max_width_percent?: number; 
+/**
+ * Per-orientation caption profiles. Slice B single-source-of-truth
+ * for caption geometry — preview and export both read through
+ * `managers::captions::compute_caption_layout(&profile, dims)`.
+ * The flat `caption_*` fields above are retained one release for
+ * backward-compat; on first load `defaults::ensure_caption_defaults`
+ * seeds this from those flat fields.
+ */
+caption_profiles?: CaptionProfileSet; 
+/**
+ * Idempotency latch for the flat-field → profiles migration. Once
+ * true, `ensure_caption_defaults` is a no-op on subsequent loads.
+ */
+caption_profiles_was_migrated?: boolean; settings_version?: number; 
+/**
+ * ID of the catalog entry (see `managers::llm::catalog`) the user
+ * selected for the in-process local-GGUF cleanup path. `None` means
+ * no local model has been chosen yet; the dispatcher falls back to
+ * the HTTP provider when this is unset, regardless of the provider
+ * selector value. See PRD R-008.
+ */
+local_llm_model_id?: string | null }
 export type AudioDevice = { index: string; name: string; is_default: boolean }
+/**
+ * User-facing export format. Default is `Mp4` (current behavior:
+ * H.264 video + AAC audio in mp4). The four audio-only variants drop
+ * the video stream (`-vn`) and re-mux the post-edit audio with the
+ * codec / bitrate listed in `export_format_codec_map`.
+ * 
+ * Serialized lowercase per PRD R-001 / data model:
+ * `"mp4" | "mp3" | "wav" | "m4a" | "opus"`.
+ */
+export type AudioExportFormat = "mp4" | "mp3" | "wav" | "m4a" | "opus"
 export type AvailableAccelerators = { whisper: string[]; ort: string[]; gpu_devices: GpuDeviceOption[] }
 /**
  * Authoritative caption unit consumed verbatim by preview and export.
@@ -979,6 +1075,54 @@ frame_width: number; frame_height: number }
  */
 export type CaptionFontFamily = "Inter" | "Roboto" | "SystemUi"
 /**
+ * Canonical per-video caption layout derived from a `CaptionProfile`
+ * and the target video dimensions. Preview (`get_caption_layout`
+ * Tauri command) and libass export BOTH call
+ * [`compute_caption_layout`] with the same inputs — any divergence
+ * surfaces as a `preview_and_export_layouts_are_byte_identical`
+ * test failure (Slice B SSOT gate).
+ * 
+ * All values are in authoritative **video pixels**.
+ */
+export type CaptionLayout = { 
+/**
+ * Vertical margin — distance from the top of the frame to the
+ * baseline anchor of the caption box, derived from
+ * `profile.position` as a percentage of frame height.
+ */
+margin_v_px: number; 
+/**
+ * Horizontal margin — symmetric left/right gutter derived from
+ * `profile.max_width_percent`.
+ */
+margin_h_px: number; 
+/**
+ * Caption box width in video pixels
+ * (`frame_width * max_width_percent / 100`).
+ */
+box_width_px: number; font_size_px: number; padding_x_px: number; padding_y_px: number; radius_px: number; 
+/**
+ * Background color RGBA (u8 quad parsed from `bg_color` hex).
+ */
+bg_rgba: [number, number, number, number]; 
+/**
+ * Text color RGBA.
+ */
+fg_rgba: [number, number, number, number]; font_family: CaptionFontFamily; frame_width: number; frame_height: number }
+/**
+ * Per-orientation caption profile. Carries the 9 user-configurable
+ * caption geometry fields that persist in settings and projects.
+ * Preview and libass export both consume geometry derived from this
+ * via `managers::captions::compute_caption_layout` — the single
+ * source of truth for caption layout math (AGENTS.md, Slice B).
+ */
+export type CaptionProfile = { font_size: number; bg_color: string; text_color: string; position: number; font_family: CaptionFontFamily; radius_px: number; padding_x_px: number; padding_y_px: number; max_width_percent: number }
+/**
+ * Pair of caption profiles selected by orientation. Desktop is used
+ * for landscape (width/height > 1.0), Mobile for portrait or square.
+ */
+export type CaptionProfileSet = { desktop: CaptionProfile; mobile: CaptionProfile }
+/**
  * A caption segment for SRT/VTT output and live preview.
  */
 export type CaptionSegment = { index: number; start_us: number; end_us: number; text: string }
@@ -1013,13 +1157,16 @@ pauses: PauseInfo[]; filler_count: number; pause_count: number;
  */
 duplicate_indices: number[]; duplicate_count: number }
 export type GpuDeviceOption = { id: number; name: string; total_vram_mb: number }
-export type HistoryEntry = { id: number; file_name: string; timestamp: number; saved: boolean; title: string; transcription_text: string; post_processed_text: string | null; post_process_prompt: string | null; post_process_requested: boolean }
-export type HistoryUpdatePayload = { action: "added"; entry: HistoryEntry } | { action: "updated"; entry: HistoryEntry } | { action: "deleted"; id: number } | { action: "toggled"; id: number }
 /**
  * A keep-segment: contiguous non-deleted region of the source media.
  */
 export type KeepSegment = { start_us: number; end_us: number }
 export type LLMPrompt = { id: string; name: string; prompt: string }
+/**
+ * Runtime view of a catalog entry + download status. Shape mirrors
+ * `managers::model::ModelInfo` for UX parity per PRD R-002.
+ */
+export type LlmModelInfo = { id: string; display_name: string; description: string; filename: string; download_url: string; sha256: string; quantization: string; size_bytes: number; context_length: number; recommended_ram_gb: number; is_recommended_default: boolean; is_downloaded: boolean; is_downloading: boolean; partial_size: number }
 export type LocalLlmApplyResponse = { projection: EditorProjection; apply_result: LocalLlmApplyResult }
 /**
  * Outcome for applying a batch of local LLM proposals.
@@ -1035,6 +1182,59 @@ export type LocalLlmProposalRejection = { proposal_index: number; start_word_ind
  */
 export type LocalLlmWordProposal = { start_word_index: number; end_word_index: number; replacement_words: string[] }
 export type LogLevel = "trace" | "debug" | "info" | "warn" | "error"
+/**
+ * Preflight DTO surfaced to the frontend. All fields are computed
+ * here in Rust — the React side reads and formats them but performs
+ * **no arithmetic** on LUFS / dBTP / LRA values (AGENTS.md
+ * "Single source of truth for dual-path logic"; AC-006-a).
+ */
+export type LoudnessPreflight = { 
+/**
+ * Integrated loudness across the analyzed buffer, LUFS. May be
+ * `f64::NEG_INFINITY` for silent input — formatters should detect
+ * non-finite values.
+ */
+integrated_lufs: number; 
+/**
+ * True-peak across the analyzed buffer, dBTP (max across
+ * channels). May be `f64::NEG_INFINITY` for silent input.
+ */
+true_peak_dbtp: number; 
+/**
+ * EBU R128 loudness range (LRA), in LU.
+ */
+lra: number; 
+/**
+ * The integrated-LUFS target for the selected `LoudnessTarget`,
+ * or `None` when the target is `Off`.
+ */
+target_lufs: number | null; 
+/**
+ * `target_lufs - integrated_lufs` in LU when both are finite,
+ * otherwise `None`. Computed in Rust so the frontend cannot
+ * re-derive it (AC-006-a).
+ */
+delta_lu: number | null }
+/**
+ * User-facing loudness target enum. Single source of truth for the
+ * `loudnorm` filter parameters used by the export pipeline; the
+ * frontend only stores/sends this enum and never builds a filter
+ * string itself (AGENTS.md "Single source of truth for dual-path
+ * logic"). See `build_loudnorm_filter` for the mapping.
+ */
+export type LoudnessTarget = 
+/**
+ * No `loudnorm` filter is emitted; export passes audio through.
+ */
+"off" | 
+/**
+ * Podcast / broadcast preset: integrated -16 LUFS.
+ */
+"podcast_-16" | 
+/**
+ * Streaming preset (Spotify/YouTube-friendly): integrated -14 LUFS.
+ */
+"streaming_-14"
 export type MediaInfo = { 
 /**
  * Absolute path to the media file.
@@ -1061,15 +1261,25 @@ export type ModelCategory = "Transcription" | "System"
 export type ModelInfo = { id: string; name: string; description: string; filename: string; url: string | null; sha256: string | null; size_mb: number; is_downloaded: boolean; is_downloading: boolean; partial_size: number; is_directory: boolean; engine_type: EngineType; accuracy_score: number; speed_score: number; supports_translation: boolean; is_recommended: boolean; supported_languages: string[]; supports_language_selection: boolean; is_custom: boolean; category?: ModelCategory }
 export type ModelLoadStatus = { is_loaded: boolean; current_model: string | null }
 export type ModelUnloadTimeout = "never" | "immediately" | "min_2" | "min_5" | "min_10" | "min_15" | "hour_1" | "sec_15"
+/**
+ * Orientation selector for caption commands. Auto-detection happens
+ * in the frontend editor radio; the Tauri surface only exposes the
+ * two concrete profiles.
+ */
+export type Orientation = "Desktop" | "Mobile"
 export type OrtAcceleratorSetting = "auto" | "cpu" | "cuda" | "directml" | "rocm"
-export type PaginatedHistory = { entries: HistoryEntry[]; has_more: boolean }
 export type PauseInfo = { after_word_index: number; gap_duration_us: number }
 export type PermissionAccess = "allowed" | "denied" | "unknown"
 export type PlaybackAudioContract = { selected_output_device: string; selected_output_device_available: boolean; preferred_output_sample_rate: number; detected_output_sample_rate: number | null; normalized_output_sample_rate: number; mismatch_detected: boolean }
 export type PostProcessProvider = { id: string; label: string; base_url: string; allow_base_url_edit?: boolean; models_endpoint?: string | null; supports_structured_output?: boolean; local_only?: boolean; requires_api_key?: boolean }
 export type PreviewRenderMetadata = { status: PreviewRenderStatus; preview_file_path: string | null; preview_url_safe_path: string | null; source_media_fingerprint: string | null; edit_version: string; generation_token: string; cache_hit: boolean }
 export type PreviewRenderStatus = "ready" | "no_segments" | "missing_media"
-export type RecordingRetentionPeriod = "never" | "preserve_limit" | "days_3" | "weeks_2" | "months_3"
+/**
+ * Scope for `set_caption_profile` — whether the write lands on
+ * `AppSettings` (user-default) or the currently-open `ProjectSettings`
+ * (per-project override).
+ */
+export type ProfileScope = "App" | "Project"
 export type Rgba = { r: number; g: number; b: number; a: number }
 export type SecretMap = Partial<{ [key in string]: string }>
 export type ShortcutBinding = { id: string; name: string; description: string; default_binding: string; current_binding: string }
@@ -1148,6 +1358,10 @@ warning: string | null }
  * A keep-segment represented in microseconds.
  */
 export type TimingSegment = { start_us: number; end_us: number }
+/**
+ * Video dimensions in pixels. Input to `compute_caption_layout`.
+ */
+export type VideoDims = { width: number; height: number }
 export type WhisperAcceleratorSetting = "auto" | "cpu" | "gpu"
 export type WindowsMicrophonePermissionStatus = { supported: boolean; overall_access: PermissionAccess; device_access: PermissionAccess; app_access: PermissionAccess; desktop_app_access: PermissionAccess }
 export type Word = { text: string; 
@@ -1227,3 +1441,6 @@ function __makeEvents__<T extends Record<string, any>>(
 		},
 	);
 }
+
+void TAURI_CHANNEL;
+void __makeEvents__;

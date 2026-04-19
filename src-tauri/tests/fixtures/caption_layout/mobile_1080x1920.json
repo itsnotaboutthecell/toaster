@@ -1,0 +1,14 @@
+{
+  "margin_v_px": 1536,
+  "margin_h_px": 108,
+  "box_width_px": 864,
+  "font_size_px": 48,
+  "padding_x_px": 14,
+  "padding_y_px": 6,
+  "radius_px": 8,
+  "bg_rgba": [0, 0, 0, 179],
+  "fg_rgba": [255, 255, 255, 255],
+  "font_family": "Inter",
+  "frame_width": 1080,
+  "frame_height": 1920
+}

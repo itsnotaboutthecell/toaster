@@ -30,11 +30,8 @@ const TAURI_MOCK_SCRIPT = `<script>
         app_language: "en",
         show_tray_icon: true,
         model_unload_timeout: 300,
-        experimental_enabled: false,
         acceleration: "auto",
         simplify_mode: "basic",
-        history_limit: 50,
-        recording_retention_period: 30,
         debug_mode: false,
         discard_words: "",
         allow_words: "",
@@ -54,8 +51,6 @@ const TAURI_MOCK_SCRIPT = `<script>
         return { supported: false, overall_access: "allowed" };
       if (cmd === "get_available_microphones") return [];
       if (cmd === "get_available_output_devices") return [];
-      if (cmd === "get_transcription_history") return [];
-      if (cmd === "get_history_entries") return { entries: [], has_more: false };
       if (cmd === "is_first_run") return false;
       if (cmd === "initialize_enigo") return null;
       if (cmd === "initialize_shortcuts") return null;
@@ -116,8 +111,8 @@ test.describe("Toaster App", () => {
     const logo = page.locator('img[alt="Toaster"]');
     await expect(logo).toBeVisible();
 
-    // All five sidebar navigation items are present
-    for (const label of ["Editor", "Models", "Advanced", "History", "About"]) {
+    // All sidebar navigation items are present
+    for (const label of ["Editor", "Models", "About"]) {
       await expect(page.getByText(label, { exact: true })).toBeVisible();
     }
   });
@@ -129,18 +124,18 @@ test.describe("Toaster App", () => {
     await page.getByText("About", { exact: true }).click();
     await expect(page.getByText("Source Code")).toBeVisible();
 
-    // Click "Advanced" — about content disappears, settings groups appear
-    await page.getByText("Advanced", { exact: true }).click();
+    // Click "Models" — about content disappears, models container appears
+    await page.getByText("Models", { exact: true }).click();
     await expect(page.getByText("Source Code")).not.toBeVisible();
     await expect(
-      page.locator("h2", { hasText: /app|transcription/i }).first(),
+      page.locator("div.max-w-3xl.w-full.mx-auto"),
     ).toBeVisible();
 
-    // Click "Editor" — settings groups disappear
+    // Click "Editor" — models container disappears
     await page.getByText("Editor", { exact: true }).click();
     await expect(
-      page.locator("h2", { hasText: /app|transcription/i }),
-    ).not.toBeVisible();
+      page.locator("h2", { hasText: /project/i }).first(),
+    ).toBeVisible();
   });
 
   test("settings page renders at least one settings group", async ({
@@ -148,13 +143,13 @@ test.describe("Toaster App", () => {
   }) => {
     await page.goto("/");
 
-    // Navigate to Advanced settings
-    await page.getByText("Advanced", { exact: true }).click();
+    // Navigate to Models — relocated Performance + Captions groups live here
+    await page.getByText("Models", { exact: true }).click();
 
     // SettingsGroup renders h2 headings (uppercase, small text)
     const groupHeadings = page.locator("h2.text-xs.font-medium");
     await expect(groupHeadings.first()).toBeVisible();
-    expect(await groupHeadings.count()).toBeGreaterThanOrEqual(2);
+    expect(await groupHeadings.count()).toBeGreaterThanOrEqual(1);
   });
 
   test("dark theme applies dark background color", async ({ browser }) => {
@@ -197,26 +192,21 @@ test.describe("Toaster App", () => {
     page,
   }) => {
     await page.goto("/");
-    await page.getByText("Advanced", { exact: true }).click();
+    await page.getByText("Editor", { exact: true }).click();
 
-    // At least "App" and "Transcription" group headings are present
+    // Editor renders Project / Words headings
     const groupHeadings = page.locator("h2.text-xs.font-medium");
     await expect(groupHeadings.first()).toBeVisible();
     const headingTexts = await groupHeadings.allTextContents();
     const upper = headingTexts.map((t) => t.toUpperCase());
-    expect(upper).toEqual(expect.arrayContaining(["APP", "TRANSCRIPTION"]));
-
-    // Toggle switches (hidden checkboxes inside ToggleSwitch) exist
-    const toggles = page.locator('input[type="checkbox"]');
-    await expect(toggles.first()).toBeAttached();
-    expect(await toggles.count()).toBeGreaterThanOrEqual(2);
+    expect(upper).toEqual(expect.arrayContaining(["PROJECT"]));
   });
 
   test("toggling a setting checkbox changes its checked state", async ({
     page,
   }) => {
     await page.goto("/");
-    await page.getByText("Advanced", { exact: true }).click();
+    await page.getByText("Models", { exact: true }).click();
 
     // Find the first toggle switch and flip it
     const firstToggle = page.locator('input[type="checkbox"]').first();
@@ -287,19 +277,7 @@ test.describe("Toaster App", () => {
   });
 
   test("history page shows empty state message", async ({ page }) => {
-    await page.goto("/");
-    await page.getByText("History", { exact: true }).click();
-
-    // The history section heading
-    const historyHeading = page.locator("h2.text-xs.font-medium", {
-      hasText: /history/i,
-    });
-    await expect(historyHeading).toBeVisible();
-
-    // With empty history (mock returns []), an empty-state message appears
-    await expect(
-      page.getByText(/no transcriptions yet/i),
-    ).toBeVisible();
+    test.skip(true, "History page removed in remove-history-and-legacy.");
   });
 
   test("sidebar highlights active navigation item", async ({ page }) => {
@@ -326,19 +304,19 @@ test.describe("Toaster App", () => {
   }) => {
     await page.goto("/");
 
-    // Navigate to Advanced
-    await page.getByText("Advanced", { exact: true }).click();
-    const advancedNav = page
-      .locator("div.rounded-lg.cursor-pointer", { hasText: "Advanced" })
+    // Navigate to Models
+    await page.getByText("Models", { exact: true }).click();
+    const modelsNav = page
+      .locator("div.rounded-lg.cursor-pointer", { hasText: "Models" })
       .first();
-    await expect(advancedNav).toHaveClass(/bg-logo-primary/);
+    await expect(modelsNav).toHaveClass(/bg-logo-primary/);
 
-    // Go to About, then back to Advanced
+    // Go to About, then back to Models
     await page.getByText("About", { exact: true }).click();
-    await expect(advancedNav).not.toHaveClass(/bg-logo-primary/);
+    await expect(modelsNav).not.toHaveClass(/bg-logo-primary/);
 
-    await page.getByText("Advanced", { exact: true }).click();
-    await expect(advancedNav).toHaveClass(/bg-logo-primary/);
+    await page.getByText("Models", { exact: true }).click();
+    await expect(modelsNav).toHaveClass(/bg-logo-primary/);
   });
 
   test("responsive: sidebar and content render at narrow viewport", async ({
@@ -368,7 +346,7 @@ test.describe("Toaster App", () => {
     await expect(page.locator('img[alt="Toaster"]')).toBeVisible();
 
     // Navigate to settings and verify content is centered
-    await page.getByText("Advanced", { exact: true }).click();
+    await page.getByText("Models", { exact: true }).click();
     const container = page.locator("div.max-w-3xl.w-full.mx-auto");
     await expect(container).toBeVisible();
 
@@ -415,8 +393,6 @@ test.describe("Toaster App", () => {
     for (const label of [
       "Editor",
       "Models",
-      "Advanced",
-      "History",
       "About",
     ]) {
       await page.getByText(label, { exact: true }).click();
@@ -430,8 +406,7 @@ test.describe("Toaster App", () => {
       (e) =>
         !e.includes("invoke") &&
         !e.includes("TAURI") &&
-        !e.includes("Failed to load") &&
-        !e.includes("history"),
+        !e.includes("Failed to load"),
     );
     expect(unexpectedErrors).toEqual([]);
   });

@@ -2,7 +2,7 @@
 // This file is copied over transcription.rs during CI tests.
 //
 // The mock must preserve the exact public signature of the real
-// `TranscriptionManager` so that callers (e.g. `commands::history`,
+// `TranscriptionManager` so that callers (e.g.
 // `commands::transcribe_file`) which consume the returned
 // `NormalizedTranscriptionResult` continue to compile — and so that the
 // entire segment-timestamp pipeline (`build_words_from_segments`,

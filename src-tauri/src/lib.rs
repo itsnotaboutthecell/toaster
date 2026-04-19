@@ -1,11 +1,11 @@
 pub mod audio_toolkit;
 pub mod cli;
-mod commands;
+pub mod commands;
 mod llm_client;
 pub mod lock_recovery;
-mod managers;
+pub mod managers;
 pub mod portable;
-mod settings;
+pub mod settings;
 mod utils;
 
 pub use cli::CliArgs;
@@ -16,7 +16,7 @@ use tauri_specta::{collect_commands, collect_events, Builder};
 use commands::editor::EditorStore;
 use env_filter::Builder as EnvFilterBuilder;
 use managers::editor::EditorState;
-use managers::history::HistoryManager;
+use managers::llm::LlmManager;
 use managers::media::{MediaState, MediaStore};
 use managers::model::ModelManager;
 use managers::transcription::TranscriptionManager;
@@ -132,8 +132,14 @@ fn initialize_core_logic(app_handle: &AppHandle) {
         TranscriptionManager::new(app_handle, model_manager.clone())
             .expect("Failed to initialize transcription manager"),
     );
-    let history_manager =
-        Arc::new(HistoryManager::new(app_handle).expect("Failed to initialize history manager"));
+
+    // Local LLM manager (in-process GGUF path). On-disk assets live under
+    // <app-data>/llm/, separate from Whisper's <app-data>/models/ (PRD R-003).
+    let llm_dir = crate::portable::app_data_dir(app_handle)
+        .expect("Failed to get app data dir")
+        .join("llm");
+    let llm_manager =
+        Arc::new(LlmManager::new(llm_dir).expect("Failed to initialize LLM manager"));
 
     // Apply accelerator preferences before any model loads
     managers::transcription::apply_accelerator_settings(app_handle);
@@ -141,9 +147,10 @@ fn initialize_core_logic(app_handle: &AppHandle) {
     // Add managers to Tauri's managed state
     app_handle.manage(model_manager.clone());
     app_handle.manage(transcription_manager.clone());
-    app_handle.manage(history_manager.clone());
+    app_handle.manage(llm_manager.clone());
     app_handle.manage(EditorStore(Mutex::new(EditorState::new())));
     app_handle.manage(MediaStore(Mutex::new(MediaState::new())));
+    app_handle.manage(crate::commands::project::CurrentProjectStore::default());
 
     // Note: Keyboard shortcuts and Unix signal handlers have been removed
     // (legacy Handy dictation surface). Toaster is a transcript editor
@@ -194,8 +201,6 @@ pub fn run(cli_args: CliArgs) {
             commands::app_settings::change_debug_mode_setting,
             commands::app_settings::change_word_correction_threshold_setting,
             commands::app_settings::change_post_process_enabled_setting,
-            commands::app_settings::change_experimental_enabled_setting,
-            commands::app_settings::change_experimental_simplify_mode_setting,
             commands::app_settings::change_post_process_base_url_setting,
             commands::app_settings::change_post_process_api_key_setting,
             commands::app_settings::change_post_process_model_setting,
@@ -213,6 +218,7 @@ pub fn run(cli_args: CliArgs) {
             commands::app_settings::change_caption_position_setting,
             commands::app_settings::change_lazy_stream_close_setting,
             commands::app_settings::change_normalize_audio_setting,
+            commands::app_settings::change_loudness_target_setting,
             commands::app_settings::change_export_volume_db_setting,
             commands::app_settings::change_export_fade_in_ms_setting,
             commands::app_settings::change_export_fade_out_ms_setting,
@@ -234,7 +240,6 @@ pub fn run(cli_args: CliArgs) {
             commands::open_recordings_folder,
             commands::open_log_dir,
             commands::open_app_data_dir,
-            commands::check_apple_intelligence_available,
             commands::models::get_available_models,
             commands::models::get_model_info,
             commands::models::download_model,
@@ -283,6 +288,7 @@ pub fn run(cli_args: CliArgs) {
             commands::waveform::invalidate_temp_preview_cache,
             commands::waveform::render_temp_preview_audio,
             commands::waveform::export_edited_media,
+            commands::waveform::loudness_preflight,
             commands::filler::analyze_fillers,
             commands::filler::delete_fillers,
             commands::filler::delete_duplicates,
@@ -293,18 +299,19 @@ pub fn run(cli_args: CliArgs) {
             commands::disfluency::cleanup_smart_duplicates,
             commands::project::save_project,
             commands::project::load_project,
+            commands::captions::get_caption_profile,
+            commands::captions::set_caption_profile,
+            commands::captions::get_caption_layout,
             commands::transcription::set_model_unload_timeout,
             commands::transcription::get_model_load_status,
             commands::transcription::unload_model_manually,
-            commands::history::get_history_entries,
-            commands::history::toggle_history_entry_saved,
-            commands::history::get_audio_file_path,
-            commands::history::delete_history_entry,
-            commands::history::retry_history_entry_transcription,
-            commands::history::update_history_limit,
-            commands::history::update_recording_retention_period,
+            commands::llm_models::list_llm_models,
+            commands::llm_models::download_llm_model,
+            commands::llm_models::cancel_llm_download,
+            commands::llm_models::delete_llm_model,
+            commands::llm_models::set_selected_llm_model,
         ])
-        .events(collect_events![managers::history::HistoryUpdatePayload,]);
+        .events(collect_events![]);
 
     #[cfg(debug_assertions)] // <- Only export on non-release builds
     {
@@ -325,7 +332,19 @@ pub fn run(cli_args: CliArgs) {
         // TODO: drop this shim when upgrading tauri-specta to a release
         // that lets us configure the cast target directly.
         if let Ok(src) = std::fs::read_to_string(BINDINGS_PATH) {
-            let patched = src.replace("e  as any", "e as string");
+            let mut patched = src.replace("e  as any", "e as string");
+            // When `collect_events![]` is empty, tauri-specta still emits the
+            // `Channel as TAURI_CHANNEL` import and the `__makeEvents__`
+            // helper, neither of which is referenced. TS strict mode then
+            // fails with TS6133 ("declared but never read") and breaks
+            // `bun run build`. Append a void-reference trailer so both
+            // identifiers count as used until events are added back. Idempotent
+            // — skipped once the trailer is already present.
+            const VOID_TRAILER: &str =
+                "\nvoid TAURI_CHANNEL;\nvoid __makeEvents__;\n";
+            if !patched.contains("void TAURI_CHANNEL;") {
+                patched.push_str(VOID_TRAILER);
+            }
             if patched != src {
                 if let Err(err) = std::fs::write(BINDINGS_PATH, patched) {
                     eprintln!("Failed to post-process bindings.ts: {err}");

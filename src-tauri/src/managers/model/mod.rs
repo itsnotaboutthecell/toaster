@@ -1,19 +1,14 @@
 use crate::settings::{get_settings, write_settings};
 use anyhow::Result;
-use flate2::read::GzDecoder;
 use futures_util::StreamExt;
 use log::{debug, info, warn};
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use std::collections::{HashMap, HashSet};
 use std::fs;
-use std::fs::File;
-use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
-use std::time::{Duration, Instant};
-use tar::Archive;
 use tauri::{AppHandle, Emitter, Manager};
 
 mod catalog;

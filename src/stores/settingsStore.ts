@@ -5,6 +5,7 @@ import type {
   AppSettings as Settings,
   AudioDevice,
   LogLevel,
+  LoudnessTarget,
   WhisperAcceleratorSetting,
   OrtAcceleratorSetting,
 } from "@/bindings";
@@ -79,8 +80,6 @@ const settingUpdaters: {
         ? "default"
         : (value as string),
     ),
-  recording_retention_period: (value) =>
-    commands.updateRecordingRetentionPeriod(value as string),
   translate_to_english: (value) =>
     commands.changeTranslateToEnglishSetting(value as boolean),
   selected_language: (value) =>
@@ -91,17 +90,12 @@ const settingUpdaters: {
     commands.changeCustomFillerWordsSetting(value as string[]),
   word_correction_threshold: (value) =>
     commands.changeWordCorrectionThresholdSetting(value as number),
-  history_limit: (value) => commands.updateHistoryLimit(value as number),
   post_process_enabled: (value) =>
     commands.changePostProcessEnabledSetting(value as boolean),
   post_process_selected_prompt_id: (value) =>
     commands.setPostProcessSelectedPrompt(value as string),
   log_level: (value) => commands.setLogLevel(value as LogLevel),
   app_language: (value) => commands.changeAppLanguageSetting(value as string),
-  experimental_enabled: (value) =>
-    commands.changeExperimentalEnabledSetting(value as boolean),
-  experimental_simplify_mode: (value) =>
-    commands.changeExperimentalSimplifyModeSetting(value as boolean),
   lazy_stream_close: (value) =>
     commands.changeLazyStreamCloseSetting(value as boolean),
   whisper_accelerator: (value) =>
@@ -114,6 +108,8 @@ const settingUpdaters: {
     commands.changeWhisperGpuDevice(value as number),
   normalize_audio_on_export: (value) =>
     commands.changeNormalizeAudioSetting(value as boolean),
+  loudness_target: (value) =>
+    commands.changeLoudnessTargetSetting(value as LoudnessTarget),
   export_volume_db: (value) =>
     commands.changeExportVolumeDbSetting(value as number),
   export_fade_in_ms: (value) =>

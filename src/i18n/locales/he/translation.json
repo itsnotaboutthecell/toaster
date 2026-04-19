@@ -6,13 +6,11 @@
   },
   "sidebar": {
     "editor": "Editor",
-    "general": "כללי",
     "models": "מודלים",
-    "advanced": "מתקדם",
     "postProcessing": "עיבוד משלים",
-    "history": "היסטוריה",
     "debug": "ניפוי שגיאות",
-    "about": "אודות"
+    "about": "אודות",
+    "advanced": "Advanced"
   },
   "onboarding": {
     "subtitle": "כדי להתחיל, בחר מודל תמלול",
@@ -160,44 +158,151 @@
         "allLanguages": "כל השפות"
       },
       "noModelsMatch": "אין מודלים שמתאימים לסינון הזה.",
-      "download": "Download"
-    },
-    "advanced": {
-      "title": "מתקדם",
+      "download": "Download",
       "groups": {
-        "app": "אפליקציה",
-        "output": "פלט",
-        "transcription": "תמלול",
-        "captionSettings": "Caption Settings",
-        "history": "היסטוריה",
-        "experimental": "ניסיוני"
+        "performance": "Performance",
+        "captions": "Captions"
+      }
+    },
+    "postProcessing": {
+      "title": "עיבוד משלים",
+      "hotkey": {
+        "title": "קיצור מקשים"
       },
-      "experimentalToggle": {
-        "label": "תכונות ניסיוניות",
-        "description": "הפעל תכונות ניסיוניות שעדיין נמצאות בפיתוח."
+      "api": {
+        "title": "API (תואם OpenAI)",
+        "provider": {
+          "title": "ספק",
+          "description": "בחר ספק שתואם ל-OpenAI."
+        },
+        "baseUrl": {
+          "title": "Base URL",
+          "description": "כתובת ה-API הבסיסית עבור הספק הנבחר. רק ספק מותאם אישית ניתן לעריכה.",
+          "placeholder": "https://api.openai.com/v1"
+        },
+        "apiKey": {
+          "title": "מפתח API",
+          "description": "מפתח API עבור הספק הנבחר.",
+          "placeholder": "sk-..."
+        },
+        "model": {
+          "title": "מודל",
+          "descriptionCustom": "ספק את מזהה המודל שה-endpoint המותאם שלך מצפה לו.",
+          "descriptionDefault": "בחר מודל שהספק הנבחר חושף.",
+          "placeholderWithOptions": "חפש או בחר מודל",
+          "placeholderNoOptions": "הקלד שם מודל",
+          "refreshModels": "רענן מודלים"
+        }
       },
-      "experimentalSimplifyModeToggle": {
-        "label": "Simplify media timing path (experimental)",
-        "description": "Use a simplified preview/export segment path while still enforcing timing-contract validation. Disabled by default."
+      "prompts": {
+        "title": "פרומפט",
+        "selectedPrompt": {
+          "title": "פרומפט נבחר",
+          "description": "בחר תבנית לשיפור התמלול או צור חדשה. השתמש ב-${output} בתוך טקסט הפרומפט כדי להפנות לתמלול שנקלט."
+        },
+        "noPrompts": "אין פרומפטים זמינים",
+        "selectPrompt": "בחר פרומפט",
+        "createNew": "צור פרומפט חדש",
+        "promptLabel": "שם הפרומפט",
+        "promptLabelPlaceholder": "הזן שם לפרומפט",
+        "promptInstructions": "הוראות לפרומפט",
+        "promptInstructionsPlaceholder": "כתוב את ההוראות שירוצו אחרי התמלול. לדוגמה: שפר דקדוק ובהירות עבור הטקסט הבא: ${output}",
+        "promptTip": "טיפ: השתמש ב-<code>${output}</code> כדי להכניס את הטקסט המתומלל לפרומפט שלך.",
+        "updatePrompt": "עדכן פרומפט",
+        "deletePrompt": "מחק פרומפט",
+        "createPrompt": "צור פרומפט",
+        "cancel": "ביטול",
+        "selectToEdit": "בחר פרומפט למעלה כדי לצפות בפרטים שלו ולערוך אותם.",
+        "createFirst": "לחץ על 'צור פרומפט חדש' למעלה כדי ליצור את פרומפט העיבוד הראשון שלך."
       },
+      "localLlmAlert": {
+        "link": "Learn more",
+        "title": "Local LLM required",
+        "body": "Toaster post-processing runs against a local OpenAI-compatible endpoint. See docs/post-processing.md for setup."
+      },
+      "localModels": {
+        "title": "Local LLM model",
+        "description": "Toaster runs LLM cleanup in-process. Pick a model below to download and use locally.",
+        "defaultBadge": "Default",
+        "selectedBadge": "Active",
+        "download": "Download",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "select": "Use this model",
+        "empty": "No local models available.",
+        "requirementsFormat": "{{size}} · RAM ~{{ram}} MB · Disk ~{{disk}} MB",
+        "progressFormat": "{{percent}}% · {{speed}} MB/s"
+      },
+      "provider": {
+        "local": {
+          "label": "Local (in-process)",
+          "description": "Runs the cleanup model inside Toaster. No network calls."
+        }
+      }
+    },
+    "debug": {
+      "title": "ניפוי שגיאות",
+      "logDirectory": {
+        "title": "תיקיית לוגים",
+        "description": "המיקום שבו נשמרים קבצי הלוג"
+      },
+      "logLevel": {
+        "title": "רמת לוג",
+        "description": "הגדר את רמת הפירוט של הלוגים"
+      },
+      "updateChecks": {
+        "label": "בדוק עדכונים",
+        "description": "בדוק אוטומטית אם קיימות גרסאות חדשות של Toaster"
+      },
+      "wordCorrectionThreshold": {
+        "title": "סף תיקון מילים",
+        "description": "רגישות לתיקוני מילים מותאמות אישית"
+      },
+      "postProcessingToggle": {
+        "label": "עיבוד משלים",
+        "description": "הפעל שיפור טקסט מבוסס AI אחרי התמלול"
+      },
+      "paths": {
+        "appData": "נתוני אפליקציה:",
+        "models": "מודלים:",
+        "settings": "הגדרות:"
+      }
+    },
+    "about": {
+      "title": "אודות",
+      "version": {
+        "title": "גרסה",
+        "description": "הגרסה הנוכחית של Toaster"
+      },
+      "appDataDirectory": {
+        "title": "תיקיית נתוני אפליקציה",
+        "description": "המיקום שבו Toaster שומר את הנתונים שלו"
+      },
+      "sourceCode": {
+        "title": "קוד מקור",
+        "description": "צפה בקוד המקור ותרום",
+        "button": "צפה ב-GitHub"
+      },
+      "acknowledgments": {
+        "title": "תודות",
+        "intro": "Toaster extends its engine with transcript-first video and audio editing capabilities from the following projects.",
+        "handy": {
+          "title": "Handy",
+          "description": "Handy is built on the foundation of Handy by cjpais",
+          "details": "Handy is an open-source, local-first speech-to-text application. Thank you to cjpais and all Handy contributors.",
+          "button": "View Handy on GitHub"
+        },
+        "whisper": {
+          "title": "Whisper.cpp",
+          "description": "הסקה מהירה לביצועים גבוהים עבור מודל זיהוי הדיבור Whisper של OpenAI",
+          "details": "Toaster משתמש ב-Whisper.cpp לתמלול מהיר ומקומי. תודה לעבודה המדהימה של Georgi Gerganov וכל התורמים."
+        }
+      }
+    },
+    "controls": {
       "lazyStreamClose": {
         "label": "השאר את המיקרופון פתוח בין תמלולים",
         "description": "משאיר את זרם המיקרופון פתוח למשך 30 שניות אחרי סיום ההקלטה, וכך מפחית השהיה בתמלולים רצופים. עשוי לפגוע באיכות שמע Bluetooth בזמן שהאפשרות פעילה."
-      },
-      "acceleration": {
-        "whisper": {
-          "title": "האצת Whisper",
-          "description": "האצת חומרה למודלי Whisper. מצב אוטומטי משתמש ב-GPU אם זמין (Metal ב-macOS, Vulkan ב-Windows/Linux)."
-        },
-        "ort": {
-          "title": "האצת ONNX",
-          "description": "האצת חומרה למודלי ONNX (Parakeet, Canary, Moonshine ועוד). DirectML ב-Windows הוא ניסיוני. ייתכן שמודלים ייכשלו בתמלול."
-        },
-        "gpuDevice": {
-          "title": "התקן GPU",
-          "description": "בחר באיזה GPU להשתמש עבור הסקת Whisper. מצב אוטומטי בוחר את ה-GPU הייעודי.",
-          "auto": "אוטומטי"
-        }
       },
       "translateToEnglish": {
         "label": "תרגם לאנגלית",
@@ -271,157 +376,124 @@
         "maxWidthDescription": "How wide the caption is allowed to grow before it wraps onto a second line, as a percentage of the video frame."
       }
     },
-    "postProcessing": {
-      "title": "עיבוד משלים",
-      "hotkey": {
-        "title": "קיצור מקשים"
-      },
-      "api": {
-        "title": "API (תואם OpenAI)",
-        "provider": {
-          "title": "ספק",
-          "description": "בחר ספק שתואם ל-OpenAI."
+    "captions": {
+      "tabs": {
+        "ariaLabel": "Caption orientation",
+        "desktop": "Desktop",
+        "desktopDescription": "Styling for landscape videos (width \u2265 height).",
+        "mobile": "Mobile",
+        "mobileDescription": "Styling for portrait / square videos (width < height)."
+      },      "preview": {
+        "heading": "Live preview",
+        "sampleLegend": "Sample text",
+        "sample": {
+          "short": "looking crispy",
+          "twoLine": "looking crispy\nand readable",
+          "long": "looking crispy and readable\neven when the caption text\nwraps onto a third line"
         },
-        "appleIntelligence": {
-          "title": "Apple Intelligence",
-          "description": "רץ כולו על המכשיר. לא נדרש מפתח API או חיבור רשת.",
-          "requirements": "דורש Mac עם Apple Silicon שמריץ macOS Tahoe (26.0) ומעלה. Apple Intelligence חייב להיות מופעל בהגדרות המערכת.",
-          "unavailable": "Apple Intelligence לא זמין במכשיר הזה. נדרש Mac עם Apple Silicon שמריץ macOS Tahoe (26.0) ומעלה, עם Apple Intelligence מופעל בהגדרות המערכת."
-        },
-        "baseUrl": {
-          "title": "Base URL",
-          "description": "כתובת ה-API הבסיסית עבור הספק הנבחר. רק ספק מותאם אישית ניתן לעריכה.",
-          "placeholder": "https://api.openai.com/v1"
-        },
-        "apiKey": {
-          "title": "מפתח API",
-          "description": "מפתח API עבור הספק הנבחר.",
-          "placeholder": "sk-..."
-        },
-        "model": {
-          "title": "מודל",
-          "descriptionApple": "ספק מגבלת טוקנים מספרית אופציונלית או השאר את ברירת המחדל שעל המכשיר.",
-          "descriptionCustom": "ספק את מזהה המודל שה-endpoint המותאם שלך מצפה לו.",
-          "descriptionDefault": "בחר מודל שהספק הנבחר חושף.",
-          "placeholderApple": "Apple Intelligence",
-          "placeholderWithOptions": "חפש או בחר מודל",
-          "placeholderNoOptions": "הקלד שם מודל",
-          "refreshModels": "רענן מודלים"
+        "orientation": {
+          "label": "כיוון התצוגה המקדימה",
+          "horizontal": "אופקי",
+          "vertical": "אנכי"
         }
-      },
-      "prompts": {
-        "title": "פרומפט",
-        "selectedPrompt": {
-          "title": "פרומפט נבחר",
-          "description": "בחר תבנית לשיפור התמלול או צור חדשה. השתמש ב-${output} בתוך טקסט הפרומפט כדי להפנות לתמלול שנקלט."
-        },
-        "noPrompts": "אין פרומפטים זמינים",
-        "selectPrompt": "בחר פרומפט",
-        "createNew": "צור פרומפט חדש",
-        "promptLabel": "שם הפרומפט",
-        "promptLabelPlaceholder": "הזן שם לפרומפט",
-        "promptInstructions": "הוראות לפרומפט",
-        "promptInstructionsPlaceholder": "כתוב את ההוראות שירוצו אחרי התמלול. לדוגמה: שפר דקדוק ובהירות עבור הטקסט הבא: ${output}",
-        "promptTip": "טיפ: השתמש ב-<code>${output}</code> כדי להכניס את הטקסט המתומלל לפרומפט שלך.",
-        "updatePrompt": "עדכן פרומפט",
-        "deletePrompt": "מחק פרומפט",
-        "createPrompt": "צור פרומפט",
-        "cancel": "ביטול",
-        "selectToEdit": "בחר פרומפט למעלה כדי לצפות בפרטים שלו ולערוך אותם.",
-        "createFirst": "לחץ על 'צור פרומפט חדש' למעלה כדי ליצור את פרומפט העיבוד הראשון שלך."
       }
     },
-    "history": {
-      "title": "היסטוריה",
-      "openFolder": "פתח את תיקיית ההקלטות",
-      "loading": "טוען היסטוריה...",
-      "empty": "עדיין אין תמלולים. התחל להקליט כדי לבנות את ההיסטוריה שלך!",
-      "copyToClipboard": "העתק תמלול ללוח",
-      "save": "שמור תמלול",
-      "unsave": "הסר משמורים",
-      "delete": "מחק רשומה",
-      "deleteError": "מחיקת הרשומה נכשלה. נסה שוב.",
-      "retranscribe": "תמלל מחדש",
-      "retranscribeError": "תמלול מחדש נכשל. נסה שוב.",
-      "transcribing": "מתמלל...",
-      "transcriptionFailed": "התמלול נכשל. אפשר לתמלל מחדש באמצעות אייקון הניסיון החוזר."
+    "experimental": {
+      "title": "Experimental",
+      "banner": "These features are under active development and may change or be removed."
     },
-    "debug": {
-      "title": "ניפוי שגיאות",
-      "logDirectory": {
-        "title": "תיקיית לוגים",
-        "description": "המיקום שבו נשמרים קבצי הלוג"
+    "export": {
+      "title": "Export",
+      "description": "Settings that apply when exporting your edited media.",
+      "loudness": {
+        "title": "Loudness normalization",
+        "description": "Match a target integrated loudness so exported videos sound consistent across players and platforms.",
+        "options": {
+          "off": {
+            "label": "Off",
+            "description": "No loudness normalization. Exported audio uses the source levels."
+          },
+          "podcast_-16": {
+            "label": "Podcast (-16 LUFS)",
+            "description": "Broadcast / podcast preset. Targets -16 LUFS integrated."
+          },
+          "streaming_-14": {
+            "label": "Streaming (-14 LUFS)",
+            "description": "Spotify / YouTube preset. Targets -14 LUFS integrated."
+          }
+        },
+        "preflight": {
+          "title": "Preflight measurement",
+          "description": "Measures the post-edit audio without exporting so you can preview how far off-target it is.",
+          "run": "Run preflight",
+          "running": "Measuring…",
+          "integrated": "Integrated",
+          "truePeak": "True peak",
+          "lra": "Loudness range",
+          "delta": "Delta to target",
+          "target": "Target",
+          "noMedia": "Open a project to run preflight.",
+          "noTarget": "—",
+          "warningOffTarget": "Measured loudness is more than 12 LU off the target. Consider re-recording or adjusting the source before export.",
+          "error": "Preflight failed: {{error}}"
+        }
       },
-      "logLevel": {
-        "title": "רמת לוג",
-        "description": "הגדר את רמת הפירוט של הלוגים"
-      },
-      "updateChecks": {
-        "label": "בדוק עדכונים",
-        "description": "בדוק אוטומטית אם קיימות גרסאות חדשות של Toaster"
-      },
-      "wordCorrectionThreshold": {
-        "title": "סף תיקון מילים",
-        "description": "רגישות לתיקוני מילים מותאמות אישית"
-      },
-      "historyLimit": {
-        "title": "מגבלת היסטוריה",
-        "description": "המספר המרבי של רשומות היסטוריה לשמירה",
-        "entries": "רשומות"
-      },
-      "recordingRetention": {
-        "title": "מחיקה אוטומטית של הקלטות",
-        "description": "מחק הקלטות ישנות אוטומטית כדי לחסוך מקום",
-        "never": "אף פעם",
-        "preserveLimit": "שמור את {{count}} האחרונות",
-        "days3": "אחרי 3 ימים",
-        "weeks2": "אחרי שבועיים",
-        "months3": "אחרי 3 חודשים",
-        "placeholder": "בחר משך שמירה..."
-      },
-      "clamshellMicrophone": {
-        "title": "מיקרופון במצב clamshell",
-        "description": "המיקרופון שישמש כשהמחשב הנייד סגור"
-      },
-      "postProcessingToggle": {
-        "label": "עיבוד משלים",
-        "description": "הפעל שיפור טקסט מבוסס AI אחרי התמלול"
-      },
-      "paths": {
-        "appData": "נתוני אפליקציה:",
-        "models": "מודלים:",
-        "settings": "הגדרות:"
+      "format": {
+        "title": "Format",
+        "label": "Output format",
+        "description": "Choose the container and codec for exported media. Audio-only presets drop the video stream.",
+        "options": {
+          "mp4": {
+            "label": "Video (mp4)",
+            "description": "Edited video with H.264 video and AAC audio in an mp4 container. Default."
+          },
+          "mp3": {
+            "label": "Audio - mp3",
+            "description": "Audio-only mp3 (libmp3lame) at 192 kbps. Most universally compatible audio format."
+          },
+          "wav": {
+            "label": "Audio - wav",
+            "description": "Uncompressed 16-bit PCM in a wav container. Largest file; lossless."
+          },
+          "m4a": {
+            "label": "Audio - m4a",
+            "description": "AAC audio in an m4a (audio-only mp4) container at 192 kbps. Good for Apple devices."
+          },
+          "opus": {
+            "label": "Audio - opus",
+            "description": "Opus audio (libopus) at 128 kbps. Best quality per bit; modern codec."
+          }
+        }
       }
     },
-    "about": {
-      "title": "אודות",
-      "version": {
-        "title": "גרסה",
-        "description": "הגרסה הנוכחית של Toaster"
-      },
-      "appDataDirectory": {
-        "title": "תיקיית נתוני אפליקציה",
-        "description": "המיקום שבו Toaster שומר את הנתונים שלו"
-      },
-      "sourceCode": {
-        "title": "קוד מקור",
-        "description": "צפה בקוד המקור ותרום",
-        "button": "צפה ב-GitHub"
-      },
-      "acknowledgments": {
-        "title": "תודות",
-        "intro": "Toaster extends its engine with transcript-first video and audio editing capabilities from the following projects.",
-        "handy": {
-          "title": "Handy",
-          "description": "Handy is built on the foundation of Handy by cjpais",
-          "details": "Handy is an open-source, local-first speech-to-text application. Thank you to cjpais and all Handy contributors.",
-          "button": "View Handy on GitHub"
+    "advanced": {
+      "title": "Advanced",
+      "description": "Configured-once controls like allow and discard word lists.",
+      "groups": {
+        "words": {
+          "title": "Words",
+          "description": "Discard and allow word lists used across the transcript editor."
         },
-        "whisper": {
-          "title": "Whisper.cpp",
-          "description": "הסקה מהירה לביצועים גבוהים עבור מודל זיהוי הדיבור Whisper של OpenAI",
-          "details": "Toaster משתמש ב-Whisper.cpp לתמלול מהיר ומקומי. תודה לעבודה המדהימה של Georgi Gerganov וכל התורמים."
+        "performance": {
+          "title": "Performance",
+          "description": "Model unload timing and related runtime behavior."
+        },
+        "captions": {
+          "title": "Captions",
+          "description": "Caption preview and export styling."
+        },
+        "export": {
+          "title": "Export",
+          "description": "Output format, loudness target, and preflight checks for exported media."
+        },
+        "experimental": {
+          "title": "Experimental",
+          "description": "Opt-in features that may change or be removed. Gated by the master toggle below."
         }
+      },
+      "experimentalMaster": {
+        "title": "Enable experimental features",
+        "description": "Master switch for every experiment. When off, individual experiment flags read as disabled even if they were previously turned on. Turning this back on restores your prior selections."
       }
     }
   },
@@ -485,10 +557,6 @@
     "title": "שפת האפליקציה",
     "description": "שנה את שפת הממשק של Toaster"
   },
-  "overlay": {
-    "transcribing": "מתמלל...",
-    "processing": "מעבד..."
-  },
   "player": {
     "play": "Play",
     "pause": "Pause",
@@ -509,12 +577,22 @@
     "cacheModeSimplified": "Cache: simplified"
   },
   "editor": {
+    "captionOrientation": {
+      "ariaLabel": "Caption orientation",
+      "label": "Captions",
+      "option": {
+        "desktop": "Desktop",
+        "mobile": "Mobile",
+        "auto": "Auto"
+      }
+    },
     "sections": {
       "project": "Project",
       "media": "Media",
       "transcription": "Transcription",
       "exportTools": "Export & Tools",
-      "edit": "Edit"
+      "edit": "Edit",
+      "words": "Words"
     },
     "deleteWord": "Delete Word",
     "restoreWord": "Restore Word",
@@ -587,5 +665,12 @@
     "exporting": "Exporting...",
     "addCaptions": "Add Captions",
     "cleanup": "Clean up"
+  },
+  "experiments": {
+    "simplifyMode": {
+      "label": "Simplify Mode",
+      "description": "Reduce visual density and hide secondary controls in the editor."
+    },
+    "feedbackLink": "Send feedback"
   }
 }

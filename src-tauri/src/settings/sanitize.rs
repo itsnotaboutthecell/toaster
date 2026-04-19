@@ -1,7 +1,6 @@
 //! Input sanitization helpers for post-process provider settings.
 
 use super::types::PostProcessProvider;
-use super::APPLE_INTELLIGENCE_PROVIDER_ID;
 use std::net::IpAddr;
 
 pub(crate) fn is_loopback_host(host: &str) -> bool {
@@ -34,7 +33,7 @@ pub(crate) fn base_url_is_loopback(base_url: &str) -> bool {
 }
 
 pub fn is_local_post_process_provider(provider: &PostProcessProvider) -> bool {
-    provider.local_only || provider.id == APPLE_INTELLIGENCE_PROVIDER_ID
+    provider.local_only
 }
 
 pub fn sanitize_local_post_process_base_url(base_url: &str) -> Result<String, String> {

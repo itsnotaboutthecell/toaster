@@ -7,14 +7,13 @@ use log::{info, warn};
 use std::fs;
 use std::fs::File;
 use std::io::Write;
-use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tar::Archive;
 use tauri::Emitter;
 
-use super::{DownloadCleanup, DownloadProgress, EngineType, ModelManager};
+use super::{DownloadCleanup, DownloadProgress, ModelManager};
 
 impl ModelManager {
     pub async fn download_model(&self, model_id: &str) -> Result<()> {

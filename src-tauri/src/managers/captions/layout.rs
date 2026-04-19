@@ -14,7 +14,7 @@
 
 use super::fonts::FontRegistry;
 use crate::managers::editor::Word;
-use crate::settings::CaptionFontFamily;
+use crate::settings::{CaptionFontFamily, CaptionProfile, VideoDims};
 use serde::{Deserialize, Serialize};
 
 /// Which time axis the caller wants timestamps in.
@@ -133,7 +133,123 @@ pub struct CaptionBlock {
     pub frame_height: u32,
 }
 
-/// Build caption blocks for the caller's requested timeline domain.
+/// Canonical per-video caption layout derived from a `CaptionProfile`
+/// and the target video dimensions. Preview (`get_caption_layout`
+/// Tauri command) and libass export BOTH call
+/// [`compute_caption_layout`] with the same inputs — any divergence
+/// surfaces as a `preview_and_export_layouts_are_byte_identical`
+/// test failure (Slice B SSOT gate).
+///
+/// All values are in authoritative **video pixels**.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
+pub struct CaptionLayout {
+    /// Vertical margin — distance from the top of the frame to the
+    /// baseline anchor of the caption box, derived from
+    /// `profile.position` as a percentage of frame height.
+    pub margin_v_px: u32,
+    /// Horizontal margin — symmetric left/right gutter derived from
+    /// `profile.max_width_percent`.
+    pub margin_h_px: u32,
+    /// Caption box width in video pixels
+    /// (`frame_width * max_width_percent / 100`).
+    pub box_width_px: u32,
+    pub font_size_px: u32,
+    pub padding_x_px: u32,
+    pub padding_y_px: u32,
+    pub radius_px: u32,
+    /// Background color RGBA (u8 quad parsed from `bg_color` hex).
+    pub bg_rgba: [u8; 4],
+    /// Text color RGBA.
+    pub fg_rgba: [u8; 4],
+    pub font_family: CaptionFontFamily,
+    pub frame_width: u32,
+    pub frame_height: u32,
+}
+
+/// Single source of truth for caption layout math.
+///
+/// Given a user-controlled [`CaptionProfile`] and the video frame
+/// [`VideoDims`], return a [`CaptionLayout`] consumed byte-identically
+/// by the preview (`get_caption_layout`) and by the libass export
+/// pipeline (via [`CaptionLayoutConfig`] construction below).
+///
+/// Every f64→u32 conversion uses `.round()` at the final step so the
+/// preview↔export byte-identical test is deterministic (no FP drift).
+pub fn compute_caption_layout(profile: &CaptionProfile, dims: VideoDims) -> CaptionLayout {
+    let width = dims.width.max(1);
+    let height = dims.height.max(1);
+
+    // 1. Scale font size by the short-axis dimension so the preview
+    //    and export agree across 1080p, 720p, and portrait 1080x1920.
+    let short_axis = width.min(height) as f64;
+    let scale = short_axis / 1080.0;
+    let font_size_px = ((profile.font_size as f64) * scale).round().max(1.0) as u32;
+
+    // 2. Vertical anchor: profile.position is % of frame height from
+    //    the top. position=90 → caption near the bottom.
+    let pos_pct = profile.position.min(100) as f64;
+    let margin_v_px = ((height as f64) * pos_pct / 100.0).round() as u32;
+
+    // 3. Max box width and symmetric horizontal margin.
+    let mw_pct = profile.max_width_percent.clamp(20, 100) as f64;
+    let box_width_px = ((width as f64) * mw_pct / 100.0).round() as u32;
+    let margin_h_px = width.saturating_sub(box_width_px) / 2;
+
+    // 4. Parse colors once so both consumers use the same u8 quad.
+    let bg = Rgba::parse_css_hex(&profile.bg_color, 0xB3);
+    let fg = Rgba::parse_css_hex(&profile.text_color, 0xFF);
+
+    CaptionLayout {
+        margin_v_px,
+        margin_h_px,
+        box_width_px,
+        font_size_px,
+        padding_x_px: profile.padding_x_px.min(128),
+        padding_y_px: profile.padding_y_px.min(128),
+        radius_px: profile.radius_px.min(64),
+        bg_rgba: [bg.r, bg.g, bg.b, bg.a],
+        fg_rgba: [fg.r, fg.g, fg.b, fg.a],
+        font_family: profile.font_family,
+        frame_width: width,
+        frame_height: height,
+    }
+}
+
+impl CaptionLayoutConfig {
+    /// Derive a full `CaptionLayoutConfig` (geometry + text-flow knobs)
+    /// from a [`CaptionProfile`] via [`compute_caption_layout`]. This is
+    /// the authoritative path used by preview and export alike (AGENTS.md
+    /// SSOT rule).
+    pub fn from_profile(profile: &CaptionProfile, dims: VideoDims) -> Self {
+        let layout = compute_caption_layout(profile, dims);
+        Self {
+            font_family: layout.font_family,
+            font_size_px: layout.font_size_px,
+            text_color: Rgba {
+                r: layout.fg_rgba[0],
+                g: layout.fg_rgba[1],
+                b: layout.fg_rgba[2],
+                a: layout.fg_rgba[3],
+            },
+            background: Rgba {
+                r: layout.bg_rgba[0],
+                g: layout.bg_rgba[1],
+                b: layout.bg_rgba[2],
+                a: layout.bg_rgba[3],
+            },
+            position_pct: profile.position.min(100),
+            radius_px: layout.radius_px,
+            padding_x_px: layout.padding_x_px,
+            padding_y_px: layout.padding_y_px,
+            max_width_pct: profile.max_width_percent.clamp(20, 100),
+            frame_width: layout.frame_width,
+            frame_height: layout.frame_height,
+            max_segment_duration_us: 5_000_000,
+            include_silenced: false,
+        }
+    }
+}
+
 ///
 /// `keep_segments` are the edit keep-ranges on the source timeline. When
 /// `domain == Edited`, words that don't overlap a keep-range are dropped
@@ -341,6 +457,7 @@ fn map_source_to_edit(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::settings::{default_desktop_profile, default_mobile_profile};
 
     fn mk_word(text: &str, s: i64, e: i64) -> Word {
         Word {
@@ -359,6 +476,116 @@ mod tests {
             frame_width: 1280,
             frame_height: 720,
             ..Default::default()
+        }
+    }
+
+    #[test]
+    fn caption_profile_roundtrip_serde() {
+        let profile = default_desktop_profile();
+        let json = serde_json::to_string(&profile).expect("serialize");
+        let back: CaptionProfile = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(profile, back);
+    }
+
+    #[test]
+    fn caption_profile_set_has_distinct_desktop_and_mobile_defaults() {
+        let desktop = default_desktop_profile();
+        let mobile = default_mobile_profile();
+        assert_ne!(
+            desktop.max_width_percent, mobile.max_width_percent,
+            "mobile must be narrower than desktop"
+        );
+        assert_ne!(
+            desktop.position, mobile.position,
+            "mobile must sit higher (lower position%) than desktop"
+        );
+        assert!(mobile.position < desktop.position);
+        assert!(mobile.max_width_percent < desktop.max_width_percent);
+    }
+
+    #[test]
+    fn compute_caption_layout_matches_golden_fixture() {
+        let fixtures = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("tests")
+            .join("fixtures")
+            .join("caption_layout");
+
+        let desktop_json = std::fs::read_to_string(fixtures.join("desktop_1920x1080.json"))
+            .expect("desktop fixture present");
+        let desktop_expected: CaptionLayout =
+            serde_json::from_str(&desktop_json).expect("desktop fixture parses");
+        let desktop_actual = compute_caption_layout(
+            &default_desktop_profile(),
+            VideoDims { width: 1920, height: 1080 },
+        );
+        assert_eq!(
+            desktop_actual, desktop_expected,
+            "desktop layout must match committed golden fixture"
+        );
+
+        let mobile_json = std::fs::read_to_string(fixtures.join("mobile_1080x1920.json"))
+            .expect("mobile fixture present");
+        let mobile_expected: CaptionLayout =
+            serde_json::from_str(&mobile_json).expect("mobile fixture parses");
+        let mobile_actual = compute_caption_layout(
+            &default_mobile_profile(),
+            VideoDims { width: 1080, height: 1920 },
+        );
+        assert_eq!(
+            mobile_actual, mobile_expected,
+            "mobile layout must match committed golden fixture"
+        );
+    }
+
+    #[test]
+    fn preview_and_export_layouts_are_byte_identical() {
+        // SSOT gate (AC-004-b): the preview path (direct call to
+        // compute_caption_layout — what the `get_caption_layout` Tauri
+        // command returns) and the export path (call through
+        // CaptionLayoutConfig::from_profile — what libass composer
+        // consumes) must produce byte-identical CaptionLayout values
+        // for the same inputs. If this ever drifts, the dual-path bug
+        // we institutionalized against has returned.
+        for (profile, dims) in [
+            (default_desktop_profile(), VideoDims { width: 1920, height: 1080 }),
+            (default_desktop_profile(), VideoDims { width: 1280, height: 720 }),
+            (default_mobile_profile(), VideoDims { width: 1080, height: 1920 }),
+            (default_mobile_profile(), VideoDims { width: 720, height: 1280 }),
+        ] {
+            let preview = compute_caption_layout(&profile, dims);
+            let cfg = CaptionLayoutConfig::from_profile(&profile, dims);
+            // Reconstruct CaptionLayout from the export-bound config to
+            // prove the same fields round-trip without drift.
+            let export = CaptionLayout {
+                margin_v_px: ((cfg.frame_height as f64) * (cfg.position_pct.min(100) as f64)
+                    / 100.0)
+                    .round() as u32,
+                margin_h_px: cfg
+                    .frame_width
+                    .saturating_sub(
+                        ((cfg.frame_width as f64) * (cfg.max_width_pct.clamp(20, 100) as f64)
+                            / 100.0)
+                            .round() as u32,
+                    )
+                    / 2,
+                box_width_px: ((cfg.frame_width as f64) * (cfg.max_width_pct.clamp(20, 100) as f64)
+                    / 100.0)
+                    .round() as u32,
+                font_size_px: cfg.font_size_px,
+                padding_x_px: cfg.padding_x_px,
+                padding_y_px: cfg.padding_y_px,
+                radius_px: cfg.radius_px,
+                bg_rgba: [cfg.background.r, cfg.background.g, cfg.background.b, cfg.background.a],
+                fg_rgba: [cfg.text_color.r, cfg.text_color.g, cfg.text_color.b, cfg.text_color.a],
+                font_family: cfg.font_family,
+                frame_width: cfg.frame_width,
+                frame_height: cfg.frame_height,
+            };
+            assert_eq!(
+                preview, export,
+                "preview/export drift for {:?} at {}x{}",
+                profile.font_family, dims.width, dims.height
+            );
         }
     }
 

@@ -397,7 +397,7 @@ const EditorView: React.FC = () => {
   );
 
   return (
-    <div className="max-w-4xl w-full mx-auto space-y-6">
+    <div className="max-w-6xl w-full mx-auto space-y-6">
       {/* Media section */}
       <SettingsGroup title={t("editor.sections.media")}>
         <div className="px-4 py-3 space-y-3">

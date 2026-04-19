@@ -1,12 +1,12 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Cog, History, Info, Cpu, Scissors } from "lucide-react";
+import { Info, Cpu, Scissors, Wand2, SlidersHorizontal } from "lucide-react";
 import toasterLogo from "../../toaster_text.svg";
 import {
-  AdvancedSettings,
-  HistorySettings,
   AboutSettings,
   ModelsSettings,
+  PostProcessingSettings,
+  AdvancedSettings,
 } from "./settings";
 import EditorView from "./editor/EditorView";
 
@@ -36,16 +36,16 @@ export const SECTIONS_CONFIG = {
     component: ModelsSettings,
     enabled: () => true,
   },
-  advanced: {
-    labelKey: "sidebar.advanced",
-    icon: Cog,
-    component: AdvancedSettings,
+  postProcessing: {
+    labelKey: "sidebar.postProcessing",
+    icon: Wand2,
+    component: PostProcessingSettings,
     enabled: () => true,
   },
-  history: {
-    labelKey: "sidebar.history",
-    icon: History,
-    component: HistorySettings,
+  advanced: {
+    labelKey: "sidebar.advanced",
+    icon: SlidersHorizontal,
+    component: AdvancedSettings,
     enabled: () => true,
   },
   about: {
@@ -55,6 +55,24 @@ export const SECTIONS_CONFIG = {
     enabled: () => true,
   },
 } as const satisfies Record<string, SectionConfig>;
+
+/**
+ * Defensive fallback for deserialized/persisted `activeSection`
+ * values. Returns the editor section when the key is not a valid
+ * entry of `SECTIONS_CONFIG` (e.g. legacy `"export"` or
+ * `"experimental"` ids saved by older builds). Kept exported so
+ * consumers — App.tsx today, other entry points later — apply the
+ * same rule (SSOT).
+ */
+export const resolveSidebarSection = (value: unknown): SidebarSection => {
+  if (
+    typeof value === "string" &&
+    Object.prototype.hasOwnProperty.call(SECTIONS_CONFIG, value)
+  ) {
+    return value as SidebarSection;
+  }
+  return "editor";
+};
 
 interface SidebarProps {
   activeSection: SidebarSection;
@@ -73,7 +91,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <div className="flex flex-col w-40 h-full border-e border-mid-gray/20 items-center px-2">
-      <img src={toasterLogo} alt="Toaster" className="w-[120px] m-4" />
+      <img src={toasterLogo} alt="Toaster" className="w-[144px] mx-0 my-4" />
       <div className="flex flex-col w-full items-center gap-1 pt-2 border-t border-mid-gray/20">
         {availableSections.map((section) => {
           const Icon = section.icon;

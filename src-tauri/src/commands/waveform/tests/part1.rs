@@ -404,6 +404,7 @@ fn preview_and_export_share_identical_seam_fade_policy() {
         None,
         None,
         &[],
+        AudioExportFormat::Mp4,
     );
 
     let preview_filter = preview_args
@@ -426,7 +427,7 @@ fn preview_and_export_share_identical_seam_fade_policy() {
 #[test]
 fn single_segment_video_export_reencodes_video() {
     let mut args = vec![];
-    extend_single_segment_export_args(&mut args, 1_000_000, 2_500_000, true);
+    extend_single_segment_export_args(&mut args, 1_000_000, 2_500_000, true, None);
     assert!(args.windows(2).any(|w| w[0] == "-c:v" && w[1] == "libx264"));
     assert!(!args.iter().any(|arg| arg == "copy"));
 }
@@ -434,10 +435,13 @@ fn single_segment_video_export_reencodes_video() {
 #[test]
 fn single_segment_audio_only_export_omits_video_codec() {
     let mut args = vec![];
-    extend_single_segment_export_args(&mut args, 1_000_000, 2_500_000, false);
+    extend_single_segment_export_args(&mut args, 1_000_000, 2_500_000, false, None);
     assert!(!args.iter().any(|arg| arg == "-c:v"));
     assert!(args.windows(2).any(|w| w[0] == "-c:a" && w[1] == "aac"));
 }
+
+// AC-002-b `export_format_args_no_video_stream` moved to part2.rs to
+// keep part1.rs under the 800-line cap (check-file-sizes).
 
 #[test]
 fn deleted_ranges_are_complement_of_keep_segments() {
@@ -648,6 +652,7 @@ fn live_validation_backend_media_pipeline() {
         None,
         None,
         &[],
+        AudioExportFormat::Mp4,
     );
     run_ffmpeg(&export_args).expect("export render ffmpeg failed");
 

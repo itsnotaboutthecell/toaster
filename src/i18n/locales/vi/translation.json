@@ -6,13 +6,11 @@
   },
   "sidebar": {
     "editor": "Editor",
-    "general": "Chung",
     "models": "Mô hình",
-    "advanced": "Nâng cao",
     "postProcessing": "Xử lý sau",
-    "history": "Lịch sử",
     "debug": "Gỡ lỗi",
-    "about": "Giới thiệu"
+    "about": "Giới thiệu",
+    "advanced": "Advanced"
   },
   "onboarding": {
     "subtitle": "Để bắt đầu, hãy chọn một mô hình chuyển đổi giọng nói",
@@ -160,44 +158,151 @@
         "allLanguages": "Tất cả ngôn ngữ"
       },
       "noModelsMatch": "Không có mô hình nào khớp với bộ lọc này.",
-      "download": "Download"
-    },
-    "advanced": {
-      "title": "Nâng cao",
+      "download": "Download",
       "groups": {
-        "app": "Ứng dụng",
-        "output": "Đầu ra",
-        "transcription": "Chuyển đổi",
-        "captionSettings": "Caption Settings",
-        "history": "Lịch sử",
-        "experimental": "Thử nghiệm"
+        "performance": "Performance",
+        "captions": "Captions"
+      }
+    },
+    "postProcessing": {
+      "title": "Xử lý sau",
+      "hotkey": {
+        "title": "Phím tắt"
       },
-      "experimentalToggle": {
-        "label": "Tính năng thử nghiệm",
-        "description": "Bật các tính năng thử nghiệm đang trong quá trình phát triển."
+      "api": {
+        "title": "API (Tương thích OpenAI)",
+        "provider": {
+          "title": "Nhà cung cấp",
+          "description": "Chọn một nhà cung cấp tương thích OpenAI."
+        },
+        "baseUrl": {
+          "title": "URL cơ sở",
+          "description": "URL cơ sở API cho nhà cung cấp đã chọn. Chỉ có thể chỉnh sửa nhà cung cấp tùy chỉnh.",
+          "placeholder": "https://api.openai.com/v1"
+        },
+        "apiKey": {
+          "title": "Khóa API",
+          "description": "Khóa API cho nhà cung cấp đã chọn.",
+          "placeholder": "sk-..."
+        },
+        "model": {
+          "title": "Mô hình",
+          "descriptionCustom": "Cung cấp định danh mô hình được yêu cầu bởi điểm cuối tùy chỉnh của bạn.",
+          "descriptionDefault": "Chọn một mô hình được cung cấp bởi nhà cung cấp đã chọn.",
+          "placeholderWithOptions": "Tìm kiếm hoặc chọn một mô hình",
+          "placeholderNoOptions": "Nhập tên mô hình",
+          "refreshModels": "Làm mới mô hình"
+        }
       },
-      "experimentalSimplifyModeToggle": {
-        "label": "Simplify media timing path (experimental)",
-        "description": "Use a simplified preview/export segment path while still enforcing timing-contract validation. Disabled by default."
+      "prompts": {
+        "title": "Prompt",
+        "selectedPrompt": {
+          "title": "Prompt đã chọn",
+          "description": "Chọn một mẫu để tinh chỉnh bản ghi hoặc tạo mới. Sử dụng ${output} trong văn bản prompt để tham chiếu bản ghi đã chụp."
+        },
+        "noPrompts": "Không có prompt nào",
+        "selectPrompt": "Chọn một prompt",
+        "createNew": "Tạo Prompt mới",
+        "promptLabel": "Nhãn Prompt",
+        "promptLabelPlaceholder": "Nhập tên prompt",
+        "promptInstructions": "Hướng dẫn Prompt",
+        "promptInstructionsPlaceholder": "Viết hướng dẫn để chạy sau khi chuyển đổi. Ví dụ: Cải thiện ngữ pháp và độ rõ ràng cho văn bản sau: ${output}",
+        "promptTip": "Mẹo: Sử dụng <code>${output}</code> để chèn văn bản đã chuyển đổi vào prompt của bạn.",
+        "updatePrompt": "Cập nhật Prompt",
+        "deletePrompt": "Xóa Prompt",
+        "createPrompt": "Tạo Prompt",
+        "cancel": "Hủy",
+        "selectToEdit": "Chọn một prompt ở trên để xem và chỉnh sửa chi tiết.",
+        "createFirst": "Nhấn 'Tạo Prompt mới' ở trên để tạo prompt xử lý sau đầu tiên của bạn."
       },
+      "localLlmAlert": {
+        "link": "Learn more",
+        "title": "Local LLM required",
+        "body": "Toaster post-processing runs against a local OpenAI-compatible endpoint. See docs/post-processing.md for setup."
+      },
+      "localModels": {
+        "title": "Local LLM model",
+        "description": "Toaster runs LLM cleanup in-process. Pick a model below to download and use locally.",
+        "defaultBadge": "Default",
+        "selectedBadge": "Active",
+        "download": "Download",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "select": "Use this model",
+        "empty": "No local models available.",
+        "requirementsFormat": "{{size}} · RAM ~{{ram}} MB · Disk ~{{disk}} MB",
+        "progressFormat": "{{percent}}% · {{speed}} MB/s"
+      },
+      "provider": {
+        "local": {
+          "label": "Local (in-process)",
+          "description": "Runs the cleanup model inside Toaster. No network calls."
+        }
+      }
+    },
+    "debug": {
+      "title": "Gỡ lỗi",
+      "logDirectory": {
+        "title": "Thư mục nhật ký",
+        "description": "Vị trí lưu trữ các tệp nhật ký"
+      },
+      "logLevel": {
+        "title": "Mức nhật ký",
+        "description": "Đặt mức độ chi tiết của nhật ký"
+      },
+      "updateChecks": {
+        "label": "Kiểm tra cập nhật",
+        "description": "Tự động kiểm tra phiên bản mới của Toaster"
+      },
+      "wordCorrectionThreshold": {
+        "title": "Ngưỡng sửa từ",
+        "description": "Độ nhạy cho việc sửa từ tùy chỉnh"
+      },
+      "postProcessingToggle": {
+        "label": "Xử lý sau",
+        "description": "Bật tinh chỉnh văn bản bằng AI sau khi chuyển đổi"
+      },
+      "paths": {
+        "appData": "Dữ liệu ứng dụng:",
+        "models": "Mô hình:",
+        "settings": "Cài đặt:"
+      }
+    },
+    "about": {
+      "title": "Giới thiệu",
+      "version": {
+        "title": "Phiên bản",
+        "description": "Phiên bản hiện tại của Toaster"
+      },
+      "appDataDirectory": {
+        "title": "Thư mục dữ liệu ứng dụng",
+        "description": "Vị trí Toaster lưu trữ dữ liệu"
+      },
+      "sourceCode": {
+        "title": "Mã nguồn",
+        "description": "Xem mã nguồn và đóng góp",
+        "button": "Xem trên GitHub"
+      },
+      "acknowledgments": {
+        "title": "Lời cảm ơn",
+        "intro": "Toaster extends its engine with transcript-first video and audio editing capabilities from the following projects.",
+        "handy": {
+          "title": "Handy",
+          "description": "Handy is built on the foundation of Handy by cjpais",
+          "details": "Handy is an open-source, local-first speech-to-text application. Thank you to cjpais and all Handy contributors.",
+          "button": "View Handy on GitHub"
+        },
+        "whisper": {
+          "title": "Whisper.cpp",
+          "description": "Suy luận hiệu suất cao của mô hình nhận dạng giọng nói tự động Whisper của OpenAI",
+          "details": "Toaster sử dụng Whisper.cpp để xử lý chuyển đổi giọng nói thành văn bản nhanh, cục bộ. Cảm ơn công việc tuyệt vời của Georgi Gerganov và các cộng tác viên."
+        }
+      }
+    },
+    "controls": {
       "lazyStreamClose": {
         "label": "Giữ micro mở giữa các lần phiên âm",
         "description": "Giữ luồng micro mở trong 30 giây sau khi dừng ghi âm, giảm độ trễ khi phiên âm liên tiếp. Có thể làm giảm chất lượng âm thanh Bluetooth khi đang hoạt động."
-      },
-      "acceleration": {
-        "whisper": {
-          "title": "Tăng tốc Whisper",
-          "description": "Tăng tốc phần cứng cho các mô hình Whisper. Chế độ tự động sử dụng GPU nếu có (Metal trên macOS, Vulkan trên Windows/Linux)."
-        },
-        "ort": {
-          "title": "Tăng tốc ONNX",
-          "description": "Tăng tốc phần cứng cho các mô hình ONNX (Parakeet, Canary, Moonshine, v.v.). DirectML trên Windows là thử nghiệm. Các mô hình có thể không chuyển đổi giọng nói được."
-        },
-        "gpuDevice": {
-          "title": "Thiết bị GPU",
-          "description": "Chọn GPU để sử dụng cho suy luận Whisper. Tự động chọn GPU chuyên dụng.",
-          "auto": "Tự động"
-        }
       },
       "translateToEnglish": {
         "label": "Dịch sang tiếng Anh",
@@ -271,157 +376,124 @@
         "maxWidthDescription": "How wide the caption is allowed to grow before it wraps onto a second line, as a percentage of the video frame."
       }
     },
-    "postProcessing": {
-      "title": "Xử lý sau",
-      "hotkey": {
-        "title": "Phím tắt"
-      },
-      "api": {
-        "title": "API (Tương thích OpenAI)",
-        "provider": {
-          "title": "Nhà cung cấp",
-          "description": "Chọn một nhà cung cấp tương thích OpenAI."
+    "captions": {
+      "tabs": {
+        "ariaLabel": "Caption orientation",
+        "desktop": "Desktop",
+        "desktopDescription": "Styling for landscape videos (width \u2265 height).",
+        "mobile": "Mobile",
+        "mobileDescription": "Styling for portrait / square videos (width < height)."
+      },      "preview": {
+        "heading": "Live preview",
+        "sampleLegend": "Sample text",
+        "sample": {
+          "short": "looking crispy",
+          "twoLine": "looking crispy\nand readable",
+          "long": "looking crispy and readable\neven when the caption text\nwraps onto a third line"
         },
-        "appleIntelligence": {
-          "title": "Apple Intelligence",
-          "description": "Chạy hoàn toàn trên thiết bị. Không cần khóa API hoặc truy cập mạng.",
-          "requirements": "Yêu cầu Mac Apple Silicon chạy macOS Tahoe (26.0) trở lên. Apple Intelligence phải được bật trong Cài đặt Hệ thống.",
-          "unavailable": "Apple Intelligence không khả dụng trên thiết bị này. Yêu cầu Mac Apple Silicon chạy macOS Tahoe (26.0) trở lên với Apple Intelligence được bật trong Cài đặt Hệ thống."
-        },
-        "baseUrl": {
-          "title": "URL cơ sở",
-          "description": "URL cơ sở API cho nhà cung cấp đã chọn. Chỉ có thể chỉnh sửa nhà cung cấp tùy chỉnh.",
-          "placeholder": "https://api.openai.com/v1"
-        },
-        "apiKey": {
-          "title": "Khóa API",
-          "description": "Khóa API cho nhà cung cấp đã chọn.",
-          "placeholder": "sk-..."
-        },
-        "model": {
-          "title": "Mô hình",
-          "descriptionApple": "Cung cấp giới hạn token tùy chọn hoặc giữ cài đặt mặc định trên thiết bị.",
-          "descriptionCustom": "Cung cấp định danh mô hình được yêu cầu bởi điểm cuối tùy chỉnh của bạn.",
-          "descriptionDefault": "Chọn một mô hình được cung cấp bởi nhà cung cấp đã chọn.",
-          "placeholderApple": "Apple Intelligence",
-          "placeholderWithOptions": "Tìm kiếm hoặc chọn một mô hình",
-          "placeholderNoOptions": "Nhập tên mô hình",
-          "refreshModels": "Làm mới mô hình"
+        "orientation": {
+          "label": "Hướng xem trước",
+          "horizontal": "Ngang",
+          "vertical": "Dọc"
         }
-      },
-      "prompts": {
-        "title": "Prompt",
-        "selectedPrompt": {
-          "title": "Prompt đã chọn",
-          "description": "Chọn một mẫu để tinh chỉnh bản ghi hoặc tạo mới. Sử dụng ${output} trong văn bản prompt để tham chiếu bản ghi đã chụp."
-        },
-        "noPrompts": "Không có prompt nào",
-        "selectPrompt": "Chọn một prompt",
-        "createNew": "Tạo Prompt mới",
-        "promptLabel": "Nhãn Prompt",
-        "promptLabelPlaceholder": "Nhập tên prompt",
-        "promptInstructions": "Hướng dẫn Prompt",
-        "promptInstructionsPlaceholder": "Viết hướng dẫn để chạy sau khi chuyển đổi. Ví dụ: Cải thiện ngữ pháp và độ rõ ràng cho văn bản sau: ${output}",
-        "promptTip": "Mẹo: Sử dụng <code>${output}</code> để chèn văn bản đã chuyển đổi vào prompt của bạn.",
-        "updatePrompt": "Cập nhật Prompt",
-        "deletePrompt": "Xóa Prompt",
-        "createPrompt": "Tạo Prompt",
-        "cancel": "Hủy",
-        "selectToEdit": "Chọn một prompt ở trên để xem và chỉnh sửa chi tiết.",
-        "createFirst": "Nhấn 'Tạo Prompt mới' ở trên để tạo prompt xử lý sau đầu tiên của bạn."
       }
     },
-    "history": {
-      "title": "Lịch sử",
-      "openFolder": "Mở thư mục ghi âm",
-      "loading": "Đang tải lịch sử...",
-      "empty": "Chưa có bản ghi nào. Bắt đầu ghi âm để xây dựng lịch sử của bạn!",
-      "copyToClipboard": "Sao chép bản ghi vào clipboard",
-      "save": "Lưu bản ghi",
-      "unsave": "Xóa khỏi đã lưu",
-      "delete": "Xóa mục",
-      "deleteError": "Không thể xóa mục. Vui lòng thử lại.",
-      "retranscribe": "Phiên âm lại",
-      "retranscribeError": "Không thể phiên âm lại. Vui lòng thử lại.",
-      "transcribing": "Đang phiên âm...",
-      "transcriptionFailed": "Phiên âm thất bại. Bạn có thể phiên âm lại bằng biểu tượng thử lại."
+    "experimental": {
+      "title": "Experimental",
+      "banner": "These features are under active development and may change or be removed."
     },
-    "debug": {
-      "title": "Gỡ lỗi",
-      "logDirectory": {
-        "title": "Thư mục nhật ký",
-        "description": "Vị trí lưu trữ các tệp nhật ký"
+    "export": {
+      "title": "Export",
+      "description": "Settings that apply when exporting your edited media.",
+      "loudness": {
+        "title": "Loudness normalization",
+        "description": "Match a target integrated loudness so exported videos sound consistent across players and platforms.",
+        "options": {
+          "off": {
+            "label": "Off",
+            "description": "No loudness normalization. Exported audio uses the source levels."
+          },
+          "podcast_-16": {
+            "label": "Podcast (-16 LUFS)",
+            "description": "Broadcast / podcast preset. Targets -16 LUFS integrated."
+          },
+          "streaming_-14": {
+            "label": "Streaming (-14 LUFS)",
+            "description": "Spotify / YouTube preset. Targets -14 LUFS integrated."
+          }
+        },
+        "preflight": {
+          "title": "Preflight measurement",
+          "description": "Measures the post-edit audio without exporting so you can preview how far off-target it is.",
+          "run": "Run preflight",
+          "running": "Measuring…",
+          "integrated": "Integrated",
+          "truePeak": "True peak",
+          "lra": "Loudness range",
+          "delta": "Delta to target",
+          "target": "Target",
+          "noMedia": "Open a project to run preflight.",
+          "noTarget": "—",
+          "warningOffTarget": "Measured loudness is more than 12 LU off the target. Consider re-recording or adjusting the source before export.",
+          "error": "Preflight failed: {{error}}"
+        }
       },
-      "logLevel": {
-        "title": "Mức nhật ký",
-        "description": "Đặt mức độ chi tiết của nhật ký"
-      },
-      "updateChecks": {
-        "label": "Kiểm tra cập nhật",
-        "description": "Tự động kiểm tra phiên bản mới của Toaster"
-      },
-      "wordCorrectionThreshold": {
-        "title": "Ngưỡng sửa từ",
-        "description": "Độ nhạy cho việc sửa từ tùy chỉnh"
-      },
-      "historyLimit": {
-        "title": "Giới hạn lịch sử",
-        "description": "Số lượng mục lịch sử tối đa cần giữ",
-        "entries": "mục"
-      },
-      "recordingRetention": {
-        "title": "Tự động xóa ghi âm",
-        "description": "Tự động xóa các bản ghi âm cũ để tiết kiệm dung lượng",
-        "never": "Không bao giờ",
-        "preserveLimit": "Giữ {{count}} bản mới nhất",
-        "days3": "Sau 3 ngày",
-        "weeks2": "Sau 2 tuần",
-        "months3": "Sau 3 tháng",
-        "placeholder": "Chọn thời gian lưu giữ..."
-      },
-      "clamshellMicrophone": {
-        "title": "Micrô chế độ gập",
-        "description": "Micrô sử dụng khi nắp laptop được đóng"
-      },
-      "postProcessingToggle": {
-        "label": "Xử lý sau",
-        "description": "Bật tinh chỉnh văn bản bằng AI sau khi chuyển đổi"
-      },
-      "paths": {
-        "appData": "Dữ liệu ứng dụng:",
-        "models": "Mô hình:",
-        "settings": "Cài đặt:"
+      "format": {
+        "title": "Format",
+        "label": "Output format",
+        "description": "Choose the container and codec for exported media. Audio-only presets drop the video stream.",
+        "options": {
+          "mp4": {
+            "label": "Video (mp4)",
+            "description": "Edited video with H.264 video and AAC audio in an mp4 container. Default."
+          },
+          "mp3": {
+            "label": "Audio - mp3",
+            "description": "Audio-only mp3 (libmp3lame) at 192 kbps. Most universally compatible audio format."
+          },
+          "wav": {
+            "label": "Audio - wav",
+            "description": "Uncompressed 16-bit PCM in a wav container. Largest file; lossless."
+          },
+          "m4a": {
+            "label": "Audio - m4a",
+            "description": "AAC audio in an m4a (audio-only mp4) container at 192 kbps. Good for Apple devices."
+          },
+          "opus": {
+            "label": "Audio - opus",
+            "description": "Opus audio (libopus) at 128 kbps. Best quality per bit; modern codec."
+          }
+        }
       }
     },
-    "about": {
-      "title": "Giới thiệu",
-      "version": {
-        "title": "Phiên bản",
-        "description": "Phiên bản hiện tại của Toaster"
-      },
-      "appDataDirectory": {
-        "title": "Thư mục dữ liệu ứng dụng",
-        "description": "Vị trí Toaster lưu trữ dữ liệu"
-      },
-      "sourceCode": {
-        "title": "Mã nguồn",
-        "description": "Xem mã nguồn và đóng góp",
-        "button": "Xem trên GitHub"
-      },
-      "acknowledgments": {
-        "title": "Lời cảm ơn",
-        "intro": "Toaster extends its engine with transcript-first video and audio editing capabilities from the following projects.",
-        "handy": {
-          "title": "Handy",
-          "description": "Handy is built on the foundation of Handy by cjpais",
-          "details": "Handy is an open-source, local-first speech-to-text application. Thank you to cjpais and all Handy contributors.",
-          "button": "View Handy on GitHub"
+    "advanced": {
+      "title": "Advanced",
+      "description": "Configured-once controls like allow and discard word lists.",
+      "groups": {
+        "words": {
+          "title": "Words",
+          "description": "Discard and allow word lists used across the transcript editor."
         },
-        "whisper": {
-          "title": "Whisper.cpp",
-          "description": "Suy luận hiệu suất cao của mô hình nhận dạng giọng nói tự động Whisper của OpenAI",
-          "details": "Toaster sử dụng Whisper.cpp để xử lý chuyển đổi giọng nói thành văn bản nhanh, cục bộ. Cảm ơn công việc tuyệt vời của Georgi Gerganov và các cộng tác viên."
+        "performance": {
+          "title": "Performance",
+          "description": "Model unload timing and related runtime behavior."
+        },
+        "captions": {
+          "title": "Captions",
+          "description": "Caption preview and export styling."
+        },
+        "export": {
+          "title": "Export",
+          "description": "Output format, loudness target, and preflight checks for exported media."
+        },
+        "experimental": {
+          "title": "Experimental",
+          "description": "Opt-in features that may change or be removed. Gated by the master toggle below."
         }
+      },
+      "experimentalMaster": {
+        "title": "Enable experimental features",
+        "description": "Master switch for every experiment. When off, individual experiment flags read as disabled even if they were previously turned on. Turning this back on restores your prior selections."
       }
     }
   },
@@ -485,10 +557,6 @@
     "title": "Ngôn ngữ ứng dụng",
     "description": "Thay đổi ngôn ngữ giao diện của Toaster"
   },
-  "overlay": {
-    "transcribing": "Đang chuyển đổi...",
-    "processing": "Đang xử lý..."
-  },
   "player": {
     "play": "Play",
     "pause": "Pause",
@@ -509,12 +577,22 @@
     "cacheModeSimplified": "Cache: simplified"
   },
   "editor": {
+    "captionOrientation": {
+      "ariaLabel": "Caption orientation",
+      "label": "Captions",
+      "option": {
+        "desktop": "Desktop",
+        "mobile": "Mobile",
+        "auto": "Auto"
+      }
+    },
     "sections": {
       "project": "Project",
       "media": "Media",
       "transcription": "Transcription",
       "exportTools": "Export & Tools",
-      "edit": "Edit"
+      "edit": "Edit",
+      "words": "Words"
     },
     "deleteWord": "Delete Word",
     "restoreWord": "Restore Word",
@@ -587,5 +665,12 @@
     "exporting": "Exporting...",
     "addCaptions": "Add Captions",
     "cleanup": "Clean up"
+  },
+  "experiments": {
+    "simplifyMode": {
+      "label": "Simplify Mode",
+      "description": "Reduce visual density and hide secondary controls in the editor."
+    },
+    "feedbackLink": "Send feedback"
   }
 }

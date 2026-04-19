@@ -141,6 +141,7 @@ fn test_build_export_args_single_segment_video() {
         None,
         None,
         &[],
+        AudioExportFormat::Mp4,
     );
     assert!(args.contains(&"-y".to_string()));
     assert!(args.contains(&"-i".to_string()));
@@ -159,6 +160,7 @@ fn test_build_export_args_single_segment_with_captions() {
         Some("C:\\path\\to\\captions.srt"),
         None,
         &[],
+        AudioExportFormat::Mp4,
     );
     let vf_idx = args.iter().position(|a| a == "-vf");
     assert!(
@@ -188,6 +190,7 @@ fn test_build_export_args_multi_segment_video() {
         None,
         None,
         &[],
+        AudioExportFormat::Mp4,
     );
     assert!(
         args.contains(&"-filter_complex".to_string()),
@@ -215,6 +218,7 @@ fn test_build_export_args_multi_segment_with_captions() {
         Some("C:\\captions.srt"),
         None,
         &[],
+        AudioExportFormat::Mp4,
     );
     let fc_idx = args.iter().position(|a| a == "-filter_complex").unwrap();
     let filter = &args[fc_idx + 1];
@@ -265,6 +269,7 @@ fn test_build_export_args_audio_only() {
         None,
         None,
         &[],
+        AudioExportFormat::Mp4,
     );
     // Audio-only should not contain -vf or video filter
     assert!(
@@ -288,6 +293,7 @@ fn test_single_segment_captions_use_fontsdir_when_provided() {
         Some("C:\\path\\to\\captions.ass"),
         Some("C:\\fonts"),
         &[],
+        AudioExportFormat::Mp4,
     );
     let vf_idx = args.iter().position(|a| a == "-vf").unwrap();
     let filter = &args[vf_idx + 1];
@@ -309,6 +315,7 @@ fn test_multi_segment_captions_use_fontsdir_when_provided() {
         Some("C:\\captions.ass"),
         Some("C:\\fonts"),
         &[],
+        AudioExportFormat::Mp4,
     );
     let fc_idx = args.iter().position(|a| a == "-filter_complex").unwrap();
     let filter = &args[fc_idx + 1];
@@ -329,6 +336,7 @@ fn test_captions_without_fonts_dir_omit_fontsdir() {
         Some("C:\\captions.ass"),
         None,
         &[],
+        AudioExportFormat::Mp4,
     );
     let vf_idx = args.iter().position(|a| a == "-vf").unwrap();
     let filter = &args[vf_idx + 1];
@@ -393,6 +401,7 @@ fn build_export_args_emits_volume_gate_for_silenced_word() {
         None,
         None,
         &[(1_500_000, 2_000_000)],
+        AudioExportFormat::Mp4,
     );
     let af_idx = args
         .iter()
@@ -419,6 +428,7 @@ fn build_export_args_multi_segment_audio_silences_word() {
         None,
         None,
         &[(2_400_000, 2_700_000)], // inside second keep-segment
+        AudioExportFormat::Mp3,
     );
     let fc_idx = args
         .iter()
@@ -453,6 +463,7 @@ fn preview_and_export_silence_gate_parity() {
         None,
         None,
         &silenced,
+        AudioExportFormat::M4a,
     );
     let preview_filter = preview_args
         .windows(2)
@@ -482,9 +493,57 @@ fn build_export_args_no_silence_keeps_existing_filter_graph() {
         None,
         None,
         &[],
+        AudioExportFormat::Mp4,
     );
     let fc_idx = args.iter().position(|a| a == "-filter_complex").unwrap();
     let filter = &args[fc_idx + 1];
     assert!(!filter.contains("volume="));
     assert!(!filter.contains("[outa_raw]"));
+}
+
+
+/// AC-002-b: for any audio-only `AudioExportFormat`, the constructed argv
+/// must contain `-vn` and must NOT contain `-c:v`. Covers single- and
+/// multi-segment paths with both video and audio sources.
+#[test]
+fn export_format_args_no_video_stream() {
+    let cases: &[(AudioExportFormat, &str)] = &[
+        (AudioExportFormat::Mp3, "libmp3lame"),
+        (AudioExportFormat::Wav, "pcm_s16le"),
+        (AudioExportFormat::M4a, "aac"),
+        (AudioExportFormat::Opus, "libopus"),
+    ];
+
+    let single = [(0_i64, 5_000_000_i64)];
+    let multi = [(0_i64, 2_000_000_i64), (3_000_000, 5_000_000)];
+
+    for (format, codec) in cases {
+        for (label, segments) in [("single", single.as_slice()), ("multi", multi.as_slice())] {
+            // has_video=true to mimic an mp4 source — audio-only must
+            // still drop the video stream.
+            let args = build_export_args(
+                "input.mp4",
+                "output.bin",
+                segments,
+                true,
+                &default_audio_opts(),
+                None,
+                None,
+                &[],
+                *format,
+            );
+            assert!(
+                args.iter().any(|a| a == "-vn"),
+                "{label} {format:?}: -vn must be present",
+            );
+            assert!(
+                !args.iter().any(|a| a == "-c:v"),
+                "{label} {format:?}: -c:v must NOT be present",
+            );
+            assert!(
+                args.windows(2).any(|w| w[0] == "-c:a" && w[1] == *codec),
+                "{label} {format:?}: -c:a {codec} must be present",
+            );
+        }
+    }
 }

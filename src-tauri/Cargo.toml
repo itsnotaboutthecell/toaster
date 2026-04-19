@@ -67,6 +67,27 @@ specta-typescript = "0.0.9"
 tauri-specta = { version = "=2.0.0-rc.21", features = ["derive", "typescript"] }
 tauri-plugin-dialog = "2.6"
 fontdue = "0.9"
+sysinfo = { version = "0.33", default-features = false, features = ["system", "disk"] }
+
+# Optional local-GGUF inference backend. Gated behind the `local-llm` feature
+# because llama-cpp-2 pulls cmake + ninja + upstream llama.cpp and can add
+# 2-5 minutes to cold builds (see AGENTS.md "Cargo runtime expectations").
+# CPU-only by default; GPU backends are a v2 concern.
+# See features/local-llm-model-catalog/BLUEPRINT.md for rationale.
+llama-cpp-2 = { version = "0.1.123", optional = true, default-features = false }
+
+[features]
+default = []
+# Enables the in-process GGUF LLM backend used by the post-process
+# `local` provider. Off by default: end users opt in via a packaged
+# release built with `--features local-llm`. Keeping it off-by-default
+# means the routine `cargo check -p toaster --lib` gate does not have
+# to cold-build llama.cpp.
+local-llm = ["dep:llama-cpp-2"]
+# Exposes the in-crate `MockBackend` for downstream integration tests
+# without enabling llama.cpp. Not needed for the in-tree `#[cfg(test)]`
+# unit tests which already compile `MockBackend`.
+mock-llm = []
 
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]

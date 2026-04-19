@@ -89,3 +89,134 @@ fn rejects_language_script_drift() {
     let error = validation.expect_err("validation should fail for script changes");
     assert!(error.to_string().contains("language/script changed"));
 }
+
+#[test]
+fn cleanup_prompt_includes_custom_words() {
+    // Custom_words from the Allow list must flow into the contract system prompt
+    // as protected tokens so the LLM does not rewrite them. The transcript itself
+    // provides no digit/symbol tokens, so the whole list must come from settings.
+    let protected = super::dedupe_tokens(&[
+        "Toaster".to_string(),
+        "Tauri".to_string(),
+    ]);
+    let prompt = super::prompts::build_cleanup_contract_system_prompt(
+        "",
+        &protected,
+        &[],
+    );
+    assert!(
+        prompt.contains("Toaster"),
+        "prompt must include custom Allow word 'Toaster', got: {prompt}"
+    );
+    assert!(
+        prompt.contains("Tauri"),
+        "prompt must include custom Allow word 'Tauri', got: {prompt}"
+    );
+    assert!(
+        !prompt.contains("none detected"),
+        "non-empty Allow list must not render as 'none detected'"
+    );
+}
+
+#[test]
+fn cleanup_prompt_uses_custom_filler_words() {
+    // Discard Words list ("custom_filler_words") must flow verbatim into the
+    // cleanup prompt; no other hardcoded filler list may leak through.
+    let fillers = vec![
+        "um".to_string(),
+        "uh".to_string(),
+        "like".to_string(),
+    ];
+    let prompt = super::prompts::build_cleanup_contract_system_prompt(
+        "",
+        &[],
+        &fillers,
+    );
+    for filler in &fillers {
+        assert!(
+            prompt.contains(filler),
+            "prompt must include configured filler {filler}, got: {prompt}"
+        );
+    }
+
+    // User prompt template containing the placeholder should have it expanded.
+    let user_template = "Please remove: ${filler_words}\nTranscript:\n${output}";
+    let legacy = super::prompts::build_cleanup_legacy_prompt(
+        user_template,
+        "hello world",
+        &[],
+        &fillers,
+    );
+    let expected_filler_line = format!("Please remove: {}", fillers.join(", "));
+    assert!(
+        legacy.contains(&expected_filler_line),
+        "legacy prompt must substitute ${{filler_words}} placeholder, got: {legacy}"
+    );
+    assert!(
+        !legacy.contains("${filler_words}"),
+        "legacy prompt must not leave raw placeholder, got: {legacy}"
+    );
+}
+
+#[test]
+fn cleanup_prompt_omits_fillers_when_list_empty() {
+    // Empty Discard Words list means NO filler-removal clause reaches the LLM.
+    // There is no hardcoded fallback — "respect what the UI shows".
+    let prompt = super::prompts::build_cleanup_contract_system_prompt(
+        "",
+        &[],
+        &[],
+    );
+    assert!(
+        !prompt.to_lowercase().contains("filler"),
+        "empty filler list must not produce a filler clause, got: {prompt}"
+    );
+
+    // Placeholder in a user prompt template must still be substituted,
+    // rendered as "none" so the LLM never sees the raw placeholder.
+    let user_template = "Remove: ${filler_words}\nTranscript:\n${output}";
+    let legacy = super::prompts::build_cleanup_legacy_prompt(
+        user_template,
+        "hello",
+        &[],
+        &[],
+    );
+    assert!(
+        legacy.contains("Remove: none"),
+        "empty filler list must substitute placeholder with 'none', got: {legacy}"
+    );
+    assert!(
+        !legacy.contains("${filler_words}"),
+        "empty filler list must not leave raw placeholder, got: {legacy}"
+    );
+}
+
+#[test]
+fn protected_tokens_from_settings_sanitizes_input() {
+    // The frontend AllowWords sanitizer strips <>"'& before saving; the backend
+    // mirrors it as defence-in-depth so adversarial saved settings can't break
+    // prompt formatting.
+    let mut settings = crate::settings::get_default_settings();
+    settings.custom_words = vec![
+        "Toaster".to_string(),
+        "<script>".to_string(),
+        "evil\"word".to_string(),
+        "   ".to_string(),
+    ];
+    let tokens = super::protected_tokens_from_settings(&settings);
+    assert!(tokens.contains(&"Toaster".to_string()));
+    assert!(tokens.contains(&"script".to_string()));
+    assert!(tokens.contains(&"evilword".to_string()));
+    assert!(
+        !tokens.iter().any(|t| t.is_empty()),
+        "empty/whitespace tokens must be dropped"
+    );
+    for token in &tokens {
+        for bad in ['<', '>', '"', '\'', '&'] {
+            assert!(
+                !token.contains(bad),
+                "sanitized token {token:?} still contains forbidden char {bad:?}"
+            );
+        }
+    }
+}

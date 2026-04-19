@@ -8,9 +8,7 @@
 
 use tauri::{AppHandle, Emitter, Manager};
 
-#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
-use crate::settings::APPLE_INTELLIGENCE_DEFAULT_MODEL_ID;
-use crate::settings::{self, LLMPrompt, APPLE_INTELLIGENCE_PROVIDER_ID};
+use crate::settings::{self, LLMPrompt};
 
 /// Validate that a post-process provider exists in the user's settings.
 fn validate_provider_exists(
@@ -176,27 +174,6 @@ pub fn change_post_process_enabled_setting(app: AppHandle, enabled: bool) -> Res
 
 #[tauri::command]
 #[specta::specta]
-pub fn change_experimental_enabled_setting(app: AppHandle, enabled: bool) -> Result<(), String> {
-    let mut settings = settings::get_settings(&app);
-    settings.experimental_enabled = enabled;
-    settings::write_settings(&app, settings);
-    Ok(())
-}
-
-#[tauri::command]
-#[specta::specta]
-pub fn change_experimental_simplify_mode_setting(
-    app: AppHandle,
-    enabled: bool,
-) -> Result<(), String> {
-    let mut settings = settings::get_settings(&app);
-    settings.experimental_simplify_mode = enabled;
-    settings::write_settings(&app, settings);
-    Ok(())
-}
-
-#[tauri::command]
-#[specta::specta]
 pub fn change_post_process_base_url_setting(
     app: AppHandle,
     provider_id: String,
@@ -272,9 +249,7 @@ pub fn set_post_process_provider(app: AppHandle, provider_id: String) -> Result<
     validate_provider_exists(&settings, &provider_id)?;
 
     if let Some(provider) = settings.post_process_provider(&provider_id) {
-        if settings::is_local_post_process_provider(provider)
-            && provider.id != APPLE_INTELLIGENCE_PROVIDER_ID
-        {
+        if settings::is_local_post_process_provider(provider) {
             settings::sanitize_local_post_process_base_url(&provider.base_url).map_err(|e| {
                 format!(
                     "Invalid local base URL for '{}': {}. Update the provider base URL and try again.",
@@ -380,18 +355,6 @@ pub async fn fetch_post_process_models(
         .find(|p| p.id == provider_id)
         .ok_or_else(|| format!("Provider '{}' not found", provider_id))?;
 
-    if provider.id == APPLE_INTELLIGENCE_PROVIDER_ID {
-        #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
-        {
-            return Ok(vec![APPLE_INTELLIGENCE_DEFAULT_MODEL_ID.to_string()]);
-        }
-
-        #[cfg(not(all(target_os = "macos", target_arch = "aarch64")))]
-        {
-            return Err("Apple Intelligence is only available on Apple silicon Macs running macOS 15 or later.".to_string());
-        }
-    }
-
     if settings::is_local_post_process_provider(provider) {
         settings::sanitize_local_post_process_base_url(&provider.base_url).map_err(|e| {
             format!(
@@ -469,6 +432,24 @@ pub fn change_lazy_stream_close_setting(app: AppHandle, enabled: bool) -> Result
 pub fn change_normalize_audio_setting(app: AppHandle, enabled: bool) -> Result<(), String> {
     let mut settings = settings::get_settings(&app);
     settings.normalize_audio_on_export = enabled;
+    settings::write_settings(&app, settings);
+    Ok(())
+}
+
+/// Update the export `loudness_target` setting (R-003 / AC-001-a).
+///
+/// Frontend sends the enum string ("off" / "podcast_-16" /
+/// "streaming_-14"); the backend never receives a `loudnorm=...` filter
+/// from TS — that is built only by
+/// `managers::splice::loudness::build_loudnorm_filter`.
+#[tauri::command]
+#[specta::specta]
+pub fn change_loudness_target_setting(
+    app: AppHandle,
+    target: settings::LoudnessTarget,
+) -> Result<(), String> {
+    let mut settings = settings::get_settings(&app);
+    settings.loudness_target = target;
     settings::write_settings(&app, settings);
     Ok(())
 }

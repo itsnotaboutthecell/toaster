@@ -1,6 +1,6 @@
 use crate::commands::editor::EditorStore;
 use crate::managers::captions::{
-    self, CaptionBlock as LayoutBlock, CaptionLayoutConfig, FontRegistry, Rgba, TimelineDomain,
+    self, CaptionBlock as LayoutBlock, CaptionLayoutConfig, FontRegistry, TimelineDomain,
 };
 use crate::managers::export::{self, CaptionSegment, ExportConfig, ExportFormat};
 use crate::managers::media::MediaStore;
@@ -102,28 +102,46 @@ fn probe_video_dimensions_cached(path: &str) -> Option<(u32, u32)> {
     crate::commands::waveform::probe_video_dimensions(path)
 }
 
+/// Pick the effective caption profile for the given orientation,
+/// preferring project-level overrides over the app default. Slice B's
+/// `get_caption_profile` command calls the same logic via
+/// `commands::captions`.
+pub fn effective_profile(
+    settings: &crate::settings::AppSettings,
+    project_profiles: Option<&crate::settings::CaptionProfileSet>,
+    orientation: crate::settings::Orientation,
+) -> crate::settings::CaptionProfile {
+    let set = project_profiles.unwrap_or(&settings.caption_profiles);
+    match orientation {
+        crate::settings::Orientation::Desktop => set.desktop.clone(),
+        crate::settings::Orientation::Mobile => set.mobile.clone(),
+    }
+}
+
 /// Build a layout config from the active `AppSettings` and the probed
 /// video frame size. Extracted so `commands::waveform` can share it with
 /// the export path when the caption-block pipeline is wired in.
+///
+/// Goes through `compute_caption_layout` via
+/// `CaptionLayoutConfig::from_profile` so preview and export agree
+/// byte-for-byte (Slice B SSOT).
 pub fn layout_config_from_settings(
     settings: &crate::settings::AppSettings,
     (frame_width, frame_height): (u32, u32),
 ) -> CaptionLayoutConfig {
-    CaptionLayoutConfig {
-        font_family: settings.caption_font_family,
-        font_size_px: settings.caption_font_size.clamp(8, 120),
-        text_color: Rgba::parse_css_hex(&settings.caption_text_color, 0xFF),
-        background: Rgba::parse_css_hex(&settings.caption_bg_color, 0xB3),
-        position_pct: settings.caption_position.min(100),
-        radius_px: settings.caption_radius_px.min(64),
-        padding_x_px: settings.caption_padding_x_px.min(128),
-        padding_y_px: settings.caption_padding_y_px.min(128),
-        max_width_pct: settings.caption_max_width_percent.clamp(20, 100),
-        frame_width,
-        frame_height,
-        max_segment_duration_us: 5_000_000,
-        include_silenced: false,
-    }
+    let orientation = if frame_width >= frame_height {
+        crate::settings::Orientation::Desktop
+    } else {
+        crate::settings::Orientation::Mobile
+    };
+    let profile = effective_profile(settings, None, orientation);
+    CaptionLayoutConfig::from_profile(
+        &profile,
+        crate::settings::VideoDims {
+            width: frame_width,
+            height: frame_height,
+        },
+    )
 }
 
 /// Build caption blocks without going through Tauri state — used by

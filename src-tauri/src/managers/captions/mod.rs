@@ -10,5 +10,6 @@ pub mod layout;
 pub use ass::blocks_to_ass;
 pub use fonts::FontRegistry;
 pub use layout::{
-    build_blocks, CaptionBlock, CaptionLayoutConfig, Rgba, TimelineDomain,
+    build_blocks, compute_caption_layout, CaptionBlock, CaptionLayout, CaptionLayoutConfig, Rgba,
+    TimelineDomain,
 };

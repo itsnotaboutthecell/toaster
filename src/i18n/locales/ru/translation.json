@@ -6,13 +6,11 @@
   },
   "sidebar": {
     "editor": "Editor",
-    "general": "Общие",
     "models": "Модели",
-    "advanced": "Продвинутые",
     "postProcessing": "Постобработка",
-    "history": "История",
     "debug": "Отладка",
-    "about": "О программе"
+    "about": "О программе",
+    "advanced": "Advanced"
   },
   "onboarding": {
     "subtitle": "Для начала выберите модель транскрипции",
@@ -160,44 +158,151 @@
         "allLanguages": "Все языки"
       },
       "noModelsMatch": "Нет моделей, соответствующих этому фильтру.",
-      "download": "Download"
-    },
-    "advanced": {
-      "title": "Продвинутые",
+      "download": "Download",
       "groups": {
-        "app": "Приложение",
-        "output": "Вывод",
-        "transcription": "Транскрипция",
-        "captionSettings": "Caption Settings",
-        "history": "История",
-        "experimental": "Экспериментальное"
+        "performance": "Performance",
+        "captions": "Captions"
+      }
+    },
+    "postProcessing": {
+      "title": "Постобработка",
+      "hotkey": {
+        "title": "Горячая клавиша"
       },
-      "experimentalToggle": {
-        "label": "Экспериментальные функции",
-        "description": "Включить экспериментальные функции, которые находятся в разработке."
+      "api": {
+        "title": "API (совместимый с OpenAI)",
+        "provider": {
+          "title": "Поставщик",
+          "description": "Выберите поставщика, совместимого с OpenAI."
+        },
+        "baseUrl": {
+          "title": "Базовый URL",
+          "description": "Базовый URL-адрес API для выбранного провайдера. Редактировать можно только настраиваемого поставщика.",
+          "placeholder": "https://api.openai.com/v1"
+        },
+        "apiKey": {
+          "title": "API-ключ",
+          "description": "API-ключ для выбранного провайдера.",
+          "placeholder": "sk-..."
+        },
+        "model": {
+          "title": "Модель",
+          "descriptionCustom": "Укажите идентификатор модели, ожидаемый вашей пользовательской конечной точкой.",
+          "descriptionDefault": "Выберите модель, предоставляемую выбранным поставщиком.",
+          "placeholderWithOptions": "Найдите или выберите модель",
+          "placeholderNoOptions": "Введите название модели",
+          "refreshModels": "Обновить модели"
+        }
       },
-      "experimentalSimplifyModeToggle": {
-        "label": "Simplify media timing path (experimental)",
-        "description": "Use a simplified preview/export segment path while still enforcing timing-contract validation. Disabled by default."
+      "prompts": {
+        "title": "Запрос к модели",
+        "selectedPrompt": {
+          "title": "Выберите запрос",
+          "description": "Выберите запрос для постобработки транскрипции или создайте новый. Используйте ${output} внутри текста запроса для ссылки на записанную транскрипцию."
+        },
+        "noPrompts": "Нет доступных запросов",
+        "selectPrompt": "Выберите запрос",
+        "createNew": "Создать новый запрос",
+        "promptLabel": "Название запроса",
+        "promptLabelPlaceholder": "Введите название запроса",
+        "promptInstructions": "Инструкции",
+        "promptInstructionsPlaceholder": "Напишите инструкции для постобработки транскрипции. Например: Улучшить грамматику и ясность следующего текста: ${output}",
+        "promptTip": "Совет: используйте <code>${output}</code>, чтобы вставить транскрипцию.",
+        "updatePrompt": "Обновить запрос",
+        "deletePrompt": "Удалить запрос",
+        "createPrompt": "Создать запрос",
+        "cancel": "Отмена",
+        "selectToEdit": "Выберите запрос выше, чтобы просмотреть и изменить его сведения.",
+        "createFirst": "Нажмите «Создать новый запрос» выше, чтобы создать первый запрос для постобработки."
       },
+      "localLlmAlert": {
+        "link": "Learn more",
+        "title": "Local LLM required",
+        "body": "Toaster post-processing runs against a local OpenAI-compatible endpoint. See docs/post-processing.md for setup."
+      },
+      "localModels": {
+        "title": "Local LLM model",
+        "description": "Toaster runs LLM cleanup in-process. Pick a model below to download and use locally.",
+        "defaultBadge": "Default",
+        "selectedBadge": "Active",
+        "download": "Download",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "select": "Use this model",
+        "empty": "No local models available.",
+        "requirementsFormat": "{{size}} · RAM ~{{ram}} MB · Disk ~{{disk}} MB",
+        "progressFormat": "{{percent}}% · {{speed}} MB/s"
+      },
+      "provider": {
+        "local": {
+          "label": "Local (in-process)",
+          "description": "Runs the cleanup model inside Toaster. No network calls."
+        }
+      }
+    },
+    "debug": {
+      "title": "Отлаживать",
+      "logDirectory": {
+        "title": "Каталог журналов",
+        "description": "Место хранения файлов журналов"
+      },
+      "logLevel": {
+        "title": "Уровень журнала",
+        "description": "Установите уровень детализации журнала"
+      },
+      "updateChecks": {
+        "label": "Проверять наличие обновлений",
+        "description": "Автоматически проверять наличие новых версий Toaster"
+      },
+      "wordCorrectionThreshold": {
+        "title": "Порог исправления слов",
+        "description": "Чувствительность к пользовательским исправлениям слов"
+      },
+      "postProcessingToggle": {
+        "label": "Постобработка",
+        "description": "Включить уточнение текста с помощью искусственного интеллекта после транскрипции"
+      },
+      "paths": {
+        "appData": "Данные приложения:",
+        "models": "Модели:",
+        "settings": "Настройки:"
+      }
+    },
+    "about": {
+      "title": "О программе",
+      "version": {
+        "title": "Версия",
+        "description": "Текущая версия Toaster"
+      },
+      "appDataDirectory": {
+        "title": "Каталог данных приложения",
+        "description": "Место, где Toaster хранит свои данные"
+      },
+      "sourceCode": {
+        "title": "Исходный код",
+        "description": "Просмотреть исходный код и внести свой вклад",
+        "button": "Посмотреть на GitHub"
+      },
+      "acknowledgments": {
+        "title": "Благодарности",
+        "intro": "Toaster extends its engine with transcript-first video and audio editing capabilities from the following projects.",
+        "handy": {
+          "title": "Handy",
+          "description": "Handy is built on the foundation of Handy by cjpais",
+          "details": "Handy is an open-source, local-first speech-to-text application. Thank you to cjpais and all Handy contributors.",
+          "button": "View Handy on GitHub"
+        },
+        "whisper": {
+          "title": "Whisper.cpp",
+          "description": "Высокопроизводительная модель автоматического распознавания речи OpenAI Whisper",
+          "details": "Toaster использует Whisper.cpp для быстрого локального преобразования речи в текст. Спасибо великолепной работе Георгия Герганова и участников."
+        }
+      }
+    },
+    "controls": {
       "lazyStreamClose": {
         "label": "Оставлять микрофон включённым между транскрипциями",
         "description": "Оставляет поток микрофона открытым в течение 30 секунд после остановки записи, уменьшая задержку при последовательных транскрипциях. Может ухудшить качество звука Bluetooth."
-      },
-      "acceleration": {
-        "whisper": {
-          "title": "Ускорение Whisper",
-          "description": "Аппаратное ускорение для моделей Whisper. Автоматический режим использует GPU при наличии (Metal на macOS, Vulkan на Windows/Linux)."
-        },
-        "ort": {
-          "title": "Ускорение ONNX",
-          "description": "Аппаратное ускорение для моделей ONNX (Parakeet, Canary, Moonshine и др.). DirectML на Windows является экспериментальным. Модели могут не выполнять транскрипцию."
-        },
-        "gpuDevice": {
-          "title": "Устройство GPU",
-          "description": "Выберите GPU для инференса Whisper. Авто выбирает выделенный GPU.",
-          "auto": "Авто"
-        }
       },
       "translateToEnglish": {
         "label": "Перевести на английский",
@@ -271,157 +376,124 @@
         "maxWidthDescription": "How wide the caption is allowed to grow before it wraps onto a second line, as a percentage of the video frame."
       }
     },
-    "postProcessing": {
-      "title": "Постобработка",
-      "hotkey": {
-        "title": "Горячая клавиша"
-      },
-      "api": {
-        "title": "API (совместимый с OpenAI)",
-        "provider": {
-          "title": "Поставщик",
-          "description": "Выберите поставщика, совместимого с OpenAI."
+    "captions": {
+      "tabs": {
+        "ariaLabel": "Caption orientation",
+        "desktop": "Desktop",
+        "desktopDescription": "Styling for landscape videos (width \u2265 height).",
+        "mobile": "Mobile",
+        "mobileDescription": "Styling for portrait / square videos (width < height)."
+      },      "preview": {
+        "heading": "Live preview",
+        "sampleLegend": "Sample text",
+        "sample": {
+          "short": "looking crispy",
+          "twoLine": "looking crispy\nand readable",
+          "long": "looking crispy and readable\neven when the caption text\nwraps onto a third line"
         },
-        "appleIntelligence": {
-          "title": "Apple Интеллект",
-          "description": "Полностью работает на устройстве. Никакой ключ API или доступ к сети не требуется.",
-          "requirements": "Требуется Apple Silicon Mac под управлением macOS Tahoe (26.0) или более поздней версии. Apple Intelligence должен быть включен в настройках системы.",
-          "unavailable": "Apple Intelligence недоступен на этом устройстве. Требуется Apple Silicon Mac под управлением macOS Tahoe (26.0) или более поздней версии с включенным Apple Intelligence в настройках системы."
-        },
-        "baseUrl": {
-          "title": "Базовый URL",
-          "description": "Базовый URL-адрес API для выбранного провайдера. Редактировать можно только настраиваемого поставщика.",
-          "placeholder": "https://api.openai.com/v1"
-        },
-        "apiKey": {
-          "title": "API-ключ",
-          "description": "API-ключ для выбранного провайдера.",
-          "placeholder": "sk-..."
-        },
-        "model": {
-          "title": "Модель",
-          "descriptionApple": "Укажите дополнительный числовой лимит токенов или сохраните настройки по умолчанию, установленные на устройстве.",
-          "descriptionCustom": "Укажите идентификатор модели, ожидаемый вашей пользовательской конечной точкой.",
-          "descriptionDefault": "Выберите модель, предоставляемую выбранным поставщиком.",
-          "placeholderApple": "Apple Интеллект",
-          "placeholderWithOptions": "Найдите или выберите модель",
-          "placeholderNoOptions": "Введите название модели",
-          "refreshModels": "Обновить модели"
+        "orientation": {
+          "label": "Ориентация предпросмотра",
+          "horizontal": "Горизонтальная",
+          "vertical": "Вертикальная"
         }
-      },
-      "prompts": {
-        "title": "Запрос к модели",
-        "selectedPrompt": {
-          "title": "Выберите запрос",
-          "description": "Выберите запрос для постобработки транскрипции или создайте новый. Используйте ${output} внутри текста запроса для ссылки на записанную транскрипцию."
-        },
-        "noPrompts": "Нет доступных запросов",
-        "selectPrompt": "Выберите запрос",
-        "createNew": "Создать новый запрос",
-        "promptLabel": "Название запроса",
-        "promptLabelPlaceholder": "Введите название запроса",
-        "promptInstructions": "Инструкции",
-        "promptInstructionsPlaceholder": "Напишите инструкции для постобработки транскрипции. Например: Улучшить грамматику и ясность следующего текста: ${output}",
-        "promptTip": "Совет: используйте <code>${output}</code>, чтобы вставить транскрипцию.",
-        "updatePrompt": "Обновить запрос",
-        "deletePrompt": "Удалить запрос",
-        "createPrompt": "Создать запрос",
-        "cancel": "Отмена",
-        "selectToEdit": "Выберите запрос выше, чтобы просмотреть и изменить его сведения.",
-        "createFirst": "Нажмите «Создать новый запрос» выше, чтобы создать первый запрос для постобработки."
       }
     },
-    "history": {
-      "title": "История",
-      "openFolder": "Открыть папку с записями",
-      "loading": "Загрузка истории...",
-      "empty": "Транскрипций пока нет. Начните запись, чтобы создать свою историю!",
-      "copyToClipboard": "Скопировать транскрипцию в буфер обмена",
-      "save": "Сохранить транскрипцию",
-      "unsave": "Удалить из сохраненных",
-      "delete": "Удалить запись",
-      "deleteError": "Не удалось удалить запись. Пожалуйста, попробуйте еще раз.",
-      "retranscribe": "Перетранскрибировать",
-      "retranscribeError": "Не удалось перетранскрибировать. Пожалуйста, попробуйте снова.",
-      "transcribing": "Транскрибирование...",
-      "transcriptionFailed": "Транскрипция не удалась. Вы можете перетранскрибировать, используя значок повтора."
+    "experimental": {
+      "title": "Experimental",
+      "banner": "These features are under active development and may change or be removed."
     },
-    "debug": {
-      "title": "Отлаживать",
-      "logDirectory": {
-        "title": "Каталог журналов",
-        "description": "Место хранения файлов журналов"
+    "export": {
+      "title": "Export",
+      "description": "Settings that apply when exporting your edited media.",
+      "loudness": {
+        "title": "Loudness normalization",
+        "description": "Match a target integrated loudness so exported videos sound consistent across players and platforms.",
+        "options": {
+          "off": {
+            "label": "Off",
+            "description": "No loudness normalization. Exported audio uses the source levels."
+          },
+          "podcast_-16": {
+            "label": "Podcast (-16 LUFS)",
+            "description": "Broadcast / podcast preset. Targets -16 LUFS integrated."
+          },
+          "streaming_-14": {
+            "label": "Streaming (-14 LUFS)",
+            "description": "Spotify / YouTube preset. Targets -14 LUFS integrated."
+          }
+        },
+        "preflight": {
+          "title": "Preflight measurement",
+          "description": "Measures the post-edit audio without exporting so you can preview how far off-target it is.",
+          "run": "Run preflight",
+          "running": "Measuring…",
+          "integrated": "Integrated",
+          "truePeak": "True peak",
+          "lra": "Loudness range",
+          "delta": "Delta to target",
+          "target": "Target",
+          "noMedia": "Open a project to run preflight.",
+          "noTarget": "—",
+          "warningOffTarget": "Measured loudness is more than 12 LU off the target. Consider re-recording or adjusting the source before export.",
+          "error": "Preflight failed: {{error}}"
+        }
       },
-      "logLevel": {
-        "title": "Уровень журнала",
-        "description": "Установите уровень детализации журнала"
-      },
-      "updateChecks": {
-        "label": "Проверять наличие обновлений",
-        "description": "Автоматически проверять наличие новых версий Toaster"
-      },
-      "wordCorrectionThreshold": {
-        "title": "Порог исправления слов",
-        "description": "Чувствительность к пользовательским исправлениям слов"
-      },
-      "historyLimit": {
-        "title": "Размер истории",
-        "description": "Максимальное количество записей истории, которые можно сохранить",
-        "entries": "записи"
-      },
-      "recordingRetention": {
-        "title": "Автоматическое удаление записей",
-        "description": "Автоматически удалять старые записи для экономии места",
-        "never": "Никогда",
-        "preserveLimit": "Хранить последние {{count}}",
-        "days3": "Через 3 дня",
-        "weeks2": "Через 2 недели",
-        "months3": "Через 3 месяца",
-        "placeholder": "Выберите срок хранения..."
-      },
-      "clamshellMicrophone": {
-        "title": "Раскладной микрофон",
-        "description": "Микрофон для использования при закрытой крышке ноутбука"
-      },
-      "postProcessingToggle": {
-        "label": "Постобработка",
-        "description": "Включить уточнение текста с помощью искусственного интеллекта после транскрипции"
-      },
-      "paths": {
-        "appData": "Данные приложения:",
-        "models": "Модели:",
-        "settings": "Настройки:"
+      "format": {
+        "title": "Format",
+        "label": "Output format",
+        "description": "Choose the container and codec for exported media. Audio-only presets drop the video stream.",
+        "options": {
+          "mp4": {
+            "label": "Video (mp4)",
+            "description": "Edited video with H.264 video and AAC audio in an mp4 container. Default."
+          },
+          "mp3": {
+            "label": "Audio - mp3",
+            "description": "Audio-only mp3 (libmp3lame) at 192 kbps. Most universally compatible audio format."
+          },
+          "wav": {
+            "label": "Audio - wav",
+            "description": "Uncompressed 16-bit PCM in a wav container. Largest file; lossless."
+          },
+          "m4a": {
+            "label": "Audio - m4a",
+            "description": "AAC audio in an m4a (audio-only mp4) container at 192 kbps. Good for Apple devices."
+          },
+          "opus": {
+            "label": "Audio - opus",
+            "description": "Opus audio (libopus) at 128 kbps. Best quality per bit; modern codec."
+          }
+        }
       }
     },
-    "about": {
-      "title": "О программе",
-      "version": {
-        "title": "Версия",
-        "description": "Текущая версия Toaster"
-      },
-      "appDataDirectory": {
-        "title": "Каталог данных приложения",
-        "description": "Место, где Toaster хранит свои данные"
-      },
-      "sourceCode": {
-        "title": "Исходный код",
-        "description": "Просмотреть исходный код и внести свой вклад",
-        "button": "Посмотреть на GitHub"
-      },
-      "acknowledgments": {
-        "title": "Благодарности",
-        "intro": "Toaster extends its engine with transcript-first video and audio editing capabilities from the following projects.",
-        "handy": {
-          "title": "Handy",
-          "description": "Handy is built on the foundation of Handy by cjpais",
-          "details": "Handy is an open-source, local-first speech-to-text application. Thank you to cjpais and all Handy contributors.",
-          "button": "View Handy on GitHub"
+    "advanced": {
+      "title": "Advanced",
+      "description": "Configured-once controls like allow and discard word lists.",
+      "groups": {
+        "words": {
+          "title": "Words",
+          "description": "Discard and allow word lists used across the transcript editor."
         },
-        "whisper": {
-          "title": "Whisper.cpp",
-          "description": "Высокопроизводительная модель автоматического распознавания речи OpenAI Whisper",
-          "details": "Toaster использует Whisper.cpp для быстрого локального преобразования речи в текст. Спасибо великолепной работе Георгия Герганова и участников."
+        "performance": {
+          "title": "Performance",
+          "description": "Model unload timing and related runtime behavior."
+        },
+        "captions": {
+          "title": "Captions",
+          "description": "Caption preview and export styling."
+        },
+        "export": {
+          "title": "Export",
+          "description": "Output format, loudness target, and preflight checks for exported media."
+        },
+        "experimental": {
+          "title": "Experimental",
+          "description": "Opt-in features that may change or be removed. Gated by the master toggle below."
         }
+      },
+      "experimentalMaster": {
+        "title": "Enable experimental features",
+        "description": "Master switch for every experiment. When off, individual experiment flags read as disabled even if they were previously turned on. Turning this back on restores your prior selections."
       }
     }
   },
@@ -485,10 +557,6 @@
     "title": "Язык приложения",
     "description": "Изменить язык интерфейса Toaster"
   },
-  "overlay": {
-    "transcribing": "Расшифровка...",
-    "processing": "Обработка..."
-  },
   "player": {
     "play": "Play",
     "pause": "Pause",
@@ -509,12 +577,22 @@
     "cacheModeSimplified": "Cache: simplified"
   },
   "editor": {
+    "captionOrientation": {
+      "ariaLabel": "Caption orientation",
+      "label": "Captions",
+      "option": {
+        "desktop": "Desktop",
+        "mobile": "Mobile",
+        "auto": "Auto"
+      }
+    },
     "sections": {
       "project": "Project",
       "media": "Media",
       "transcription": "Transcription",
       "exportTools": "Export & Tools",
-      "edit": "Edit"
+      "edit": "Edit",
+      "words": "Words"
     },
     "deleteWord": "Delete Word",
     "restoreWord": "Restore Word",
@@ -587,5 +665,12 @@
     "exporting": "Exporting...",
     "addCaptions": "Add Captions",
     "cleanup": "Clean up"
+  },
+  "experiments": {
+    "simplifyMode": {
+      "label": "Simplify Mode",
+      "description": "Reduce visual density and hide secondary controls in the editor."
+    },
+    "feedbackLink": "Send feedback"
   }
 }

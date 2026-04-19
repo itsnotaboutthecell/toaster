@@ -20,8 +20,8 @@ export const LazyStreamClose: React.FC<LazyStreamCloseProps> = React.memo(
         checked={enabled}
         onChange={(enabled) => updateSetting("lazy_stream_close", enabled)}
         isUpdating={isUpdating("lazy_stream_close")}
-        label={t("settings.advanced.lazyStreamClose.label")}
-        description={t("settings.advanced.lazyStreamClose.description")}
+        label={t("settings.controls.lazyStreamClose.label")}
+        description={t("settings.controls.lazyStreamClose.description")}
         descriptionMode={descriptionMode}
         grouped={grouped}
       />

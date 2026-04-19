@@ -20,8 +20,8 @@ export const TranslateToEnglish: React.FC<TranslateToEnglishProps> = React.memo(
         checked={translateToEnglish}
         onChange={(enabled) => updateSetting("translate_to_english", enabled)}
         isUpdating={isUpdating("translate_to_english")}
-        label={t("settings.advanced.translateToEnglish.label")}
-        description={t("settings.advanced.translateToEnglish.description")}
+        label={t("settings.controls.translateToEnglish.label")}
+        description={t("settings.controls.translateToEnglish.description")}
         descriptionMode={descriptionMode}
         grouped={grouped}
       />

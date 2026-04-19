@@ -3,8 +3,6 @@
 //! These commands consume the private helpers defined in mod.rs. Child-module
 //! visibility lets this file access them directly via `use super::*;`.
 
-use std::path::Path;
-use std::sync::Arc;
 use std::time::Instant;
 
 use log::{debug, info, warn};
@@ -15,7 +13,6 @@ use super::preview_cache::{
 };
 use super::*;
 use crate::commands::editor::EditorStore;
-use crate::managers::editor::EditorState;
 use crate::managers::media::MediaStore;
 
 /// Generate waveform peaks from a WAV audio file.
@@ -431,7 +428,10 @@ pub async fn export_edited_media(
     });
 
     let settings = crate::settings::get_settings(&app);
-    let ass_temp_path = if burn_captions.unwrap_or(false) && has_video {
+    let ass_temp_path = if burn_captions.unwrap_or(false)
+        && has_video
+        && !settings.export_format.is_audio_only()
+    {
         let blocks = crate::commands::export::build_caption_blocks_for_export(
             &words, &segments, &settings, frame_size,
         );
@@ -444,11 +444,35 @@ pub async fn export_edited_media(
     };
 
     let audio_opts = ExportAudioOptions {
-        normalize_audio: settings.normalize_audio_on_export,
+        loudness_target: crate::settings::migrate_loudness_setting(
+            Some(settings.normalize_audio_on_export),
+            Some(settings.loudness_target),
+        ),
         volume_db: settings.export_volume_db.clamp(-60.0, 24.0),
         fade_in_ms: settings.export_fade_in_ms.min(30_000),
         fade_out_ms: settings.export_fade_out_ms.min(30_000),
     };
+
+    let export_format = settings.export_format;
+    // Audio-only formats drop the video stream regardless of source.
+    let effective_has_video = has_video && !export_format.is_audio_only();
+
+    // If the chosen format does not match the output filename's
+    // extension, swap the extension. The frontend file picker uses the
+    // format's `.extension()` as the suggestion (R-001 / edge case in
+    // PRD); this is a defensive backstop for callers that pass the raw
+    // input filename through.
+    let output_path_buf = {
+        let want_ext = export_format.extension().trim_start_matches('.');
+        let p = std::path::Path::new(&output_path);
+        let cur = p.extension().and_then(|s| s.to_str()).unwrap_or("");
+        if cur.eq_ignore_ascii_case(want_ext) {
+            std::path::PathBuf::from(&output_path)
+        } else {
+            p.with_extension(want_ext)
+        }
+    };
+    let output_path_str = output_path_buf.to_string_lossy().to_string();
 
     let fonts_dir = crate::commands::export::bundled_fonts_dir(&app);
     let fonts_dir_str = fonts_dir.as_ref().map(|p| p.to_string_lossy().to_string());
@@ -459,13 +483,14 @@ pub async fn export_edited_media(
     let snapped_segments = snap_segments_against_media(&segments, input);
     let args = build_export_args(
         &input_path,
-        &output_path,
+        &output_path_str,
         &snapped_segments,
-        has_video,
+        effective_has_video,
         &audio_opts,
         ass_path_str.as_deref(),
         fonts_dir_str.as_deref(),
         &silenced_ranges,
+        export_format,
     );
 
     log::info!("Running FFmpeg export: ffmpeg {}", args.join(" "));
@@ -506,6 +531,133 @@ pub async fn export_edited_media(
     }
 
     let stdout = String::from_utf8_lossy(&output.stdout);
-    log::info!("FFmpeg export complete: {}", output_path);
-    Ok(format!("Export complete: {}\n{}", output_path, stdout))
+    log::info!("FFmpeg export complete: {}", output_path_str);
+    Ok(format!("Export complete: {}\n{}", output_path_str, stdout))
+}
+
+use crate::managers::splice::loudness::{compute_loudness_preflight, LoudnessPreflight};
+
+/// Loudness preflight: render the post-edit audio (same keep-segments
+/// + seam-fade chain that preview/export use) into PCM and run an EBU
+/// R128 measurement against the selected target.
+///
+/// AGENTS.md "Single source of truth for dual-path logic": the
+/// underlying measurement and target lookup live in
+/// `managers::splice::loudness`; this command only orchestrates the
+/// FFmpeg decode and forwards the buffer.
+///
+/// AC-002-a / AC-002-b / AC-002-c.
+#[tauri::command]
+#[specta::specta]
+pub async fn loudness_preflight(
+    app: AppHandle,
+    store: State<'_, EditorStore>,
+    media_store: State<'_, MediaStore>,
+    target: crate::managers::splice::loudness::LoudnessTarget,
+) -> Result<LoudnessPreflight, String> {
+    let experimental_simplify_mode = settings_experimental_simplify_mode_enabled(&app);
+    let (segments, silenced_ranges) = {
+        let state = crate::lock_recovery::try_lock(store.0.lock()).map_err(|e| e.to_string())?;
+        (
+            canonical_keep_segments_for_media(&state, experimental_simplify_mode),
+            state.get_silenced_ranges(),
+        )
+    };
+
+    if segments.is_empty() {
+        return Err("No segments to measure (all words deleted)".to_string());
+    }
+
+    let media_info = {
+        let state =
+            crate::lock_recovery::try_lock(media_store.0.lock()).map_err(|e| e.to_string())?;
+        state.current().cloned()
+    };
+    let media = media_info.ok_or_else(|| "No media loaded for preflight".to_string())?;
+    if !media.path.exists() {
+        return Err(format!(
+            "Media file missing: {}",
+            media.path.to_string_lossy()
+        ));
+    }
+
+    // Same seam-fade policy as preview/export so the preflight numbers
+    // describe the audio the user will actually hear/export.
+    let snapped_segments = snap_segments_against_media(&segments, &media.path);
+    let mut filter = build_audio_concat_filter_with_fade(&snapped_segments, SEAM_FADE_US);
+    let silenced_edit_ranges = silenced_edit_time_ranges(&silenced_ranges, &snapped_segments);
+    append_silence_gate(&mut filter, &silenced_edit_ranges);
+
+    const PREFLIGHT_SAMPLE_RATE_HZ: u32 = 48_000;
+    const PREFLIGHT_CHANNELS: u32 = 1;
+
+    let media_path = media.path.clone();
+    let args: Vec<String> = vec![
+        "-v".to_string(),
+        "error".to_string(),
+        "-i".to_string(),
+        media_path.to_string_lossy().to_string(),
+        "-vn".to_string(),
+        "-filter_complex".to_string(),
+        filter,
+        "-map".to_string(),
+        "[outa]".to_string(),
+        "-ac".to_string(),
+        PREFLIGHT_CHANNELS.to_string(),
+        "-ar".to_string(),
+        PREFLIGHT_SAMPLE_RATE_HZ.to_string(),
+        "-f".to_string(),
+        "f32le".to_string(),
+        "pipe:1".to_string(),
+    ];
+
+    let started = Instant::now();
+    let decode_result = tokio::time::timeout(
+        PREVIEW_RENDER_TIMEOUT,
+        tokio::task::spawn_blocking(move || {
+            std::process::Command::new("ffmpeg").args(&args).output()
+        }),
+    )
+    .await;
+
+    let output = match decode_result {
+        Ok(join_result) => join_result
+            .map_err(|e| format!("Preflight task panicked: {}", e))?
+            .map_err(|e| format!("FFmpeg not found. Install FFmpeg. Error: {}", e))?,
+        Err(_) => {
+            return Err(format!(
+                "Preflight decode timed out after {} minutes",
+                PREVIEW_RENDER_TIMEOUT.as_secs() / 60
+            ));
+        }
+    };
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("FFmpeg preflight decode failed: {}", stderr));
+    }
+
+    let mut samples: Vec<f32> = Vec::with_capacity(output.stdout.len() / 4);
+    for chunk in output.stdout.chunks_exact(4) {
+        samples.push(f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]));
+    }
+
+    let preflight = compute_loudness_preflight(
+        &samples,
+        PREFLIGHT_SAMPLE_RATE_HZ,
+        PREFLIGHT_CHANNELS,
+        target,
+    )
+    .map_err(|e| format!("EBU R128 measurement failed: {}", e))?;
+
+    log::info!(
+        "Preflight complete in {} ms: integrated={:.2} LUFS, peak={:.2} dBTP, lra={:.2} LU, target={:?}",
+        started.elapsed().as_millis(),
+        preflight.integrated_lufs,
+        preflight.true_peak_dbtp,
+        preflight.lra,
+        preflight.target_lufs,
+    );
+
+    Ok(preflight)
 }

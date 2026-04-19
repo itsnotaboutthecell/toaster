@@ -10,11 +10,14 @@
 //! External callers keep using `crate::settings::<Name>` paths; every
 //! previously-public item is re-exported below.
 
-pub const APPLE_INTELLIGENCE_PROVIDER_ID: &str = "apple_intelligence";
-pub const APPLE_INTELLIGENCE_DEFAULT_MODEL_ID: &str = "Apple Intelligence";
 pub const OLLAMA_PROVIDER_ID: &str = "ollama";
 pub const LM_STUDIO_PROVIDER_ID: &str = "lm_studio";
 pub const CUSTOM_LOCAL_PROVIDER_ID: &str = "custom";
+/// Provider ID for the in-process local-GGUF path (Feature B,
+/// `local-llm-model-catalog`). When this is the active provider and
+/// `local_llm_model_id` is `Some(_)`, the cleanup dispatcher routes
+/// through `managers::llm::LlmManager` instead of the HTTP client.
+pub const LOCAL_GGUF_PROVIDER_ID: &str = "local";
 pub const SETTINGS_STORE_PATH: &str = "settings_store.json";
 
 mod defaults;
@@ -22,16 +25,84 @@ mod io;
 mod sanitize;
 mod types;
 
-pub use defaults::get_default_settings;
-pub use io::{get_history_limit, get_recording_retention_period, get_settings, write_settings};
+pub use defaults::{
+    default_desktop_profile, default_mobile_profile, ensure_caption_defaults,
+    get_default_settings,
+};
+pub use io::{get_settings, write_settings};
 pub use sanitize::{
     is_local_post_process_provider, sanitize_local_post_process_base_url,
     sanitize_post_process_model,
 };
 pub use types::{
-    AppSettings, CaptionFontFamily, LLMPrompt, LogLevel, ModelUnloadTimeout, OrtAcceleratorSetting,
-    PostProcessProvider, RecordingRetentionPeriod, WhisperAcceleratorSetting,
+    AppSettings, CaptionFontFamily, CaptionProfile, CaptionProfileSet, LLMPrompt, LogLevel,
+    ModelUnloadTimeout, Orientation, OrtAcceleratorSetting, PostProcessProvider, ProfileScope,
+    VideoDims, WhisperAcceleratorSetting,
 };
+
+/// Known experimental feature keys. Each variant maps 1:1 to a
+/// per-flag `bool` field on `AppSettings`. Keep in sync with the
+/// frontend `experiments` registry in `src/lib/experiments.ts` —
+/// the two sides are the "two mouths of the same SSOT rule" noted
+/// in the Blueprint.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ExperimentKey {
+    SimplifyMode,
+    LazyStreamClose,
+}
+
+/// Defence-in-depth getter for experimental booleans.
+///
+/// When the master toggle `experimental_enabled` is `false`, every
+/// experiment reads as `false` regardless of the stored per-flag
+/// value. When the master is `true`, the stored per-flag value is
+/// returned verbatim. Stored values are never mutated here — that
+/// is the whole point of the gating layer (user opt-ins survive
+/// flip-flopping the master).
+pub fn is_experiment_enabled(settings: &AppSettings, key: ExperimentKey) -> bool {
+    if !settings.experimental_enabled {
+        return false;
+    }
+    match key {
+        ExperimentKey::SimplifyMode => settings.experimental_simplify_mode,
+        ExperimentKey::LazyStreamClose => settings.lazy_stream_close,
+    }
+}
+
+// Re-export the loudness enum at the settings root so callers writing
+// `crate::settings::LoudnessTarget` keep working alongside the canonical
+// `crate::managers::splice::loudness::LoudnessTarget` path.
+pub use crate::managers::splice::loudness::LoudnessTarget;
+
+/// Migrate the legacy `normalize_audio_on_export` boolean into the new
+/// `loudness_target` enum.
+///
+/// Behavior:
+/// - If `loudness_target` is already set to a non-default value, it
+///   wins (a present-day user choice always takes precedence over
+///   legacy boolean state).
+/// - Otherwise, `normalize_audio_on_export = true` becomes
+///   `LoudnessTarget::PodcastMinus16` (preserves -16 LUFS behavior of
+///   the old hard-coded filter at `commands/waveform/mod.rs:121`),
+///   and `false` becomes `LoudnessTarget::Off`.
+///
+/// AC-004-a / AC-004-b: existing settings files migrate cleanly on
+/// first load.
+pub fn migrate_loudness_setting(
+    legacy_normalize: Option<bool>,
+    current_target: Option<LoudnessTarget>,
+) -> LoudnessTarget {
+    if let Some(target) = current_target {
+        if target != LoudnessTarget::Off {
+            return target;
+        }
+    }
+    match legacy_normalize {
+        Some(true) => LoudnessTarget::PodcastMinus16,
+        Some(false) => LoudnessTarget::Off,
+        None => current_target.unwrap_or(LoudnessTarget::Off),
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -39,6 +110,52 @@ mod tests {
     use super::types::SecretMap;
     use super::*;
     use std::collections::HashMap;
+
+    #[test]
+    fn experiment_getter_returns_false_when_master_disabled() {
+        let mut settings = get_default_settings();
+        settings.experimental_enabled = false;
+        settings.experimental_simplify_mode = true;
+        settings.lazy_stream_close = true;
+
+        assert!(
+            !is_experiment_enabled(&settings, ExperimentKey::SimplifyMode),
+            "simplify mode must read false when master toggle is off, even if stored value is true"
+        );
+        assert!(
+            !is_experiment_enabled(&settings, ExperimentKey::LazyStreamClose),
+            "lazy stream close must read false when master toggle is off"
+        );
+
+        // Defence-in-depth: stored per-flag values are preserved
+        // across the master flip so the user's prior opt-in comes
+        // back when they re-enable.
+        assert!(settings.experimental_simplify_mode);
+        assert!(settings.lazy_stream_close);
+    }
+
+    #[test]
+    fn experiment_getter_returns_stored_value_when_master_enabled() {
+        let mut settings = get_default_settings();
+        settings.experimental_enabled = true;
+        settings.experimental_simplify_mode = true;
+        settings.lazy_stream_close = false;
+
+        assert!(is_experiment_enabled(
+            &settings,
+            ExperimentKey::SimplifyMode
+        ));
+        assert!(!is_experiment_enabled(
+            &settings,
+            ExperimentKey::LazyStreamClose
+        ));
+    }
+
+    #[test]
+    fn experimental_enabled_defaults_to_false_on_fresh_install() {
+        let settings = get_default_settings();
+        assert!(!settings.experimental_enabled);
+    }
 
     #[test]
     fn default_settings_disable_experimental_simplify_mode() {
@@ -148,5 +265,87 @@ mod tests {
     fn test_settings_version_present() {
         let s = get_default_settings();
         assert_eq!(s.settings_version, 1);
+    }
+
+    #[test]
+    fn caption_migration_seeds_profiles_from_flat_fields() {
+        // AC-002-a: after a first load with the migration latch off,
+        // both desktop + mobile profiles snapshot the flat-field values.
+        let mut s = get_default_settings();
+        s.caption_profiles_was_migrated = false;
+        s.caption_font_size = 33;
+        s.caption_position = 77;
+        s.caption_max_width_percent = 55;
+        s.caption_bg_color = "#112233AA".to_string();
+
+        let changed = ensure_caption_defaults(&mut s);
+        assert!(changed, "first migration should mutate");
+        assert!(s.caption_profiles_was_migrated);
+        assert_eq!(s.caption_profiles.desktop.font_size, 33);
+        assert_eq!(s.caption_profiles.desktop.position, 77);
+        assert_eq!(s.caption_profiles.desktop.max_width_percent, 55);
+        assert_eq!(s.caption_profiles.desktop.bg_color, "#112233AA");
+        // Both orientations seed from the same flat fields.
+        assert_eq!(s.caption_profiles.desktop, s.caption_profiles.mobile);
+    }
+
+    #[test]
+    fn caption_migration_idempotent() {
+        // AC-002-b: running ensure_caption_defaults twice does not
+        // overwrite user-tweaked mobile values.
+        let mut s = get_default_settings();
+        s.caption_profiles_was_migrated = false;
+        assert!(ensure_caption_defaults(&mut s));
+
+        // Simulate a user tweak to the mobile profile after first load.
+        s.caption_profiles.mobile.font_size = 999;
+
+        let second = ensure_caption_defaults(&mut s);
+        assert!(!second, "idempotent: second call must not mutate");
+        assert_eq!(s.caption_profiles.mobile.font_size, 999);
+    }
+
+    #[test]
+    fn caption_profiles_survive_full_settings_roundtrip() {
+        // AC-002-c: serde round-trip through the Settings store shape
+        // keeps caption_profiles intact.
+        let mut s = get_default_settings();
+        s.caption_profiles.desktop.font_size = 61;
+        s.caption_profiles.mobile.padding_x_px = 22;
+
+        let json = serde_json::to_value(&s).expect("serialize");
+        let back: AppSettings = serde_json::from_value(json).expect("deserialize");
+        assert_eq!(back.caption_profiles.desktop.font_size, 61);
+        assert_eq!(back.caption_profiles.mobile.padding_x_px, 22);
+        assert!(back.caption_profiles_was_migrated);
+    }
+
+    #[test]
+    fn migrate_loudness_setting_maps_legacy_boolean() {
+        // AC-004-a: (true, _) -> "podcast_-16", (false, _) -> "off",
+        // (absent, present) -> present.
+        assert_eq!(
+            migrate_loudness_setting(Some(true), None),
+            LoudnessTarget::PodcastMinus16
+        );
+        assert_eq!(
+            migrate_loudness_setting(Some(true), Some(LoudnessTarget::Off)),
+            LoudnessTarget::PodcastMinus16
+        );
+        assert_eq!(
+            migrate_loudness_setting(Some(false), None),
+            LoudnessTarget::Off
+        );
+        assert_eq!(
+            migrate_loudness_setting(None, Some(LoudnessTarget::StreamingMinus14)),
+            LoudnessTarget::StreamingMinus14
+        );
+        // Present non-default user choice always wins over legacy bool.
+        assert_eq!(
+            migrate_loudness_setting(Some(true), Some(LoudnessTarget::StreamingMinus14)),
+            LoudnessTarget::StreamingMinus14
+        );
+        // Absent on both sides: stay Off.
+        assert_eq!(migrate_loudness_setting(None, None), LoudnessTarget::Off);
     }
 }

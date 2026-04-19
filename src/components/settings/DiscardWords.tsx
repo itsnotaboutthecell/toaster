@@ -25,7 +25,7 @@ export const DiscardWords: React.FC<DiscardWordsProps> = React.memo(
       if (sanitizedWord && sanitizedWord.length <= 50) {
         if (discardWords.includes(sanitizedWord)) {
           toast.error(
-            t("settings.advanced.discardWords.duplicate", {
+            t("settings.controls.discardWords.duplicate", {
               word: sanitizedWord,
             }),
           );
@@ -33,7 +33,7 @@ export const DiscardWords: React.FC<DiscardWordsProps> = React.memo(
         }
         if (allowWords.includes(sanitizedWord)) {
           toast.error(
-            t("settings.advanced.discardWords.conflictWithAllow", {
+            t("settings.controls.discardWords.conflictWithAllow", {
               word: sanitizedWord,
             }),
           );
@@ -61,8 +61,8 @@ export const DiscardWords: React.FC<DiscardWordsProps> = React.memo(
     return (
       <>
         <SettingContainer
-          title={t("settings.advanced.discardWords.title")}
-          description={t("settings.advanced.discardWords.description")}
+          title={t("settings.controls.discardWords.title")}
+          description={t("settings.controls.discardWords.description")}
           descriptionMode={descriptionMode}
           grouped={grouped}
         >
@@ -73,7 +73,7 @@ export const DiscardWords: React.FC<DiscardWordsProps> = React.memo(
               value={newWord}
               onChange={(e) => setNewWord(e.target.value)}
               onKeyDown={handleKeyPress}
-              placeholder={t("settings.advanced.discardWords.placeholder")}
+              placeholder={t("settings.controls.discardWords.placeholder")}
               variant="compact"
               disabled={isUpdating("custom_filler_words")}
             />
@@ -87,7 +87,7 @@ export const DiscardWords: React.FC<DiscardWordsProps> = React.memo(
               variant="primary"
               size="md"
             >
-              {t("settings.advanced.discardWords.add")}
+              {t("settings.controls.discardWords.add")}
             </Button>
           </div>
         </SettingContainer>
@@ -103,7 +103,7 @@ export const DiscardWords: React.FC<DiscardWordsProps> = React.memo(
                 variant="secondary"
                 size="sm"
                 className="inline-flex items-center gap-1 cursor-pointer"
-                aria-label={t("settings.advanced.discardWords.remove", { word })}
+                aria-label={t("settings.controls.discardWords.remove", { word })}
               >
                 <span>{word}</span>
                 <svg

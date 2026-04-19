@@ -1,8 +1,8 @@
 //! Tauri store I/O: read/write the app settings store and expose convenience
 //! accessors for hot-path fields.
 
-use super::defaults::{ensure_post_process_defaults, get_default_settings};
-use super::types::{AppSettings, RecordingRetentionPeriod};
+use super::defaults::{ensure_caption_defaults, ensure_post_process_defaults, get_default_settings};
+use super::types::AppSettings;
 use super::SETTINGS_STORE_PATH;
 use log::warn;
 use tauri::AppHandle;
@@ -31,10 +31,17 @@ pub fn get_settings(app: &AppHandle) -> AppSettings {
         default_settings
     };
 
+    let mut needs_write = false;
     if ensure_post_process_defaults(&mut settings) {
+        needs_write = true;
+    }
+    if ensure_caption_defaults(&mut settings) {
+        needs_write = true;
+    }
+    if needs_write {
         match serde_json::to_value(&settings) {
             Ok(val) => store.set("settings", val),
-            Err(e) => warn!("Failed to serialize post-processed settings: {}", e),
+            Err(e) => warn!("Failed to serialize settings after default migration: {}", e),
         }
     }
 
@@ -50,14 +57,4 @@ pub fn write_settings(app: &AppHandle, settings: AppSettings) {
         Ok(val) => store.set("settings", val),
         Err(e) => warn!("Failed to serialize settings for write: {}", e),
     }
-}
-
-pub fn get_history_limit(app: &AppHandle) -> usize {
-    let settings = get_settings(app);
-    settings.history_limit
-}
-
-pub fn get_recording_retention_period(app: &AppHandle) -> RecordingRetentionPeriod {
-    let settings = get_settings(app);
-    settings.recording_retention_period
 }

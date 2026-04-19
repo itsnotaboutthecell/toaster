@@ -25,7 +25,7 @@ export const AllowWords: React.FC<AllowWordsProps> = React.memo(
       if (sanitizedWord && sanitizedWord.length <= 50) {
         if (allowWords.includes(sanitizedWord)) {
           toast.error(
-            t("settings.advanced.allowWords.duplicate", {
+            t("settings.controls.allowWords.duplicate", {
               word: sanitizedWord,
             }),
           );
@@ -33,7 +33,7 @@ export const AllowWords: React.FC<AllowWordsProps> = React.memo(
         }
         if (discardWords.includes(sanitizedWord)) {
           toast.error(
-            t("settings.advanced.allowWords.conflictWithDiscard", {
+            t("settings.controls.allowWords.conflictWithDiscard", {
               word: sanitizedWord,
             }),
           );
@@ -61,8 +61,8 @@ export const AllowWords: React.FC<AllowWordsProps> = React.memo(
     return (
       <>
         <SettingContainer
-          title={t("settings.advanced.allowWords.title")}
-          description={t("settings.advanced.allowWords.description")}
+          title={t("settings.controls.allowWords.title")}
+          description={t("settings.controls.allowWords.description")}
           descriptionMode={descriptionMode}
           grouped={grouped}
         >
@@ -73,7 +73,7 @@ export const AllowWords: React.FC<AllowWordsProps> = React.memo(
               value={newWord}
               onChange={(e) => setNewWord(e.target.value)}
               onKeyDown={handleKeyPress}
-              placeholder={t("settings.advanced.allowWords.placeholder")}
+              placeholder={t("settings.controls.allowWords.placeholder")}
               variant="compact"
               disabled={isUpdating("custom_words")}
             />
@@ -87,7 +87,7 @@ export const AllowWords: React.FC<AllowWordsProps> = React.memo(
               variant="primary"
               size="md"
             >
-              {t("settings.advanced.allowWords.add")}
+              {t("settings.controls.allowWords.add")}
             </Button>
           </div>
         </SettingContainer>
@@ -103,7 +103,7 @@ export const AllowWords: React.FC<AllowWordsProps> = React.memo(
                 variant="secondary"
                 size="sm"
                 className="inline-flex items-center gap-1 cursor-pointer"
-                aria-label={t("settings.advanced.allowWords.remove", { word })}
+                aria-label={t("settings.controls.allowWords.remove", { word })}
               >
                 <span>{word}</span>
                 <svg

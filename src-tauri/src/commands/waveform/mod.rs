@@ -7,8 +7,11 @@ use crate::managers::editor::{EditorState, TimingContractSnapshot};
 use crate::managers::splice::boundaries::{
     snap_segments_energy_biased, DEFAULT_ENERGY_RADIUS_US, DEFAULT_SNAP_RADIUS_US,
 };
+use crate::managers::splice::loudness::{build_loudnorm_filter, LoudnessTarget};
 
 mod preview_cache;
+mod export_format;
+pub use export_format::{export_format_codec_map, CodecSpec, AudioExportFormat};
 use preview_cache::{
     edit_version_token, preview_generation_token, preview_output_path, source_media_fingerprint,
     urlencoding,
@@ -47,7 +50,12 @@ const EXPORT_TIMEOUT: Duration = Duration::from_secs(1800);
 /// Audio post-processing options applied to the entire export output.
 #[derive(Debug, Clone, Default)]
 struct ExportAudioOptions {
-    normalize_audio: bool,
+    /// Selected loudness normalization target. The `loudnorm` filter
+    /// string is built by `build_loudnorm_filter`; this struct only
+    /// carries the enum so the FFmpeg arg construction remains the
+    /// single Rust authority for the filter parameters (AGENTS.md
+    /// "Single source of truth for dual-path logic").
+    loudness_target: LoudnessTarget,
     volume_db: f32,
     fade_in_ms: u32,
     fade_out_ms: u32,
@@ -117,8 +125,8 @@ fn build_audio_post_filters(opts: &ExportAudioOptions, total_duration_s: f64) ->
         filters.push(format!("afade=t=out:st={st:.3}:d={d:.3}"));
     }
 
-    if opts.normalize_audio {
-        filters.push("loudnorm=I=-16:TP=-1.5:LRA=11".to_string());
+    if let Some(loudnorm) = build_loudnorm_filter(opts.loudness_target) {
+        filters.push(loudnorm);
     }
 
     if filters.is_empty() {
@@ -296,7 +304,11 @@ fn append_silence_gate(filter: &mut String, edit_ranges: &[(i64, i64)]) {
 /// Uses the timing contract snapshot as the source of truth and normalizes
 /// bounds/order so preview and export consume identical segment semantics.
 fn settings_experimental_simplify_mode_enabled(app: &AppHandle) -> bool {
-    crate::settings::get_settings(app).experimental_simplify_mode
+    let settings = crate::settings::get_settings(app);
+    crate::settings::is_experiment_enabled(
+        &settings,
+        crate::settings::ExperimentKey::SimplifyMode,
+    )
 }
 
 fn contract_keep_segments_for_media(snapshot: &TimingContractSnapshot) -> Vec<(i64, i64)> {
@@ -507,6 +519,7 @@ fn extend_single_segment_export_args(
     start_us: i64,
     end_us: i64,
     has_video: bool,
+    audio_only_spec: Option<&CodecSpec>,
 ) {
     let start_s = start_us as f64 / 1_000_000.0;
     let end_s = end_us as f64 / 1_000_000.0;
@@ -522,12 +535,19 @@ fn extend_single_segment_export_args(
         args.extend(["-c:v".to_string(), "libx264".to_string()]);
     }
 
-    args.extend([
-        "-c:a".to_string(),
-        "aac".to_string(),
-        "-b:a".to_string(),
-        "192k".to_string(),
-    ]);
+    if let Some(spec) = audio_only_spec {
+        args.extend(["-c:a".to_string(), spec.codec.to_string()]);
+        if let Some(b) = spec.bitrate_flag() {
+            args.extend(["-b:a".to_string(), b]);
+        }
+    } else {
+        args.extend([
+            "-c:a".to_string(),
+            "aac".to_string(),
+            "-b:a".to_string(),
+            "192k".to_string(),
+        ]);
+    }
 }
 
 /// Build the ASS force_style string for FFmpeg subtitle burn-in.
@@ -574,7 +594,16 @@ fn build_export_args(
     subtitle_path: Option<&str>,
     fonts_dir: Option<&str>,
     silenced_source_ranges: &[(i64, i64)],
+    format: AudioExportFormat,
 ) -> Vec<String> {
+    // Audio-only formats force the video stream out (-vn) and pick a
+    // codec/bitrate from the central codec map. The video pipeline
+    // (Mp4) keeps the existing libx264 + aac behavior. Per AGENTS.md
+    // dual-path rule + R-005, `build_audio_post_filters` (loudness +
+    // seam fades) is reused unchanged for both paths.
+    let audio_only_spec = export_format_codec_map(format);
+    let effective_has_video = has_video && audio_only_spec.is_none();
+
     let mut args: Vec<String> = vec!["-y".to_string(), "-i".to_string(), input_path.to_string()];
 
     let total_duration_s: f64 = segments
@@ -588,7 +617,13 @@ fn build_export_args(
     if segments.len() == 1 {
         // Single segment — simple trim with re-encode for sample-accurate cuts
         let (start, end) = segments[0];
-        extend_single_segment_export_args(&mut args, start, end, has_video);
+        extend_single_segment_export_args(
+            &mut args,
+            start,
+            end,
+            effective_has_video,
+            audio_only_spec.as_ref(),
+        );
         let post_filter = build_audio_post_filters(audio_opts, total_duration_s);
         let combined_af = match (silence_gate.as_ref(), post_filter) {
             (Some(gate), Some(pf)) => Some(format!("{gate},{pf}")),
@@ -599,8 +634,14 @@ fn build_export_args(
         if let Some(af) = combined_af {
             args.extend(["-af".to_string(), af]);
         }
+        // For audio-only single-segment exports, drop the source video
+        // stream explicitly so the muxer does not choke on a leftover
+        // unmapped video stream.
+        if audio_only_spec.is_some() {
+            args.push("-vn".to_string());
+        }
         // Burn-in subtitles via -vf for single-segment video exports
-        if has_video {
+        if effective_has_video {
             if let Some(sub) = subtitle_path {
                 let escaped = escape_srt_path_for_ffmpeg(sub);
                 let fonts_param = match fonts_dir {
@@ -623,7 +664,7 @@ fn build_export_args(
             (None, None) => None,
         };
 
-        if has_video {
+        if effective_has_video {
             let mut filter_parts = Vec::new();
             let n = segments.len();
             for (i, (start, end)) in segments.iter().enumerate() {
@@ -680,6 +721,23 @@ fn build_export_args(
                 "-map".to_string(),
                 "[outa]".to_string(),
             ]);
+            // Audio-only multi-segment: explicit -vn so any source
+            // video that survives the filter graph is dropped before
+            // muxing.
+            if audio_only_spec.is_some() {
+                args.push("-vn".to_string());
+            }
+        }
+
+        // Multi-segment audio-only output codec selection. The
+        // single-segment path is handled inside
+        // `extend_single_segment_export_args` so it can sit alongside
+        // the existing -ss/-to trim args.
+        if let Some(spec) = audio_only_spec.as_ref() {
+            args.extend(["-c:a".to_string(), spec.codec.to_string()]);
+            if let Some(b) = spec.bitrate_flag() {
+                args.extend(["-b:a".to_string(), b]);
+            }
         }
     }
 
@@ -689,6 +747,44 @@ fn build_export_args(
 
 mod commands;
 pub use commands::*;
+
+/// Test-only public wrapper around the private `build_export_args`.
+///
+/// Integration tests in `src-tauri/tests/` need to drive the audio-only
+/// export pipeline end-to-end (AC-003-a round-trip), but the underlying
+/// builder is intentionally crate-private. This shim exposes a minimal
+/// surface using neutral defaults so tests don't have to reach into
+/// private types like `ExportAudioOptions`.
+///
+/// Always uses `LoudnessTarget::Off` and zero volume/fades — those
+/// concerns are tested independently. AGENTS.md "Single source of
+/// truth": this shim does NOT re-implement codec selection; it
+/// dispatches through `build_export_args`, the same function the
+/// real export command uses.
+pub fn build_audio_only_export_args_for_tests(
+    input_path: &str,
+    output_path: &str,
+    segments: &[(i64, i64)],
+    format: AudioExportFormat,
+) -> Vec<String> {
+    let opts = ExportAudioOptions {
+        loudness_target: crate::managers::splice::loudness::LoudnessTarget::Off,
+        volume_db: 0.0,
+        fade_in_ms: 0,
+        fade_out_ms: 0,
+    };
+    build_export_args(
+        input_path,
+        output_path,
+        segments,
+        true, // pretend the source has video; audio-only must drop it
+        &opts,
+        None,
+        None,
+        &[],
+        format,
+    )
+}
 
 #[cfg(test)]
 mod tests;

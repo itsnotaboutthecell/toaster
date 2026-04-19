@@ -1,21 +1,19 @@
 // Transcript cleanup post-processing.
 //
-// Preserved subset of the former `transcription_post_process` module after
-// p3-prune-handy-transcription-post-process. Holds the cleanup-contract
-// schema (CleanupContractResponse / CleanupInvariantClaims), the validation
-// logic that enforces it, the Chinese-variant conversion, and the
-// `process_transcription_output` entry point still used by the history-retry
-// command. Dictation-era paths (low-confidence span routing,
-// local-cleanup-review UI round-trip, Apple Intelligence provider branch,
-// streaming-segment confidence heuristics) were removed with the rest of the
-// Handy dictation surface.
+// Holds the cleanup-contract schema (CleanupContractResponse /
+// CleanupInvariantClaims), the validation logic that enforces it, the
+// Chinese-variant conversion, and the `process_transcription_output` entry
+// point used by the editor's cleanup commands. Dictation-era paths
+// (low-confidence span routing, local-cleanup-review UI round-trip, Apple
+// Intelligence provider branch, streaming-segment confidence heuristics)
+// were removed with the rest of the Handy dictation surface.
 
 use crate::settings::{get_settings, AppSettings};
 use ferrous_opencc::{config::BuiltinConfig, OpenCC};
 use log::{debug, error};
 use std::collections::{HashMap, HashSet};
 use std::fmt;
-use tauri::AppHandle;
+use tauri::{AppHandle, Manager};
 
 pub(super) const TRANSCRIPTION_FIELD: &str = "transcription";
 pub(super) const CLEANUP_CONTRACT_VERSION: &str = "transcript_cleanup_contract_v1";
@@ -112,6 +110,25 @@ fn extract_protected_tokens(text: &str) -> Vec<String> {
                 && (token.chars().any(|c| c.is_ascii_digit())
                     || token.chars().any(is_protected_symbol))
         })
+        .collect()
+}
+
+/// Sanitize and collect protected tokens sourced from `AppSettings.custom_words`
+/// (the user-facing Allow list). Matches the frontend sanitizer in
+/// `src/components/settings/AllowWords.tsx` (strip `<>"'&`) so user input cannot
+/// break prompt formatting, and drops empties.
+fn protected_tokens_from_settings(settings: &AppSettings) -> Vec<String> {
+    settings
+        .custom_words
+        .iter()
+        .map(|word| {
+            word.chars()
+                .filter(|c| !matches!(c, '<' | '>' | '"' | '\'' | '&'))
+                .collect::<String>()
+                .trim()
+                .to_string()
+        })
+        .filter(|word| !word.is_empty())
         .collect()
 }
 
@@ -419,7 +436,11 @@ pub(super) fn validate_cleanup_candidate(
     }
 }
 
-async fn post_process_transcription(settings: &AppSettings, transcription: &str) -> Option<String> {
+async fn post_process_transcription(
+    app: &AppHandle,
+    settings: &AppSettings,
+    transcription: &str,
+) -> Option<String> {
     let provider = match settings.active_post_process_provider().cloned() {
         Some(provider) => provider,
         None => {
@@ -482,8 +503,9 @@ async fn post_process_transcription(settings: &AppSettings, transcription: &str)
         .unwrap_or_default();
 
     let local_openai_provider = crate::settings::is_local_post_process_provider(&provider);
-    let protected_tokens = extract_protected_tokens(transcription);
-    let protected_tokens_for_prompt = dedupe_tokens(&protected_tokens);
+    let mut merged_protected = extract_protected_tokens(transcription);
+    merged_protected.extend(protected_tokens_from_settings(settings));
+    let protected_tokens_for_prompt = dedupe_tokens(&merged_protected);
     if !protected_tokens_for_prompt.is_empty() {
         debug!(
             "Cleanup contract protecting {} token(s) for provider '{}'",
@@ -491,6 +513,14 @@ async fn post_process_transcription(settings: &AppSettings, transcription: &str)
             provider.id
         );
     }
+    let filler_words_for_prompt: Vec<String> = settings
+        .custom_filler_words
+        .clone()
+        .unwrap_or_default()
+        .into_iter()
+        .map(|w| w.trim().to_string())
+        .filter(|w| !w.is_empty())
+        .collect();
 
     // Disable reasoning for providers where post-processing rarely benefits from it.
     // Toaster is local-only, so only the local OpenAI-compatible path sets
@@ -509,12 +539,38 @@ async fn post_process_transcription(settings: &AppSettings, transcription: &str)
         transcription,
         prompt: &prompt,
         protected_tokens_for_prompt: &protected_tokens_for_prompt,
+        filler_words_for_prompt: &filler_words_for_prompt,
         local_openai_provider,
         reasoning_effort,
         reasoning,
     };
 
     let should_attempt_structured = provider.supports_structured_output || local_openai_provider;
+
+    // Feature B: route through the in-process GGUF backend when selected.
+    // The HTTP path below is untouched; we just short-circuit before it.
+    let dispatch = llm_dispatch::select_dispatch_backend(
+        &provider,
+        settings.local_llm_model_id.as_deref(),
+        app.try_state::<std::sync::Arc<crate::managers::llm::LlmManager>>()
+            .map(|s| s.inner().clone()),
+    );
+    if let llm_dispatch::DispatchBackend::LocalGguf { manager, model_id } = &dispatch {
+        if should_attempt_structured {
+            if let AttemptOutcome::Success(validated) =
+                llm_dispatch::try_llm_attempt_local_gguf(&inputs, manager, model_id, true).await
+            {
+                return Some(validated);
+            }
+        }
+        return match llm_dispatch::try_llm_attempt_local_gguf(&inputs, manager, model_id, false)
+            .await
+        {
+            AttemptOutcome::Success(v) => Some(v),
+            AttemptOutcome::Fallback => None,
+        };
+    }
+
     if should_attempt_structured {
         if let AttemptOutcome::Success(validated) = try_llm_attempt(&inputs, true).await {
             return Some(validated);
@@ -598,7 +654,7 @@ pub(crate) async fn process_transcription_output(
 
     if post_process {
         let pre_post_process_text = final_text.clone();
-        let processed_text = post_process_transcription(&settings, &final_text).await;
+        let processed_text = post_process_transcription(app, &settings, &final_text).await;
 
         if let Some(processed_text) = processed_text {
             if has_meaningful_text_diff(&pre_post_process_text, &processed_text) {

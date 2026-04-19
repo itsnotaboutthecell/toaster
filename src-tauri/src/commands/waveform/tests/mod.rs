@@ -7,7 +7,7 @@ use crate::managers::editor::{EditorState, TimingSegment, Word};
 /// `use super::*;`.
 pub(super) fn default_audio_opts() -> ExportAudioOptions {
     ExportAudioOptions {
-        normalize_audio: false,
+        loudness_target: crate::managers::splice::loudness::LoudnessTarget::Off,
         volume_db: 0.0,
         fade_in_ms: 0,
         fade_out_ms: 0,
