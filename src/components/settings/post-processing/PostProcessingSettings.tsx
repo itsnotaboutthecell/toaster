@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { SettingsGroup } from "../../ui/SettingsGroup";
 import { SettingContainer } from "../../ui/SettingContainer";
@@ -11,7 +11,7 @@ import { ModelSelect } from "../post-processing-api/ModelSelect";
 import { usePostProcessProviderState } from "../post-processing-api/usePostProcessProviderState";
 import { Button } from "../../ui/Button";
 import { Alert } from "../../ui/Alert";
-import { ModelsSettings } from "../models/ModelsSettings";
+import { useModelStore } from "../../../stores/modelStore";
 import { useSettingsNavStore } from "../../../stores/settingsNavStore";
 import { useSettings } from "../../../hooks/useSettings";
 
@@ -43,10 +43,18 @@ export const PostProcessingSettings: React.FC = () => {
     handleRefreshModels,
   } = usePostProcessProviderState();
   const { settings } = useSettings();
+  const models = useModelStore((s) => s.models);
 
   const requiresApiKey = selectedProvider?.requires_api_key ?? true;
   const allowBaseUrlEdit = selectedProvider?.allow_base_url_edit ?? false;
   const isLocalProvider = selectedProviderId === LOCAL_GGUF_PROVIDER_ID;
+
+  const activeLocalModelLabel = useMemo(() => {
+    const id = settings?.local_llm_model_id;
+    if (!id) return null;
+    const match = models.find((m) => m.id === id);
+    return match?.name ?? id;
+  }, [models, settings?.local_llm_model_id]);
 
   return (
     <div className="max-w-5xl w-full mx-auto space-y-6" data-testid="settings-outer">
@@ -64,14 +72,11 @@ export const PostProcessingSettings: React.FC = () => {
           {t("settings.postProcessing.localLlmAlert.body")}
         </Alert>
       )}
-      <SettingsGroup title={t("settings.postProcessing.title")}>
-        <SettingContainer
-          title={t("settings.debug.postProcessingToggle.label")}
-          description={t("settings.debug.postProcessingToggle.description")}
-          grouped={true}
-        >
-          <PostProcessingToggle descriptionMode="tooltip" grouped={false} />
-        </SettingContainer>
+      <SettingsGroup
+        title={t("settings.postProcessing.title")}
+        description={t("settings.debug.postProcessingToggle.description")}
+      >
+        <PostProcessingToggle descriptionMode="tooltip" grouped={true} />
 
         <SettingContainer
           title={t("settings.postProcessing.api.provider.title")}
@@ -90,19 +95,22 @@ export const PostProcessingSettings: React.FC = () => {
             title={t("settings.postProcessing.localModels.title")}
             description={t("settings.postProcessing.localModels.description")}
             grouped={true}
-            layout="stacked"
           >
-            <div className="space-y-3">
-              <ModelsSettings lockedCategory="PostProcessor" />
-              <div className="flex justify-end">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => navigateToModels("PostProcessor")}
-                >
-                  {t("settings.postProcessing.manageModelsLink")}
-                </Button>
-              </div>
+            <div className="flex items-center gap-3">
+              <span
+                className="text-sm truncate max-w-[20rem]"
+                data-testid="post-processing-active-model-label"
+              >
+                {activeLocalModelLabel ??
+                  t("settings.postProcessing.localModels.empty")}
+              </span>
+              <Button
+                variant="brand"
+                size="sm"
+                onClick={() => navigateToModels("PostProcessor")}
+              >
+                {t("settings.postProcessing.manageModelsLink")}
+              </Button>
             </div>
           </SettingContainer>
         ) : (
