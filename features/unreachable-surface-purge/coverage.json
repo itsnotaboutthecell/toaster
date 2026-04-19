@@ -1,0 +1,152 @@
+{
+  "_comment": "Verifier map for unreachable-surface-purge. Live-app gates use kind:manual; cargo gates use kind:cargo-test; translation parity uses kind:script.",
+  "feature": "unreachable-surface-purge",
+  "acs": {
+    "AC-001-a": {
+      "verifier": "rg-experimental-simplify-mode",
+      "kind": "manual",
+      "command": "pwsh scripts/feature/check-feature-coverage.ps1 -Feature unreachable-surface-purge",
+      "task": "usp-qc-experimental-delete",
+      "steps": [
+        "Run: rg -n 'experimental_simplify_mode' src src-tauri",
+        "Confirm zero matches outside node_modules, target, dist, and generated build artifacts."
+      ]
+    },
+    "AC-001-b": {
+      "verifier": "cargo-test-workspace",
+      "kind": "cargo-test",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml --workspace",
+      "task": "usp-qc-experimental-delete"
+    },
+    "AC-001-c": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "usp-qc-experimental-delete",
+      "steps": [
+        "Before launch, hand-edit the on-disk settings.json to include '\"experimental_simplify_mode\": true' at the top level.",
+        "Launch via pwsh scripts/launch-toaster-monitored.ps1.",
+        "Open devtools and confirm no red error appears referencing experimental_simplify_mode or settings deserialization.",
+        "Open an editor fixture, trigger keep-segment selection by playing the transcript, and confirm playback works without runtime error."
+      ]
+    },
+    "AC-002-a": {
+      "verifier": "check-translations.ts",
+      "kind": "script",
+      "command": "bun run scripts/check-translations.ts",
+      "task": "usp-qc-i18n-orphans"
+    },
+    "AC-002-b": {
+      "verifier": "rg-sidebar-general",
+      "kind": "manual",
+      "command": "pwsh scripts/feature/check-feature-coverage.ps1 -Feature unreachable-surface-purge",
+      "task": "usp-qc-i18n-orphans",
+      "steps": [
+        "Run: rg -n '\"general\"' src/i18n/locales",
+        "Confirm every match is under the settings parent (e.g. 'settings.general'), never under sidebar.",
+        "Run: rg -n 'sidebar\\.general|\"sidebar\":\\s*\\{[^}]*\"general\"' src/i18n/locales -U",
+        "Confirm zero matches (no sidebar.general orphan remains)."
+      ]
+    },
+    "AC-002-c": {
+      "verifier": "rg-overlay-namespace",
+      "kind": "manual",
+      "command": "pwsh scripts/feature/check-feature-coverage.ps1 -Feature unreachable-surface-purge",
+      "task": "usp-qc-i18n-orphans",
+      "steps": [
+        "Run: rg -n '\"overlay\"' src/i18n/locales",
+        "Confirm zero matches."
+      ]
+    },
+    "AC-003-a": {
+      "verifier": "rg-apple-stub",
+      "kind": "manual",
+      "command": "pwsh scripts/feature/check-feature-coverage.ps1 -Feature unreachable-surface-purge",
+      "task": "usp-qc-apple-residue",
+      "steps": [
+        "Run: rg -n 'check_apple_intelligence_available' src src-tauri",
+        "Confirm zero matches."
+      ]
+    },
+    "AC-003-b": {
+      "verifier": "cargo-test-workspace",
+      "kind": "cargo-test",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml --workspace",
+      "task": "usp-qc-apple-residue"
+    },
+    "AC-003-c": {
+      "verifier": "rg-apple-constants",
+      "kind": "manual",
+      "command": "pwsh scripts/feature/check-feature-coverage.ps1 -Feature unreachable-surface-purge",
+      "task": "usp-qc-apple-residue",
+      "steps": [
+        "Run: rg -n 'appleIntelligence|APPLE_INTELLIGENCE|APPLE_PROVIDER_ID' src src-tauri",
+        "Confirm zero matches outside vendored dependencies and target/ or dist/."
+      ]
+    },
+    "AC-004-a": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "usp-qc-postprocessing-label",
+      "steps": [
+        "Launch via pwsh scripts/launch-toaster-monitored.ps1.",
+        "Open Settings and click the Post Process sidebar entry.",
+        "Confirm a visible label reads 'Local LLM only - endpoints must be loopback (127.0.0.1 / localhost / ::1)' above or adjacent to the provider form."
+      ]
+    },
+    "AC-004-b": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "usp-qc-postprocessing-label",
+      "steps": [
+        "In the Post Process panel, confirm the embedded ModelsSettings section renders models filtered to post-processing.",
+        "Confirm clicking a model surfaces its settings without a runtime error."
+      ]
+    },
+    "AC-004-c": {
+      "verifier": "rg-is-local-host",
+      "kind": "manual",
+      "command": "pwsh scripts/feature/check-feature-coverage.ps1 -Feature unreachable-surface-purge",
+      "task": "usp-qc-postprocessing-label",
+      "steps": [
+        "Run: rg -n 'is_local_host' src-tauri/src/llm_client.rs",
+        "Confirm at least one match (the loopback enforcement point the UI label cites still exists)."
+      ]
+    },
+    "AC-005-a": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "usp-qc-debug-gated",
+      "steps": [
+        "Before launch, ensure settings.json either has 'debug_mode: false' or omits debug_mode.",
+        "Launch via pwsh scripts/launch-toaster-monitored.ps1.",
+        "Open Settings and confirm the sidebar does NOT show a Debug entry."
+      ]
+    },
+    "AC-005-b": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "usp-qc-debug-gated",
+      "steps": [
+        "With the app running and debug mode off, press Ctrl+Shift+D.",
+        "Confirm a Debug entry appears in the sidebar.",
+        "Click Debug and confirm the panel renders all four components: DebugPaths, LogLevelSelector, WordCorrectionThreshold, and LogDirectory."
+      ]
+    },
+    "AC-005-c": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "usp-qc-debug-gated",
+      "steps": [
+        "With the Debug section active in the sidebar, press Ctrl+Shift+D to disable debug mode.",
+        "Confirm the Debug sidebar entry disappears.",
+        "Confirm the active section falls back to a valid section (e.g. editor) without devtools console errors."
+      ]
+    }
+  }
+}

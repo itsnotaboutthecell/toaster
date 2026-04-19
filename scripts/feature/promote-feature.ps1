@@ -26,7 +26,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$repoRoot   = Split-Path -Parent $PSScriptRoot
+$repoRoot   = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $featureDir = Join-Path $repoRoot 'features' $Slug
 $stateFile  = Join-Path $featureDir 'STATE.md'
 $journalFile = Join-Path $featureDir 'journal.md'

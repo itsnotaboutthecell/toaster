@@ -28,7 +28,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$repoRoot = Split-Path -Parent $PSScriptRoot
+$repoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $tasksFile = Join-Path $repoRoot 'features' $Feature 'tasks.sql'
 
 if (-not (Test-Path $tasksFile)) {

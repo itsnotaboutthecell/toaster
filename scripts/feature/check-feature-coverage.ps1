@@ -43,7 +43,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$repoRoot = Split-Path -Parent $PSScriptRoot
+$repoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $featuresDir = Join-Path $repoRoot 'features'
 $skillsDir = Join-Path $repoRoot '.github\skills'
 $agentsDir = Join-Path $repoRoot '.github\agents'
