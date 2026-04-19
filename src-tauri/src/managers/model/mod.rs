@@ -149,6 +149,10 @@ impl<'a> Drop for DownloadCleanup<'a> {
 pub struct ModelManager {
     app_handle: AppHandle,
     models_dir: PathBuf,
+    /// On-disk root for post-processor (GGUF LLM) assets. Kept deliberately
+    /// separate from `models_dir` per PRD R-003 so a user can "nuke one
+    /// without touching the other". Category-routed by `resolve_dir`.
+    llm_dir: PathBuf,
     available_models: Mutex<HashMap<String, ModelInfo>>,
     cancel_flags: Arc<Mutex<HashMap<String, Arc<AtomicBool>>>>,
     extracting_models: Arc<Mutex<HashSet<String>>>,
@@ -157,12 +161,16 @@ pub struct ModelManager {
 impl ModelManager {
     pub fn new(app_handle: &AppHandle) -> Result<Self> {
         // Create models directory in app data
-        let models_dir = crate::portable::app_data_dir(app_handle)
-            .map_err(|e| anyhow::anyhow!("Failed to get app data dir: {}", e))?
-            .join("models");
+        let app_data = crate::portable::app_data_dir(app_handle)
+            .map_err(|e| anyhow::anyhow!("Failed to get app data dir: {}", e))?;
+        let models_dir = app_data.join("models");
+        let llm_dir = app_data.join("llm");
 
         if !models_dir.exists() {
             fs::create_dir_all(&models_dir)?;
+        }
+        if !llm_dir.exists() {
+            fs::create_dir_all(&llm_dir)?;
         }
 
         let mut available_models = catalog::build_static_catalog();
@@ -175,6 +183,7 @@ impl ModelManager {
         let manager = Self {
             app_handle: app_handle.clone(),
             models_dir,
+            llm_dir,
             available_models: Mutex::new(available_models),
             cancel_flags: Arc::new(Mutex::new(HashMap::new())),
             extracting_models: Arc::new(Mutex::new(HashSet::new())),
@@ -203,6 +212,23 @@ impl ModelManager {
     pub fn get_model_info(&self, model_id: &str) -> Option<ModelInfo> {
         let models = crate::lock_recovery::recover_lock(self.available_models.lock());
         models.get(model_id).cloned()
+    }
+
+    /// On-disk root for a category. Transcription models live under
+    /// `<app-data>/models/`, post-processor (GGUF LLM) models under
+    /// `<app-data>/llm/` (kept separate per PRD R-003). System category is
+    /// routed to `models/` for v1 — no system entries exist yet.
+    pub fn resolve_dir(&self, category: &ModelCategory) -> &PathBuf {
+        match category {
+            ModelCategory::Transcription | ModelCategory::System => &self.models_dir,
+            ModelCategory::PostProcessor => &self.llm_dir,
+        }
+    }
+
+    /// Raw dir getters — used by LlmManager so it can probe files without
+    /// cloning ModelInfo values.
+    pub fn llm_dir(&self) -> &PathBuf {
+        &self.llm_dir
     }
 
     fn migrate_bundled_models(&self) -> Result<()> {
@@ -280,13 +306,15 @@ impl ModelManager {
         let mut models = crate::lock_recovery::recover_lock(self.available_models.lock());
 
         for model in models.values_mut() {
+            let dir: &PathBuf = match model.category {
+                ModelCategory::Transcription | ModelCategory::System => &self.models_dir,
+                ModelCategory::PostProcessor => &self.llm_dir,
+            };
             if model.is_directory {
                 // For directory-based models, check if the directory exists
-                let model_path = self.models_dir.join(&model.filename);
-                let partial_path = self.models_dir.join(format!("{}.partial", &model.filename));
-                let extracting_path = self
-                    .models_dir
-                    .join(format!("{}.extracting", &model.filename));
+                let model_path = dir.join(&model.filename);
+                let partial_path = dir.join(format!("{}.partial", &model.filename));
+                let extracting_path = dir.join(format!("{}.extracting", &model.filename));
 
                 // Clean up any leftover .extracting directories from interrupted extractions
                 // But only if this model is NOT currently being extracted
@@ -310,8 +338,8 @@ impl ModelManager {
                 }
             } else {
                 // For file-based models (existing logic)
-                let model_path = self.models_dir.join(&model.filename);
-                let partial_path = self.models_dir.join(format!("{}.partial", &model.filename));
+                let model_path = dir.join(&model.filename);
+                let partial_path = dir.join(format!("{}.partial", &model.filename));
 
                 model.is_downloaded = model_path.exists();
                 model.is_downloading = false;
@@ -386,10 +414,9 @@ impl ModelManager {
 
         debug!("ModelManager: Found model info: {:?}", model_info);
 
-        let model_path = self.models_dir.join(&model_info.filename);
-        let partial_path = self
-            .models_dir
-            .join(format!("{}.partial", &model_info.filename));
+        let dir = self.resolve_dir(&model_info.category);
+        let model_path = dir.join(&model_info.filename);
+        let partial_path = dir.join(format!("{}.partial", &model_info.filename));
         debug!("ModelManager: Model path: {:?}", model_path);
         debug!("ModelManager: Partial path: {:?}", partial_path);
 
@@ -460,10 +487,9 @@ impl ModelManager {
             ));
         }
 
-        let model_path = self.models_dir.join(&model_info.filename);
-        let partial_path = self
-            .models_dir
-            .join(format!("{}.partial", &model_info.filename));
+        let dir = self.resolve_dir(&model_info.category);
+        let model_path = dir.join(&model_info.filename);
+        let partial_path = dir.join(format!("{}.partial", &model_info.filename));
 
         if model_info.is_directory {
             // For directory-based models, ensure the directory exists and is complete

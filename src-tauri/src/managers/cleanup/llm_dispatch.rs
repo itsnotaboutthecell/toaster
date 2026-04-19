@@ -454,7 +454,7 @@ mod dispatch_tests {
         model_id: &str,
         backend: Arc<Mutex<MockBackend>>,
     ) -> (TempDir, Arc<LlmManager>) {
-        use crate::managers::llm::{download::download_tests::FixedFreeSpace, FixedRamProbe, catalog};
+        use crate::managers::llm::{catalog, FixedRamProbe};
         let tmp = TempDir::new().unwrap();
         let dir = tmp.path().join("llm");
         std::fs::create_dir_all(&dir).unwrap();
@@ -462,12 +462,7 @@ mod dispatch_tests {
         let filename = catalog::find_entry(model_id).unwrap().filename();
         std::fs::write(dir.join(&filename), b"fake").unwrap();
         let mgr = Arc::new(
-            LlmManager::with_probes(
-                dir,
-                Arc::new(FixedRamProbe(64 * 1024 * 1024 * 1024)),
-                Arc::new(FixedFreeSpace(1_000_000_000_000)),
-            )
-            .unwrap(),
+            LlmManager::with_probes(dir, Arc::new(FixedRamProbe(64 * 1024 * 1024 * 1024))).unwrap(),
         );
         mgr.install_backend_for_tests(model_id, backend as Arc<Mutex<dyn crate::managers::llm::LlmBackend>>);
         (tmp, mgr)

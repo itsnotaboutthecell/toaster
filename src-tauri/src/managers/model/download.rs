@@ -28,10 +28,9 @@ impl ModelManager {
         let url = model_info
             .url
             .ok_or_else(|| anyhow::anyhow!("No download URL for model"))?;
-        let model_path = self.models_dir.join(&model_info.filename);
-        let partial_path = self
-            .models_dir
-            .join(format!("{}.partial", &model_info.filename));
+        let dir = self.resolve_dir(&model_info.category).clone();
+        let model_path = dir.join(&model_info.filename);
+        let partial_path = dir.join(format!("{}.partial", &model_info.filename));
 
         // Don't download if complete version already exists
         if model_path.exists() {
@@ -256,10 +255,8 @@ impl ModelManager {
             info!("Extracting archive for directory-based model: {}", model_id);
 
             // Use a temporary extraction directory to ensure atomic operations
-            let temp_extract_dir = self
-                .models_dir
-                .join(format!("{}.extracting", &model_info.filename));
-            let final_model_dir = self.models_dir.join(&model_info.filename);
+            let temp_extract_dir = dir.join(format!("{}.extracting", &model_info.filename));
+            let final_model_dir = dir.join(&model_info.filename);
 
             // Clean up any previous incomplete extraction
             if temp_extract_dir.exists() {
@@ -358,5 +355,226 @@ impl ModelManager {
         );
 
         Ok(())
+    }
+}
+
+/// Unified download core shared by transcription and post-processor paths.
+///
+/// Streams `url` into `<target_dir>/<filename>.partial`, verifies sha256
+/// (if `expected_sha256` is supplied), and atomically renames the partial
+/// into the final path on success. Returns `Ok(())` on either successful
+/// completion OR a clean cancellation (via `cancel_flag`).
+///
+/// This helper is intentionally category-agnostic — the caller decides
+/// `target_dir` based on `ModelCategory` via `ModelManager::resolve_dir`.
+/// Extraction of tar.gz directory assets stays in `download_model` because
+/// it only applies to transcription entries.
+#[allow(dead_code)]
+pub(crate) async fn fetch_and_verify(
+    target_dir: &std::path::Path,
+    filename: &str,
+    url: &str,
+    expected_sha256: Option<&str>,
+    cancel_flag: Arc<AtomicBool>,
+    mut on_progress: impl FnMut(u64, u64),
+) -> Result<()> {
+    if !target_dir.exists() {
+        fs::create_dir_all(target_dir)?;
+    }
+    let final_path = target_dir.join(filename);
+    if final_path.exists() {
+        return Ok(());
+    }
+    let partial_path = target_dir.join(format!("{}.partial", filename));
+    let mut resume_from = if partial_path.exists() {
+        partial_path.metadata()?.len()
+    } else {
+        0
+    };
+
+    let client = reqwest::Client::new();
+    let mut request = client.get(url);
+    if resume_from > 0 {
+        request = request.header("Range", format!("bytes={}-", resume_from));
+    }
+    let mut response = request.send().await?;
+    if resume_from > 0 && response.status() == reqwest::StatusCode::OK {
+        warn!(
+            "Server doesn't support range requests for {}, restarting fresh",
+            filename
+        );
+        drop(response);
+        let _ = fs::remove_file(&partial_path);
+        resume_from = 0;
+        response = client.get(url).send().await?;
+    }
+    if !response.status().is_success()
+        && response.status() != reqwest::StatusCode::PARTIAL_CONTENT
+    {
+        return Err(anyhow::anyhow!(
+            "Failed to download {}: HTTP {}",
+            filename,
+            response.status()
+        ));
+    }
+
+    let total = if resume_from > 0 {
+        resume_from + response.content_length().unwrap_or(0)
+    } else {
+        response.content_length().unwrap_or(0)
+    };
+
+    let mut file = if resume_from > 0 {
+        std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&partial_path)?
+    } else {
+        std::fs::File::create(&partial_path)?
+    };
+
+    let mut downloaded = resume_from;
+    on_progress(downloaded, total);
+    let mut stream = response.bytes_stream();
+    let mut last_emit = Instant::now();
+    let throttle = Duration::from_millis(100);
+
+    while let Some(chunk) = stream.next().await {
+        if cancel_flag.load(Ordering::Relaxed) {
+            drop(file);
+            info!("Download cancelled for {}", filename);
+            // Preserve partial for resume.
+            return Ok(());
+        }
+        let bytes = chunk?;
+        file.write_all(&bytes)?;
+        downloaded += bytes.len() as u64;
+        if last_emit.elapsed() >= throttle {
+            on_progress(downloaded, total);
+            last_emit = Instant::now();
+        }
+    }
+    on_progress(downloaded, total);
+    file.flush()?;
+    drop(file);
+
+    if total > 0 {
+        let actual = partial_path.metadata()?.len();
+        if actual != total {
+            let _ = fs::remove_file(&partial_path);
+            return Err(anyhow::anyhow!(
+                "Download incomplete for {}: expected {} bytes, got {}",
+                filename,
+                total,
+                actual
+            ));
+        }
+    }
+
+    // Verify sha256 in a blocking task to avoid stalling the async runtime
+    // on large model files. `verify_sha256` deletes the partial on mismatch.
+    let verify_path = partial_path.clone();
+    let expected = expected_sha256.map(|s| s.to_string());
+    let vid = filename.to_string();
+    let verify_result = tokio::task::spawn_blocking(move || {
+        super::catalog::verify_sha256(&verify_path, expected.as_deref(), &vid)
+    })
+    .await
+    .map_err(|e| anyhow::anyhow!("SHA256 task panicked: {}", e))?;
+    verify_result?;
+
+    fs::rename(&partial_path, &final_path)?;
+    Ok(())
+}
+
+#[cfg(test)]
+mod fetch_and_verify_tests {
+    use super::*;
+    use sha2::{Digest, Sha256};
+    use tempfile::TempDir;
+    use tokio::io::AsyncReadExt;
+    use tokio::io::AsyncWriteExt;
+    use tokio::net::TcpListener;
+
+    async fn serve_once(listener: TcpListener, body: Vec<u8>) {
+        if let Ok((mut stream, _)) = listener.accept().await {
+            // Read one request (HTTP headers ending in \r\n\r\n). Ignore content.
+            let mut buf = [0u8; 4096];
+            let _ = stream.read(&mut buf).await;
+            let resp = format!(
+                "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nContent-Type: application/octet-stream\r\n\r\n",
+                body.len()
+            );
+            let _ = stream.write_all(resp.as_bytes()).await;
+            let _ = stream.write_all(&body).await;
+            let _ = stream.flush().await;
+        }
+    }
+
+    #[tokio::test]
+    async fn post_processor_download_hash_verified() {
+        let body: Vec<u8> = (0..4096u32).map(|i| (i & 0xff) as u8).collect();
+        let mut hasher = Sha256::new();
+        hasher.update(&body);
+        let expected = format!("{:x}", hasher.finalize());
+
+        let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        let body_clone = body.clone();
+        tokio::spawn(async move { serve_once(listener, body_clone).await });
+
+        let tmp = TempDir::new().unwrap();
+        let url = format!("http://{}/model.gguf", addr);
+        let cancel = Arc::new(AtomicBool::new(false));
+        let mut ticks = 0u32;
+        fetch_and_verify(
+            tmp.path(),
+            "model.gguf",
+            &url,
+            Some(&expected),
+            cancel,
+            |_d, _t| {
+                ticks += 1;
+            },
+        )
+        .await
+        .expect("fetch_and_verify must succeed on matching sha256");
+
+        let final_path = tmp.path().join("model.gguf");
+        assert!(final_path.exists(), "final file must exist");
+        let got = std::fs::read(&final_path).unwrap();
+        assert_eq!(got, body, "bytes must match");
+        let partial = tmp.path().join("model.gguf.partial");
+        assert!(!partial.exists(), "partial must be gone after rename");
+        assert!(ticks > 0, "progress callback must fire at least once");
+    }
+
+    #[tokio::test]
+    async fn post_processor_download_hash_mismatch_rejected() {
+        let body = b"some-bytes-for-mismatch-test".to_vec();
+        let bad_sha = "0".repeat(64);
+
+        let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        let body_clone = body.clone();
+        tokio::spawn(async move { serve_once(listener, body_clone).await });
+
+        let tmp = TempDir::new().unwrap();
+        let url = format!("http://{}/model.gguf", addr);
+        let cancel = Arc::new(AtomicBool::new(false));
+        let result = fetch_and_verify(
+            tmp.path(),
+            "model.gguf",
+            &url,
+            Some(&bad_sha),
+            cancel,
+            |_, _| {},
+        )
+        .await;
+        assert!(result.is_err(), "sha256 mismatch must error");
+        assert!(
+            !tmp.path().join("model.gguf").exists(),
+            "no final file on mismatch"
+        );
     }
 }

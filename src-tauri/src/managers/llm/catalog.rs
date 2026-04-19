@@ -82,6 +82,31 @@ impl From<&LlmCatalogEntry> for LlmModelInfo {
     }
 }
 
+impl LlmModelInfo {
+    /// Build from a unified `ModelInfo` record. PostProcessor entries in the
+    /// unified catalog carry an `llm_metadata` block with the fields needed
+    /// here. Non-post-processor inputs fall through with empty LLM fields.
+    pub fn from_model_info(m: crate::managers::model::ModelInfo) -> Self {
+        let llm = m.llm_metadata.clone().unwrap_or_default();
+        Self {
+            id: m.id,
+            display_name: m.name,
+            description: m.description,
+            filename: m.filename,
+            download_url: m.url.unwrap_or_default(),
+            sha256: m.sha256.unwrap_or_default(),
+            quantization: llm.quantization,
+            size_bytes: m.size_mb.saturating_mul(1_048_576),
+            context_length: llm.context_length,
+            recommended_ram_gb: llm.recommended_ram_gb,
+            is_recommended_default: m.is_recommended,
+            is_downloaded: m.is_downloaded,
+            is_downloading: m.is_downloading,
+            partial_size: m.partial_size,
+        }
+    }
+}
+
 /// v1 curated catalog. See PRD R-001 and BLUEPRINT "Catalog schema + storage".
 ///
 /// The set is intentionally small and biased toward instruction-tuned models

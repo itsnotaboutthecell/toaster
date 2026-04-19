@@ -135,11 +135,9 @@ fn initialize_core_logic(app_handle: &AppHandle) {
 
     // Local LLM manager (in-process GGUF path). On-disk assets live under
     // <app-data>/llm/, separate from Whisper's <app-data>/models/ (PRD R-003).
-    let llm_dir = crate::portable::app_data_dir(app_handle)
-        .expect("Failed to get app data dir")
-        .join("llm");
+    // Downloads/deletes flow through the shared ModelManager (unified-model-catalog R-004).
     let llm_manager =
-        Arc::new(LlmManager::new(llm_dir).expect("Failed to initialize LLM manager"));
+        Arc::new(LlmManager::new(model_manager.clone()).expect("Failed to initialize LLM manager"));
 
     // Apply accelerator preferences before any model loads
     managers::transcription::apply_accelerator_settings(app_handle);

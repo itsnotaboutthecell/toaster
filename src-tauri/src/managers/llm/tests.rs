@@ -25,14 +25,7 @@ fn write_fake_gguf(llm_dir: &std::path::Path, id: &str) {
 fn build_manager_with_ram(ram_bytes: u64) -> (TempDir, LlmManager) {
     let tmp = TempDir::new().unwrap();
     let llm_dir = tmp.path().join("llm");
-    let mgr = LlmManager::with_probes(
-        llm_dir.clone(),
-        Arc::new(FixedRamProbe(ram_bytes)),
-        Arc::new(download::download_tests::FixedFreeSpace(
-            1_000_000_000_000,
-        )),
-    )
-    .unwrap();
+    let mgr = LlmManager::with_probes(llm_dir.clone(), Arc::new(FixedRamProbe(ram_bytes))).unwrap();
     (tmp, mgr)
 }
 
