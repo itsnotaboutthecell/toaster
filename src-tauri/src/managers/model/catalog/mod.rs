@@ -15,6 +15,7 @@ use log::{info, warn};
 use super::{hash, EngineType, ModelInfo};
 
 pub mod transcription;
+pub mod vad;
 
 /// Build the full catalog keyed by model id.
 /// Called once at `ModelManager::new`.

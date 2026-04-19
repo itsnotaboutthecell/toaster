@@ -200,6 +200,23 @@ pub struct AppSettings {
     pub whisper_gpu_device: i32,
     #[serde(default)]
     pub normalize_audio_on_export: bool,
+    /// **R-006 (Silero VAD reintroduction)** — when true, the
+    /// transcription manager runs Silero over the decoded file audio
+    /// before any `transcribe-rs` pass and hands only the speech
+    /// windows to the ASR. Falls back silently to the full-file path
+    /// when the Silero ONNX is not on disk or ORT init fails
+    /// (BLUEPRINT AD-8). Default `true` because the happy path is a
+    /// wall-time + hallucination-rate win per R-002.
+    #[serde(default = "default_vad_prefilter_enabled")]
+    pub vad_prefilter_enabled: bool,
+    /// **R-006 (Silero VAD reintroduction)** — when true, the splice
+    /// boundary snap in `managers::splice::boundaries` consults a
+    /// P(speech) curve within the existing zero-crossing / energy
+    /// radii. Default `false` pending the eval-win gate in R-003;
+    /// with it off, the code path is byte-identical to pre-feature
+    /// (AC-003-d).
+    #[serde(default = "default_vad_refine_boundaries")]
+    pub vad_refine_boundaries: bool,
     /// Loudness normalization target for export. Single source of truth
     /// for the `loudnorm` filter — see
     /// `managers::splice::loudness::build_loudnorm_filter`. Frontend

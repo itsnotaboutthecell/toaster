@@ -141,6 +141,22 @@ pub(super) fn default_whisper_gpu_device() -> i32 {
     -1 // auto
 }
 
+/// R-006 (features/reintroduce-silero-vad): default-on. The prefilter
+/// silently falls back when the model is absent, so an always-on
+/// default is safe and maximises the runtime / hallucination win
+/// described in R-002.
+pub(super) fn default_vad_prefilter_enabled() -> bool {
+    true
+}
+
+/// R-006 (features/reintroduce-silero-vad): default-off. Boundary
+/// refinement is gated on the AC-003 eval win; until we record a
+/// measured improvement in journal.md, the default stays off and the
+/// pre-feature snap is byte-identical (AC-003-d).
+pub(super) fn default_vad_refine_boundaries() -> bool {
+    false
+}
+
 /// Seed `caption_profiles` from the legacy flat `caption_*` fields on
 /// first load after upgrade. Idempotent via
 /// `caption_profiles_was_migrated`. Returns `true` if any mutation
@@ -247,6 +263,8 @@ pub fn get_default_settings() -> AppSettings {
         ort_accelerator: OrtAcceleratorSetting::default(),
         whisper_gpu_device: default_whisper_gpu_device(),
         normalize_audio_on_export: false,
+        vad_prefilter_enabled: default_vad_prefilter_enabled(),
+        vad_refine_boundaries: default_vad_refine_boundaries(),
         loudness_target: crate::managers::splice::loudness::LoudnessTarget::Off,
         export_volume_db: 0.0,
         export_fade_in_ms: 0,

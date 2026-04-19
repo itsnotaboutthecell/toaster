@@ -58,6 +58,12 @@ tar = "0.4.44"
 flate2 = "1.0"
 sha2 = "0.10"
 transcribe-rs = { version = "0.3.8", features = ["whisper-cpp", "onnx"] }
+# Direct ORT handle for the file-based Silero VAD wrapper in
+# `audio_toolkit::vad`. Pinned to the version `transcribe-rs` already
+# pulls in (see Cargo.lock) so we do not fracture the ONNX runtime.
+# AD-1 in features/reintroduce-silero-vad/BLUEPRINT.md: do not bring
+# `vad-rs` back — keep one runtime, one upgrade path.
+ort = "=2.0.0-rc.12"
 clap = { version = "4", features = ["derive"] }
 specta = "=2.0.0-rc.22"
 specta-typescript = "0.0.9"

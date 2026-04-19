@@ -1,0 +1,230 @@
+{
+  "feature": "reintroduce-silero-vad",
+  "acs": {
+    "AC-001-a": {
+      "verifier": "cargo check (src-tauri)",
+      "kind": "cargo-test",
+      "command": "cd src-tauri && cargo test --no-run",
+      "task": "reintroduce-silero-vad-qc-module"
+    },
+    "AC-001-b": {
+      "verifier": "scripts/eval/eval-verifier.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/eval/eval-verifier.ps1 -Pattern 'pub (trait|struct) VoiceActivityDetector|SmoothedVad|SileroVad' -Path src-tauri/src/audio_toolkit/vad -ExpectOnePerSymbol",
+      "task": "reintroduce-silero-vad-qc-module"
+    },
+    "AC-001-c": {
+      "verifier": "file-size cap",
+      "kind": "manual",
+      "command": "Get-ChildItem src-tauri/src/audio_toolkit/vad -Recurse -Filter *.rs | % { [pscustomobject]@{ Path=$_.FullName; Lines=(Get-Content $_ | Measure-Object -Line).Lines } } | Sort-Object Lines -Descending",
+      "steps": [
+        "Run the command above from repo root",
+        "Confirm every listed file has Lines <= 800",
+        "Record max line count in journal.md"
+      ],
+      "task": "reintroduce-silero-vad-qc-module"
+    },
+    "AC-002-a": {
+      "verifier": "scripts/eval/eval-edit-quality.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/eval/eval-edit-quality.ps1",
+      "task": "reintroduce-silero-vad-qc-prefilter"
+    },
+    "AC-002-b": {
+      "verifier": "transcription runtime delta (manual)",
+      "kind": "manual",
+      "command": "Manual timed run on silence-heavy fixture",
+      "steps": [
+        "Pick a silence-heavy fixture under eval/fixtures/ (>= 30% silence); record its path",
+        "Set vad_prefilter_enabled = false in settings; transcribe the fixture; record wall-time in journal.md as BASELINE_MS",
+        "Set vad_prefilter_enabled = true; transcribe the same fixture; record wall-time as PREFILTER_MS",
+        "Confirm PREFILTER_MS < BASELINE_MS and record the percentage delta in journal.md and in the PR body"
+      ],
+      "task": "reintroduce-silero-vad-qc-prefilter"
+    },
+    "AC-002-c": {
+      "verifier": "hallucination-on-silence count (manual)",
+      "kind": "manual",
+      "command": "Manual count on music/silence-mixed fixture",
+      "steps": [
+        "Pick or curate a music/silence-mixed fixture under eval/fixtures/; record its path",
+        "With vad_prefilter_enabled = false, transcribe and dump word list with timestamps; count words whose [start_us, end_us] lies entirely inside a hand-labeled non-speech region; record as BASELINE_HALLUC",
+        "With vad_prefilter_enabled = true, repeat the count; record as PREFILTER_HALLUC",
+        "Confirm PREFILTER_HALLUC <= BASELINE_HALLUC; record both numbers in journal.md and in the PR body"
+      ],
+      "task": "reintroduce-silero-vad-qc-prefilter"
+    },
+    "AC-002-d": {
+      "verifier": "cargo test (graceful degradation)",
+      "kind": "cargo-test",
+      "command": "cd src-tauri && cargo test --test prefilter_degrades_gracefully",
+      "task": "reintroduce-silero-vad-qc-prefilter"
+    },
+    "AC-003-a": {
+      "verifier": "scripts/eval/eval-audio-boundary.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/eval/eval-audio-boundary.ps1",
+      "task": "reintroduce-silero-vad-qc-boundary"
+    },
+    "AC-003-b": {
+      "verifier": "waveform-diff",
+      "kind": "agent",
+      "command": "Invoke the waveform-diff agent on the standard splice fixture with vad_refine_boundaries=true; confirm preview vs. export seam parity within 1 sample across all cuts; attach JSON to journal.md",
+      "task": "reintroduce-silero-vad-qc-boundary"
+    },
+    "AC-003-c": {
+      "verifier": "cut-drift-fuzzer",
+      "kind": "agent",
+      "command": "Invoke the cut-drift-fuzzer agent for 1000 seeded ops with vad_refine_boundaries=true; confirm zero cumulative duration drift, monotonic time maps, zero panics",
+      "task": "reintroduce-silero-vad-qc-boundary"
+    },
+    "AC-003-d": {
+      "verifier": "byte-identical export (manual)",
+      "kind": "manual",
+      "command": "SHA-256 comparison of fixture export with vad_refine_boundaries=false vs. pre-feature baseline",
+      "steps": [
+        "Before the feature lands, capture SHA-256 of the standard splice fixture export; record in journal.md as BASELINE_SHA",
+        "After the feature lands with vad_refine_boundaries=false, re-export the same fixture via the same command",
+        "Compute SHA-256 of the new export; confirm it equals BASELINE_SHA",
+        "Record both SHAs in journal.md"
+      ],
+      "task": "reintroduce-silero-vad-qc-boundary"
+    },
+    "AC-004-a": {
+      "verifier": "cargo test (filler classifier)",
+      "kind": "cargo-test",
+      "command": "cd src-tauri && cargo test --test filler_gap_classification",
+      "task": "reintroduce-silero-vad-qc-filler"
+    },
+    "AC-004-b": {
+      "verifier": "scripts/eval/eval-edit-quality.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/eval/eval-edit-quality.ps1",
+      "task": "reintroduce-silero-vad-qc-filler"
+    },
+    "AC-004-c": {
+      "verifier": "scripts/eval/eval-verifier.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/eval/eval-verifier.ps1 -Pattern 'auto_delete_fillers: true|auto_silence_pauses: true' -Path src-tauri/src -ExpectZero",
+      "task": "reintroduce-silero-vad-qc-filler"
+    },
+    "AC-005-a": {
+      "verifier": "scripts/eval/eval-verifier.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/eval/eval-verifier.ps1 -Pattern 'silero' -Path src-tauri/src/managers/model/catalog -ExpectNonZero",
+      "task": "reintroduce-silero-vad-qc-model"
+    },
+    "AC-005-b": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 180",
+      "steps": [
+        "Run scripts/setup-env.ps1 first",
+        "Remove any existing Silero model file from the model cache dir",
+        "Launch the app via the monitored script",
+        "Open Transcription settings; enable 'Pre-filter silences before transcribing'; click Download",
+        "Confirm the Silero ONNX appears on disk and its SHA-256 matches the catalog entry",
+        "Toggle the setting off and on; close the app; relaunch; confirm the setting persists",
+        "Record findings + timestamps in journal.md"
+      ],
+      "task": "reintroduce-silero-vad-qc-model"
+    },
+    "AC-005-c": {
+      "verifier": "cargo test (missing model)",
+      "kind": "cargo-test",
+      "command": "cd src-tauri && cargo test --test vad_missing_model_degrades",
+      "task": "reintroduce-silero-vad-qc-model"
+    },
+    "AC-006-a": {
+      "verifier": "scripts/check-translations.ts",
+      "kind": "script",
+      "command": "pwsh scripts/check-translations.ts",
+      "task": "reintroduce-silero-vad-qc-settings"
+    },
+    "AC-006-b": {
+      "verifier": "npm run build + bindings.ts inspection",
+      "kind": "manual",
+      "command": "npm run build",
+      "steps": [
+        "From repo root run npm run build and confirm exit 0",
+        "Open src/bindings.ts and grep for vad_prefilter_enabled and vad_refine_boundaries",
+        "Confirm both fields are present and are typed as boolean",
+        "Confirm bindings.ts was regenerated (not hand-edited) by checking git blame on the new lines"
+      ],
+      "task": "reintroduce-silero-vad-qc-settings"
+    },
+    "AC-006-c": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 180",
+      "steps": [
+        "Run scripts/setup-env.ps1 first",
+        "Launch the app via the monitored script",
+        "Open Transcription settings; toggle 'Pre-filter silences before transcribing' off then on; confirm the change persists across restart",
+        "Open Editor settings; toggle 'Use VAD to refine splice boundaries' off then on; confirm persistence",
+        "Record each toggle with a timestamp and operator initials in journal.md"
+      ],
+      "task": "reintroduce-silero-vad-qc-settings"
+    },
+    "AC-006-d": {
+      "verifier": "scripts/eval/eval-verifier.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/eval/eval-verifier.ps1 -Pattern '#\\[allow\\(dead_code\\)\\].*vad_(prefilter_enabled|refine_boundaries)' -Path src-tauri/src -ExpectZero",
+      "task": "reintroduce-silero-vad-qc-settings"
+    },
+    "AC-007-a": {
+      "verifier": "dep-hygiene",
+      "kind": "skill",
+      "command": "Invoke .github/skills/dep-hygiene; run cargo machete in src-tauri; confirm zero unused dependencies",
+      "task": "reintroduce-silero-vad-qc-dep-hygiene"
+    },
+    "AC-007-b": {
+      "verifier": "scripts/eval/eval-verifier.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/eval/eval-verifier.ps1 -Pattern 'vad-rs|audio_toolkit/vad/\\*' -Path .github/skills -ExpectZero",
+      "task": "reintroduce-silero-vad-qc-dep-hygiene"
+    },
+    "AC-007-c": {
+      "verifier": "handy-legacy-pruning SKILL.md doc section",
+      "kind": "doc-section",
+      "path": "features/reintroduce-silero-vad/BLUEPRINT.md",
+      "sections": [
+        "## Architecture decisions",
+        "## Module layout"
+      ],
+      "command": "Confirm .github/skills/handy-legacy-pruning/SKILL.md gained a heading containing 'VAD reintroduced' and that its body references R-002, R-003, R-004 verbatim; the referenced BLUEPRINT sections above describe the module layout the skill doc must match",
+      "task": "reintroduce-silero-vad-qc-dep-hygiene"
+    },
+    "AC-008-a": {
+      "verifier": "scripts/eval/eval-edit-quality.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/eval/eval-edit-quality.ps1",
+      "task": "reintroduce-silero-vad-qc-eval-gates"
+    },
+    "AC-008-b": {
+      "verifier": "scripts/eval/eval-audio-boundary.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/eval/eval-audio-boundary.ps1",
+      "task": "reintroduce-silero-vad-qc-eval-gates"
+    },
+    "AC-008-c": {
+      "verifier": "scripts/eval/run-eval-harness.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/eval/run-eval-harness.ps1",
+      "task": "reintroduce-silero-vad-qc-eval-gates"
+    },
+    "AC-008-d": {
+      "verifier": "PR-body eval delta (manual)",
+      "kind": "manual",
+      "command": "PR body review",
+      "steps": [
+        "Open the PR description",
+        "Confirm it contains BASELINE_MS / PREFILTER_MS (from AC-002-b) with the percentage delta",
+        "Confirm it contains BASELINE_HALLUC / PREFILTER_HALLUC (from AC-002-c)",
+        "Confirm it contains BASELINE_SHA (from AC-003-d) proving byte-identical default behavior",
+        "Block merge if any number is missing or reads 'should be better'"
+      ],
+      "task": "reintroduce-silero-vad-qc-eval-gates"
+    }
+  }
+}
