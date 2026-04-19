@@ -45,7 +45,7 @@ npm run lint                                         # full eslint pass
 cargo tauri dev
 
 # Monitored live-app verification (required for audio / caption / preview / export fixes)
-pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 300
+pwsh scripts/launch-toaster-monitored.ps1 -Duration 5m
 
 # Fixture-based eval harness
 pwsh scripts/eval/eval-edit-quality.ps1              # precision eval

@@ -44,6 +44,16 @@ cost the most when missed. Full verb-indexed rule list:
 - **ALWAYS** respect the 800-line file cap for `.rs` / `.ts` / `.tsx` under `src/` and `src-tauri/src/` (`bun run check:file-sizes`). Split, don't allowlist.
 - **FORBIDDEN:** hand-editing `src/bindings.ts` beyond a temporary one-line union patch — it is specta-generated (see [`src/AGENTS.md`](src/AGENTS.md)).
 
+### Launch shortcut
+
+When the user says `launch toaster [duration]` in chat, run `scripts\launch-toaster-monitored.ps1 -Duration <duration>`:
+
+- Bare `launch toaster` → no `-Duration` (defaults to 5 minutes).
+- `launch toaster <N><unit>` → pass through as `-Duration <N><unit>`, where `unit` is `ms | s | m | h` (e.g. `10m`, `1h`, `30s`, `500ms`). The launcher clamps below 5 s and caps at 4 h.
+- Anything else (e.g. `launch toaster 10` with no unit, or `launch toaster 10foo`) → ask before invoking. Do not guess.
+
+Do NOT invent other parameter names (`-DurationMinutes`, etc.) — the launcher accepts only `-Duration` (string) and `-ObservationSeconds` (int, back-compat); unknown params hang silently in async shells.
+
 ## Core architecture
 
 ```text

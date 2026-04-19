@@ -124,7 +124,7 @@
       "tier": "live",
       "shell": "pwsh",
       "purpose": "Monitored live-app verification (required for audio/caption/preview/export fixes)",
-      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 300",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -Duration 5m",
       "when": "audio / caption / preview / export fix"
     },
     {

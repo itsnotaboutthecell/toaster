@@ -8,7 +8,12 @@ monitors startup output for success/failure signatures, prints concise diagnosis
 and emits a compact final status summary after the observation window.
 
 .PARAMETER ObservationSeconds
-Minimum startup observation window in seconds. Default is 20.
+Startup observation window in seconds. Range [5, 14400] (5s to 4h). Default 300.
+
+.PARAMETER Duration
+Human-friendly observation window as a shortcut: `<number><ms|s|m|h>`, e.g. `500ms`,
+`30s`, `10m`, `1h`. When provided, overrides -ObservationSeconds. Sub-5s values are
+clamped to 5s (with a warning). Values above 4h fail.
 
 .PARAMETER SetupScriptPath
 Optional path override for setup-env.ps1 (useful for diagnostics/testing).
@@ -17,12 +22,17 @@ Optional path override for setup-env.ps1 (useful for diagnostics/testing).
 .\scripts\launch-toaster-monitored.ps1
 
 .EXAMPLE
-.\scripts\launch-toaster-monitored.ps1 -ObservationSeconds 30
+.\scripts\launch-toaster-monitored.ps1 -Duration 10m
+
+.EXAMPLE
+.\scripts\launch-toaster-monitored.ps1 -ObservationSeconds 600
 #>
 [CmdletBinding()]
 param(
-    [ValidateRange(5, 300)]
+    [ValidateRange(5, 14400)]
     [int]$ObservationSeconds = 300,
+    [ValidatePattern('^\d+(ms|s|m|h)$', Options = 'IgnoreCase')]
+    [string]$Duration,
     [ValidateRange(1, 30)]
     [int]$DrainSeconds = 3,
     [string]$SetupScriptPath
@@ -30,6 +40,61 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+
+# Parses a duration shortcut like "500ms" / "30s" / "10m" / "1h" into whole
+# seconds. Rounds up sub-second inputs and clamps any result below
+# $MinSeconds to $MinSeconds (the observation loop needs enough headroom
+# to see Vite/Tauri readiness signals). Returns $null on parse failure;
+# the caller should rely on ValidatePattern to prevent that.
+function Convert-DurationToSeconds {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Value,
+        [int]$MinSeconds = 5,
+        [int]$MaxSeconds = 14400
+    )
+
+    if ($Value -notmatch '^(?<n>\d+)(?<u>ms|s|m|h)$') {
+        return $null
+    }
+
+    $n = [int]$matches['n']
+    $u = $matches['u'].ToLowerInvariant()
+
+    switch ($u) {
+        'ms' { $seconds = [math]::Ceiling($n / 1000.0) }
+        's'  { $seconds = $n }
+        'm'  { $seconds = $n * 60 }
+        'h'  { $seconds = $n * 3600 }
+    }
+
+    $seconds = [int]$seconds
+
+    if ($seconds -lt $MinSeconds) {
+        Write-Host ("[monitor] Warning: duration '{0}' resolves to {1}s; clamping to minimum {2}s so the observation loop can detect Vite/Tauri readiness." -f $Value, $seconds, $MinSeconds) -ForegroundColor Yellow
+        $seconds = $MinSeconds
+    }
+    elseif ($seconds -gt $MaxSeconds) {
+        throw ("Duration '{0}' resolves to {1}s which exceeds the {2}s ({3}h) monitored-launch cap. Use a detached run for longer sessions." -f $Value, $seconds, $MaxSeconds, ($MaxSeconds / 3600))
+    }
+
+    return $seconds
+}
+
+# Resolve the effective observation window. -Duration wins over
+# -ObservationSeconds when both are provided so the chat shortcut
+# ("launch toaster 10m") stays authoritative.
+if (-not [string]::IsNullOrWhiteSpace($Duration)) {
+    $resolvedSeconds = Convert-DurationToSeconds -Value $Duration
+    if ($null -eq $resolvedSeconds) {
+        throw "Could not parse -Duration '$Duration'. Expected <number><ms|s|m|h>, e.g. 500ms, 30s, 10m, 1h."
+    }
+    $ObservationSeconds = $resolvedSeconds
+    Write-Host ("[monitor] Duration: {0} ({1}s)" -f $Duration, $ObservationSeconds) -ForegroundColor Cyan
+}
+else {
+    Write-Host ("[monitor] Observation window: {0}s" -f $ObservationSeconds) -ForegroundColor Cyan
+}
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $setupScript = if ([string]::IsNullOrWhiteSpace($SetupScriptPath)) {
