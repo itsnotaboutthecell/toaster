@@ -211,6 +211,49 @@ mod tests {
     }
 
     #[test]
+    fn legacy_post_process_id_migration() {
+        // Per PRD R-009 (unified-model-catalog): ensure_post_process_defaults
+        // migrates a legacy local_llm_model_id against the unified
+        // post-processor catalog. Contract:
+        // 1. None is left unchanged and returns false.
+        // 2. A currently-valid unified id is left unchanged.
+        // 3. Running twice is idempotent (short-circuits).
+        // 4. An unknown/drift id is left as-is (not silently cleared).
+        use super::defaults::ensure_post_process_defaults;
+
+        // 1. None stays None.
+        let mut s = get_default_settings();
+        s.local_llm_model_id = None;
+        let _ = ensure_post_process_defaults(&mut s);
+        assert!(s.local_llm_model_id.is_none());
+
+        // 2. Valid unified id survives.
+        let catalog = crate::managers::model::catalog::post_processor_entries();
+        let known_id = catalog
+            .first()
+            .expect("unified catalog must ship at least one post-processor entry")
+            .id
+            .clone();
+        let mut s = get_default_settings();
+        s.local_llm_model_id = Some(known_id.clone());
+        let _ = ensure_post_process_defaults(&mut s);
+        assert_eq!(s.local_llm_model_id.as_deref(), Some(known_id.as_str()));
+
+        // 3. Idempotent on re-run.
+        let _ = ensure_post_process_defaults(&mut s);
+        assert_eq!(s.local_llm_model_id.as_deref(), Some(known_id.as_str()));
+
+        // 4. Unknown id is preserved (drift surfaced in log).
+        let mut s = get_default_settings();
+        s.local_llm_model_id = Some("not-in-any-catalog".to_string());
+        let _ = ensure_post_process_defaults(&mut s);
+        assert_eq!(
+            s.local_llm_model_id.as_deref(),
+            Some("not-in-any-catalog")
+        );
+    }
+
+    #[test]
     fn sanitize_local_base_url_rejects_non_loopback_hosts() {
         let result = sanitize_local_post_process_base_url("https://example.com/v1");
         assert!(result.is_err());

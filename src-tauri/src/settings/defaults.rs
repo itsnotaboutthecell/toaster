@@ -348,7 +348,62 @@ pub fn ensure_post_process_defaults(settings: &mut AppSettings) -> bool {
         changed = true;
     }
 
+    if migrate_local_llm_model_id(settings) {
+        changed = true;
+    }
+
     changed
+}
+
+/// Legacy → unified id remapping for `local_llm_model_id`.
+///
+/// Populated per the unified-model-catalog migration (PRD R-009). Currently
+/// empty because the `umc-catalog-migration` pass preserved every GGUF id
+/// 1:1 from the legacy `managers/llm/catalog.rs` into the unified
+/// `managers/model/catalog/post_processor.rs`. The table is a
+/// future-proofing hook: future catalog rename/repackage passes register
+/// their old→new mapping here and this helper migrates existing user
+/// selections transparently on first load.
+const LEGACY_LOCAL_LLM_ID_MAP: &[(&str, &str)] = &[];
+
+/// Migrate `local_llm_model_id` against the unified post-processor catalog.
+///
+/// Returns `true` when any mutation occurred (caller persists). Idempotent:
+/// re-running on already-valid settings short-circuits at the first guard.
+/// Invariants:
+/// - `None` selection is left unchanged.
+/// - Already-valid id is left unchanged.
+/// - Legacy id present in `LEGACY_LOCAL_LLM_ID_MAP` is remapped in place.
+/// - Unknown non-legacy id is left as-is; a warn log surfaces the drift
+///   so the user can pick a valid model from the unified catalog.
+pub(super) fn migrate_local_llm_model_id(settings: &mut AppSettings) -> bool {
+    let Some(current_id) = settings.local_llm_model_id.as_deref() else {
+        return false;
+    };
+
+    if crate::managers::model::catalog::find_post_processor(current_id).is_some() {
+        return false;
+    }
+
+    if let Some((_, mapped)) = LEGACY_LOCAL_LLM_ID_MAP
+        .iter()
+        .find(|(legacy, _)| *legacy == current_id)
+    {
+        log::info!(
+            "migrating local_llm_model_id '{}' -> '{}' (unified-model-catalog)",
+            current_id,
+            mapped
+        );
+        settings.local_llm_model_id = Some((*mapped).to_string());
+        return true;
+    }
+
+    log::warn!(
+        "local_llm_model_id '{}' is not present in the unified post-processor catalog; \
+         leaving as-is so the user can pick a valid replacement",
+        current_id
+    );
+    false
 }
 
 /// Seed `caption_profiles` from the legacy flat `caption_*` fields on
