@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import type { CaptionBlock, Rgba, Word } from "@/bindings";
 import { commands } from "@/bindings";
+import { useSettings } from "@/hooks/useSettings";
 
 interface CaptionOverlayProps {
   currentTime: number;
@@ -151,6 +152,14 @@ const CaptionOverlay: React.FC<CaptionOverlayProps> = ({
   videoRef,
 }) => {
   const [blocks, setBlocks] = useState<CaptionBlock[]>([]);
+  const { getSetting } = useSettings();
+  // Refetch layout when the user edits the caption profiles in
+  // Advanced. Backend layout is the SSOT (see
+  // managers/captions/layout.rs); we just re-ask it for its current
+  // answer whenever the serialized profile set changes.
+  const profilesFingerprint = JSON.stringify(
+    getSetting("caption_profiles") ?? null,
+  );
   const [fit, setFit] = useState<{
     w: number;
     h: number;
@@ -181,7 +190,7 @@ const CaptionOverlay: React.FC<CaptionOverlayProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [enabled, wordsFingerprint, words.length]);
+  }, [enabled, wordsFingerprint, words.length, profilesFingerprint]);
 
   // Track the visible (contain-fitted) video rect. ResizeObserver fires
   // for element box changes; `loadedmetadata` fires when intrinsic size

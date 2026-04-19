@@ -5,18 +5,34 @@ import {
   Terminal,
 } from "lucide-react";
 import { SettingsGroup } from "@/components/ui/SettingsGroup";
-import type { ExportFormat, Word } from "@/bindings";
+import ExportFormatPicker from "@/components/editor/ExportFormatPicker";
+import type {
+  AllowedExportFormat,
+  AudioExportFormat,
+  ExportFormat,
+  Word,
+} from "@/bindings";
 
 interface EditorToolbarProps {
   words: Word[];
   onExport: (format: ExportFormat) => void;
   onFFmpegScript: () => void;
+  formatOverride: AudioExportFormat | null;
+  onFormatOverrideChange: (next: AudioExportFormat | null) => void;
+  allowedFormats: AllowedExportFormat[];
+  defaultExportFormat: AudioExportFormat;
+  exportPickerDisabled?: boolean;
 }
 
 const EditorToolbar: React.FC<EditorToolbarProps> = React.memo(({
   words,
   onExport,
   onFFmpegScript,
+  formatOverride,
+  onFormatOverrideChange,
+  allowedFormats,
+  defaultExportFormat,
+  exportPickerDisabled,
 }) => {
   const { t } = useTranslation();
 
@@ -25,6 +41,20 @@ const EditorToolbar: React.FC<EditorToolbarProps> = React.memo(({
   return (
     <SettingsGroup title={t("editor.sections.exportTools")}>
       <div className="px-4 py-3 space-y-3">
+        {/* Edited-media export format */}
+        <div>
+          <p className="text-[10px] uppercase tracking-wider text-mid-gray/60 mb-1.5">
+            {t("editor.exportFormat.label")}
+          </p>
+          <ExportFormatPicker
+            value={formatOverride}
+            onChange={onFormatOverrideChange}
+            options={allowedFormats}
+            defaultFormat={defaultExportFormat}
+            disabled={exportPickerDisabled}
+          />
+        </div>
+
         {/* Export formats */}
         <div>
           <p className="text-[10px] uppercase tracking-wider text-mid-gray/60 mb-1.5">

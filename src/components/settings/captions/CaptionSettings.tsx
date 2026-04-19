@@ -11,8 +11,6 @@ interface CaptionSettingsProps {
   grouped?: boolean;
 }
 
-type OrientationTab = "desktop" | "mobile";
-
 const DEFAULT_DESKTOP: CaptionProfile = {
   font_size: 40,
   bg_color: "#000000B3",
@@ -38,11 +36,12 @@ const DEFAULT_MOBILE: CaptionProfile = {
 };
 
 /**
- * Caption settings surface split per orientation (Slice B of
- * `caption-profiles-persistence`). Previously flat `caption_*` fields
- * now live on `AppSettings.caption_profiles.{desktop, mobile}`. The
- * shell renders a Desktop|Mobile tab selector; each tab wraps
- * `CaptionProfileForm` bound to the matching profile.
+ * Caption settings surface. Persistence remains dual-profile
+ * (`AppSettings.caption_profiles.{desktop, mobile}`, Slice B of
+ * `caption-profiles-persistence`) but the UI is unified behind a
+ * single orientation control in the preview toolbar: Horizontal edits
+ * the desktop profile, Vertical edits the mobile profile. Prior
+ * Desktop|Mobile tab row was duplicative and has been removed.
  */
 export const CaptionSettings: React.FC<CaptionSettingsProps> = React.memo(
   ({ descriptionMode = "tooltip", grouped = false }) => {
@@ -55,54 +54,31 @@ export const CaptionSettings: React.FC<CaptionSettingsProps> = React.memo(
         mobile: DEFAULT_MOBILE,
       };
 
-    const [tab, setTab] = useState<OrientationTab>("desktop");
     const [previewOrientation, setPreviewOrientation] =
       useState<CaptionMockOrientation>("horizontal");
 
-    const activeProfile = tab === "desktop" ? profileSet.desktop : profileSet.mobile;
+    const isVertical = previewOrientation === "vertical";
+    const activeProfile = isVertical ? profileSet.mobile : profileSet.desktop;
 
     const handleChange = (patch: Partial<CaptionProfile>) => {
       const merged: CaptionProfile = { ...activeProfile, ...patch };
       const next: CaptionProfileSet = {
-        desktop: tab === "desktop" ? merged : profileSet.desktop,
-        mobile: tab === "mobile" ? merged : profileSet.mobile,
+        desktop: isVertical ? profileSet.desktop : merged,
+        mobile: isVertical ? merged : profileSet.mobile,
       };
       updateSetting("caption_profiles", next);
-    };
-
-    const handleTabChange = (next: OrientationTab) => {
-      setTab(next);
-      setPreviewOrientation(next === "desktop" ? "horizontal" : "vertical");
     };
 
     const disabled = isUpdating("caption_profiles");
 
     return (
       <div className="px-4 py-4 space-y-4">
-        <div
-          role="tablist"
-          aria-label={t("settings.captions.tabs.ariaLabel")}
-          className="mb-3 flex items-center gap-1 border-b border-mid-gray/30"
-        >
-          {(["desktop", "mobile"] as const).map((key) => (
-            <button
-              key={key}
-              role="tab"
-              aria-selected={tab === key}
-              onClick={() => handleTabChange(key)}
-              className={`px-4 py-2 text-xs font-medium border-b-2 transition-colors ${
-                tab === key
-                  ? "border-accent text-text"
-                  : "border-transparent text-text/60 hover:text-text"
-              }`}
-            >
-              {t(`settings.captions.tabs.${key}`)}
-            </button>
-          ))}
-        </div>
-
-        <p className="mb-3 text-xs text-text/60">
-          {t(`settings.captions.tabs.${tab}Description`)}
+        <p className="text-xs text-text/60">
+          {t(
+            isVertical
+              ? "settings.captions.tabs.mobileDescription"
+              : "settings.captions.tabs.desktopDescription",
+          )}
         </p>
 
         <CaptionPreviewPane
@@ -122,3 +98,4 @@ export const CaptionSettings: React.FC<CaptionSettingsProps> = React.memo(
     );
   },
 );
+

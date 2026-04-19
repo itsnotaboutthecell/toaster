@@ -305,7 +305,7 @@ export const ModelsSettings: React.FC<ModelsSettingsProps> = ({
                 onClick={() => setCategoryDropdownOpen(!categoryDropdownOpen)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
                   categoryFilter !== "all"
-                    ? "bg-logo-primary/20 text-logo-primary"
+                    ? "bg-logo-primary/20 text-text"
                     : "bg-mid-gray/10 text-text/60 hover:bg-mid-gray/20"
                 }`}
               >
@@ -333,7 +333,7 @@ export const ModelsSettings: React.FC<ModelsSettingsProps> = ({
                         }}
                         className={`w-full px-3 py-1.5 text-sm text-left transition-colors ${
                           isActive
-                            ? "bg-logo-primary/20 text-logo-primary font-semibold"
+                            ? "bg-logo-primary/20 text-text font-semibold"
                             : "hover:bg-mid-gray/10"
                         }`}
                       >

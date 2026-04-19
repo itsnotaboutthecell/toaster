@@ -59,12 +59,17 @@ export const SliderWithInput: React.FC<SliderWithInputProps> = ({
   };
 
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLocalValue(parseInt(e.target.value));
+    const next = parseInt(e.target.value);
+    setLocalValue(next);
+    onChange(next);
   };
 
   const handleDragStart = () => setIsDragging(true);
   const handleDragEnd = () => {
     setIsDragging(false);
+    // Live-drag already calls onChange on every change; commit once more
+    // only if a non-drag path (e.g. keyboard arrow on focused slider)
+    // changed localValue without hitting handleSliderChange's onChange.
     if (localValue !== value) onChange(localValue);
   };
 

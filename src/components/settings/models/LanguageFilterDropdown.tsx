@@ -72,7 +72,7 @@ export const LanguageFilterDropdown: React.FC<LanguageFilterDropdownProps> = ({
         onClick={() => setOpen(!open)}
         className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
           value !== "all"
-            ? "bg-logo-primary/20 text-logo-primary"
+            ? "bg-logo-primary/20 text-text"
             : "bg-mid-gray/10 text-text/60 hover:bg-mid-gray/20"
         }`}
       >
@@ -113,7 +113,7 @@ export const LanguageFilterDropdown: React.FC<LanguageFilterDropdownProps> = ({
               onClick={() => pick("all")}
               className={`w-full px-3 py-1.5 text-sm text-left transition-colors ${
                 value === "all"
-                  ? "bg-logo-primary/20 text-logo-primary font-semibold"
+                  ? "bg-logo-primary/20 text-text font-semibold"
                   : "hover:bg-mid-gray/10"
               }`}
             >
@@ -126,7 +126,7 @@ export const LanguageFilterDropdown: React.FC<LanguageFilterDropdownProps> = ({
                 onClick={() => pick(lang.value)}
                 className={`w-full px-3 py-1.5 text-sm text-left transition-colors ${
                   value === lang.value
-                    ? "bg-logo-primary/20 text-logo-primary font-semibold"
+                    ? "bg-logo-primary/20 text-text font-semibold"
                     : "hover:bg-mid-gray/10"
                 }`}
               >

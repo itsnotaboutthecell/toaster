@@ -23,7 +23,6 @@ import TranscriptEditor from "@/components/editor/TranscriptEditor";
 import MediaPlayer from "@/components/player/MediaPlayer";
 import Waveform from "@/components/player/Waveform";
 import EditorToolbar from "@/components/editor/EditorToolbar";
-import ExportFormatPicker from "@/components/editor/ExportFormatPicker";
 import { PostProcessingSettingsPrompts } from "@/components/settings/post-processing/PostProcessingSettingsPrompts";
 
 const unwrapResult = <T,>(result: Result<T, string>): T => {
@@ -512,13 +511,6 @@ const EditorView: React.FC = () => {
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <ExportFormatPicker
-                    value={formatOverride}
-                    onChange={setFormatOverride}
-                    options={allowedFormats}
-                    defaultFormat={defaultExportFormat}
-                    disabled={isExportingMedia || words.length === 0}
-                  />
                   <button
                     onClick={handleExportEditedMedia}
                     disabled={words.length === 0 || isExportingMedia}
@@ -663,10 +655,15 @@ const EditorView: React.FC = () => {
       )}
 
       {/* Export & Tools section */}
-      <EditorToolbar
+              <EditorToolbar
         words={words}
         onExport={handleExport}
         onFFmpegScript={handleFFmpegScript}
+        formatOverride={formatOverride}
+        onFormatOverrideChange={setFormatOverride}
+        allowedFormats={allowedFormats}
+        defaultExportFormat={defaultExportFormat}
+        exportPickerDisabled={isExportingMedia || words.length === 0}
       />
     </div>
   );
