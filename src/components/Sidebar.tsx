@@ -1,14 +1,17 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Info, Cpu, Scissors, Wand2, SlidersHorizontal } from "lucide-react";
+import { Info, Cpu, Scissors, Wand2, SlidersHorizontal, Bug } from "lucide-react";
 import toasterLogo from "../assets/toaster_text.svg";
 import {
   AboutSettings,
   ModelsSettings,
   PostProcessingSettings,
   AdvancedSettings,
+  DebugSettings,
 } from "./settings";
 import EditorView from "./editor/EditorView";
+import { useSettings } from "../hooks/useSettings";
+import type { AppSettings } from "@/bindings";
 
 export type SidebarSection = keyof typeof SECTIONS_CONFIG;
 
@@ -20,7 +23,7 @@ interface SectionConfig {
   labelKey: string;
   icon: React.ComponentType<IconProps>;
   component: React.ComponentType;
-  enabled: () => boolean;
+  enabled: (settings: AppSettings | null) => boolean;
 }
 
 export const SECTIONS_CONFIG = {
@@ -54,6 +57,12 @@ export const SECTIONS_CONFIG = {
     component: AboutSettings,
     enabled: () => true,
   },
+  debug: {
+    labelKey: "sidebar.debug",
+    icon: Bug,
+    component: DebugSettings,
+    enabled: (settings) => settings?.debug_mode === true,
+  },
 } as const satisfies Record<string, SectionConfig>;
 
 /**
@@ -84,9 +93,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSectionChange,
 }) => {
   const { t } = useTranslation();
+  const { settings } = useSettings();
 
   const availableSections= Object.entries(SECTIONS_CONFIG)
-    .filter(([_, config]) => config.enabled())
+    .filter(([_, config]) => config.enabled(settings))
     .map(([id, config]) => ({ id: id as SidebarSection, ...config }));
 
   return (
