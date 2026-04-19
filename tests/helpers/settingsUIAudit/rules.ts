@@ -474,3 +474,95 @@ export async function checkR005Contract(
     });
   }
 }
+
+/**
+ * R-006 double-label: a SettingContainer must not repeat (case-insensitive)
+ * the title of its enclosing SettingsGroup. Catches drift like the
+ * "Post Processing" group containing a "Post Processing" container
+ * (resolved in this sprint's Post-Processing phase).
+ */
+export async function checkR006DoubleLabel(
+  page: Page,
+  routeId: string,
+  viewportId: string,
+): Promise<void> {
+  const hits = await page.evaluate(() => {
+    const out: Array<{ groupTitle: string; containerTitle: string; groupIndex: number }> = [];
+    const groups = document.querySelectorAll('[data-testid="settings-group"]');
+    groups.forEach((group, gi) => {
+      const groupTitleEl = group.querySelector('[data-setting-role="group-title"]');
+      const groupTitle = (groupTitleEl?.textContent || "").trim().toLowerCase();
+      if (!groupTitle) return;
+      const containers = group.querySelectorAll('[data-setting-role="label"]');
+      containers.forEach((labelEl) => {
+        const labelText = (labelEl.textContent || "").trim().toLowerCase();
+        if (labelText && labelText === groupTitle) {
+          out.push({
+            groupTitle: groupTitle,
+            containerTitle: labelText,
+            groupIndex: gi,
+          });
+        }
+      });
+    });
+    return out;
+  });
+
+  for (const hit of hits) {
+    await pushViolation(page, {
+      page: routeId,
+      viewport: viewportId,
+      rule: "R-006-double-label",
+      severity: "major",
+      selector: `[data-testid="settings-group"]:nth-of-type(${hit.groupIndex + 1})`,
+      expected: { containerTitleDistinctFromGroupTitle: true },
+      actual: { groupTitle: hit.groupTitle, containerTitle: hit.containerTitle },
+      screenshotSelector: '[data-testid="settings-group"]',
+    });
+  }
+}
+
+/**
+ * R-008 duplicate-description: two SettingContainers under the same
+ * SettingsGroup must not share identical description text. Catches
+ * drift like the "experimental_simplify_mode" pair that showed the
+ * same description twice.
+ */
+export async function checkR008DuplicateDescription(
+  page: Page,
+  routeId: string,
+  viewportId: string,
+): Promise<void> {
+  const hits = await page.evaluate(() => {
+    const out: Array<{ description: string; groupIndex: number; count: number }> = [];
+    const groups = document.querySelectorAll('[data-testid="settings-group"]');
+    groups.forEach((group, gi) => {
+      const seen = new Map<string, number>();
+      const descs = group.querySelectorAll('[data-setting-role="description"]');
+      descs.forEach((el) => {
+        const text = (el.textContent || "").trim();
+        if (!text) return;
+        seen.set(text, (seen.get(text) ?? 0) + 1);
+      });
+      for (const [text, count] of seen.entries()) {
+        if (count > 1) {
+          out.push({ description: text, groupIndex: gi, count });
+        }
+      }
+    });
+    return out;
+  });
+
+  for (const hit of hits) {
+    await pushViolation(page, {
+      page: routeId,
+      viewport: viewportId,
+      rule: "R-008-duplicate-description",
+      severity: "major",
+      selector: `[data-testid="settings-group"]:nth-of-type(${hit.groupIndex + 1})`,
+      expected: { descriptionsUniqueWithinGroup: true },
+      actual: { duplicate: hit.description, occurrences: hit.count },
+      screenshotSelector: '[data-testid="settings-group"]',
+    });
+  }
+}

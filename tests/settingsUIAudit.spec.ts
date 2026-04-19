@@ -27,6 +27,8 @@ import {
   checkR004PreviewClamp,
   checkR004NarrowViewport,
   checkR005Contract,
+  checkR006DoubleLabel,
+  checkR008DuplicateDescription,
 } from "./helpers/settingsUIAudit/rules";
 
 test.describe.serial("Settings UI consistency audit", () => {
@@ -71,6 +73,12 @@ test.describe.serial("Settings UI consistency audit", () => {
 
         // R-005 contract
         await checkR005Contract(page, route.id, viewport.id);
+
+        // R-006 double-label (group title == container title)
+        await checkR006DoubleLabel(page, route.id, viewport.id);
+
+        // R-008 duplicate-description (two containers, same description)
+        await checkR008DuplicateDescription(page, route.id, viewport.id);
       }
 
       // R-004 narrow-viewport overflow — only run during desktop test case
