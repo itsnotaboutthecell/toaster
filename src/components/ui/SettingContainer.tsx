@@ -54,10 +54,16 @@ export const SettingContainer: React.FC<SettingContainerProps> = ({
   if (layout === "stacked") {
     if (descriptionMode === "tooltip") {
       return (
-        <div className={containerClasses}>
+        <div
+          className={containerClasses}
+          data-testid="setting-row"
+          data-setting-role="row"
+          data-setting-layout="stacked"
+        >
           <div className="flex items-center gap-2 mb-2">
             <h3
               className={`text-sm font-medium ${disabled ? "opacity-50" : ""}`}
+              data-setting-role="label"
             >
               {title}
             </h3>
@@ -92,29 +98,47 @@ export const SettingContainer: React.FC<SettingContainerProps> = ({
               </svg>
               {showTooltip && (
                 <Tooltip targetRef={tooltipRef} position="top">
-                  <p className="text-sm text-center leading-relaxed">
+                  <p
+                    className="text-sm text-center leading-relaxed"
+                    data-setting-role="description"
+                  >
                     {description}
                   </p>
                 </Tooltip>
               )}
             </div>
           </div>
-          <div className="w-full">{children}</div>
+          <div className="w-full" data-setting-role="control">
+            {children}
+          </div>
         </div>
       );
     }
 
     return (
-      <div className={containerClasses}>
+      <div
+        className={containerClasses}
+        data-testid="setting-row"
+        data-setting-role="row"
+        data-setting-layout="stacked"
+      >
         <div className="mb-2">
-          <h3 className={`text-sm font-medium ${disabled ? "opacity-50" : ""}`}>
+          <h3
+            className={`text-sm font-medium ${disabled ? "opacity-50" : ""}`}
+            data-setting-role="label"
+          >
             {title}
           </h3>
-          <p className={`text-sm ${disabled ? "opacity-50" : ""}`}>
+          <p
+            className={`text-sm ${disabled ? "opacity-50" : ""}`}
+            data-setting-role="description"
+          >
             {description}
           </p>
         </div>
-        <div className="w-full">{children}</div>
+        <div className="w-full" data-setting-role="control">
+          {children}
+        </div>
       </div>
     );
   }
@@ -126,11 +150,16 @@ export const SettingContainer: React.FC<SettingContainerProps> = ({
 
   if (descriptionMode === "tooltip") {
     return (
-      <div className={horizontalContainerClasses}>
+      <div
+        className={horizontalContainerClasses}
+        data-testid="setting-row"
+        data-setting-role="row"
+      >
         <div className="max-w-2/3">
           <div className="flex items-center gap-2">
             <h3
               className={`text-sm font-medium ${disabled ? "opacity-50" : ""}`}
+              data-setting-role="label"
             >
               {title}
             </h3>
@@ -165,7 +194,10 @@ export const SettingContainer: React.FC<SettingContainerProps> = ({
               </svg>
               {showTooltip && (
                 <Tooltip targetRef={tooltipRef} position={tooltipPosition}>
-                  <p className="text-sm text-center leading-relaxed">
+                  <p
+                    className="text-sm text-center leading-relaxed"
+                    data-setting-role="description"
+                  >
                     {description}
                   </p>
                 </Tooltip>
@@ -173,22 +205,36 @@ export const SettingContainer: React.FC<SettingContainerProps> = ({
             </div>
           </div>
         </div>
-        <div className="relative">{children}</div>
+        <div className="relative" data-setting-role="control">
+          {children}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className={horizontalContainerClasses}>
+    <div
+      className={horizontalContainerClasses}
+      data-testid="setting-row"
+      data-setting-role="row"
+    >
       <div className="max-w-2/3">
-        <h3 className={`text-sm font-medium ${disabled ? "opacity-50" : ""}`}>
+        <h3
+          className={`text-sm font-medium ${disabled ? "opacity-50" : ""}`}
+          data-setting-role="label"
+        >
           {title}
         </h3>
-        <p className={`text-sm ${disabled ? "opacity-50" : ""}`}>
+        <p
+          className={`text-sm ${disabled ? "opacity-50" : ""}`}
+          data-setting-role="description"
+        >
           {description}
         </p>
       </div>
-      <div className="relative">{children}</div>
+      <div className="relative" data-setting-role="control">
+        {children}
+      </div>
     </div>
   );
 };

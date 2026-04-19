@@ -10,7 +10,7 @@ import {
 import "./App.css";
 import Footer from "./components/footer";
 import Onboarding from "./components/onboarding";
-import { Sidebar, SidebarSection, SECTIONS_CONFIG } from "./components/Sidebar";
+import { Sidebar, SidebarSection, SECTIONS_CONFIG, resolveSidebarSection } from "./components/Sidebar";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { useSettings } from "./hooks/useSettings";
 import { useSettingsStore } from "./stores/settingsStore";
@@ -20,8 +20,8 @@ import { getLanguageDirection, initializeRTL } from "@/lib/utils/rtl";
 type OnboardingStep = "model" | "done";
 
 const renderSettingsContent = (section: SidebarSection) => {
-  const ActiveComponent =
-    SECTIONS_CONFIG[section]?.component || SECTIONS_CONFIG.editor.component;
+  const resolved = resolveSidebarSection(section);
+  const ActiveComponent = SECTIONS_CONFIG[resolved].component;
   return <ActiveComponent />;
 };
 
@@ -202,7 +202,7 @@ function App() {
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 overflow-y-auto">
             <ErrorBoundary>
-              <div className="flex flex-col items-center p-4 gap-4">
+              <div className="flex flex-col items-center py-4 px-4 sm:px-6 lg:px-8 gap-4">
                 {renderSettingsContent(currentSection)}
               </div>
             </ErrorBoundary>

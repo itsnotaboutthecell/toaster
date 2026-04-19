@@ -1,0 +1,1441 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-04-18T23:49:00.477Z",
+  "runtimeSec": 17.3,
+  "summary": {
+    "total": 84,
+    "critical": 0,
+    "major": 84,
+    "minor": 0
+  },
+  "violations": [
+    {
+      "page": "about",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(1)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/about-desktop-1280x800-R-005-missing-description-0.png",
+      "fileHint": "src/components/settings/about/AboutSettings.tsx"
+    },
+    {
+      "page": "about",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(1)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/about-mobile-portrait-390x844-R-005-missing-description-42.png",
+      "fileHint": "src/components/settings/about/AboutSettings.tsx"
+    },
+    {
+      "page": "about",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(2)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/about-desktop-1280x800-R-005-missing-description-1.png",
+      "fileHint": "src/components/settings/about/AboutSettings.tsx"
+    },
+    {
+      "page": "about",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(2)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/about-mobile-portrait-390x844-R-005-missing-description-43.png",
+      "fileHint": "src/components/settings/about/AboutSettings.tsx"
+    },
+    {
+      "page": "about",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(3)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/about-desktop-1280x800-R-005-missing-description-2.png",
+      "fileHint": "src/components/settings/about/AboutSettings.tsx"
+    },
+    {
+      "page": "about",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(3)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/about-mobile-portrait-390x844-R-005-missing-description-44.png",
+      "fileHint": "src/components/settings/about/AboutSettings.tsx"
+    },
+    {
+      "page": "about",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(4)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/about-desktop-1280x800-R-005-missing-description-3.png",
+      "fileHint": "src/components/settings/about/AboutSettings.tsx"
+    },
+    {
+      "page": "about",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(4)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/about-mobile-portrait-390x844-R-005-missing-description-45.png",
+      "fileHint": "src/components/settings/about/AboutSettings.tsx"
+    },
+    {
+      "page": "about",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(5)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/about-mobile-portrait-390x844-R-005-missing-description-46.png",
+      "fileHint": "src/components/settings/about/AboutSettings.tsx"
+    },
+    {
+      "page": "about",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(5)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/about-desktop-1280x800-R-005-missing-description-4.png",
+      "fileHint": "src/components/settings/about/AboutSettings.tsx"
+    },
+    {
+      "page": "about",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(6)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/about-desktop-1280x800-R-005-missing-description-5.png",
+      "fileHint": "src/components/settings/about/AboutSettings.tsx"
+    },
+    {
+      "page": "about",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(6)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/about-mobile-portrait-390x844-R-005-missing-description-47.png",
+      "fileHint": "src/components/settings/about/AboutSettings.tsx"
+    },
+    {
+      "page": "about",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(7)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/about-desktop-1280x800-R-005-missing-description-6.png",
+      "fileHint": "src/components/settings/about/AboutSettings.tsx"
+    },
+    {
+      "page": "about",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(7)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/about-mobile-portrait-390x844-R-005-missing-description-48.png",
+      "fileHint": "src/components/settings/about/AboutSettings.tsx"
+    },
+    {
+      "page": "advanced",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(1)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/advanced-desktop-1280x800-R-005-missing-description-14.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "advanced",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(1)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/advanced-mobile-portrait-390x844-R-005-missing-description-56.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "advanced",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(10)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/advanced-desktop-1280x800-R-005-missing-description-23.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "advanced",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(10)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/advanced-mobile-portrait-390x844-R-005-missing-description-65.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "advanced",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(11)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/advanced-mobile-portrait-390x844-R-005-missing-description-66.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "advanced",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(11)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/advanced-desktop-1280x800-R-005-missing-description-24.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "advanced",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(12)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/advanced-desktop-1280x800-R-005-missing-description-25.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "advanced",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(12)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/advanced-mobile-portrait-390x844-R-005-missing-description-67.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "advanced",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(13)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/advanced-desktop-1280x800-R-005-missing-description-26.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "advanced",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(13)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/advanced-mobile-portrait-390x844-R-005-missing-description-68.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "advanced",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(18)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/advanced-desktop-1280x800-R-005-missing-description-27.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "advanced",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(18)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/advanced-mobile-portrait-390x844-R-005-missing-description-69.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "advanced",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(2)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/advanced-desktop-1280x800-R-005-missing-description-15.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "advanced",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(2)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/advanced-mobile-portrait-390x844-R-005-missing-description-57.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "advanced",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(3)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/advanced-mobile-portrait-390x844-R-005-missing-description-58.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "advanced",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(3)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/advanced-desktop-1280x800-R-005-missing-description-16.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "advanced",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(4)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/advanced-desktop-1280x800-R-005-missing-description-17.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "advanced",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(4)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/advanced-mobile-portrait-390x844-R-005-missing-description-59.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "advanced",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(5)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/advanced-desktop-1280x800-R-005-missing-description-18.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "advanced",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(5)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/advanced-mobile-portrait-390x844-R-005-missing-description-60.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "advanced",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(6)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/advanced-desktop-1280x800-R-005-missing-description-19.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "advanced",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(6)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/advanced-mobile-portrait-390x844-R-005-missing-description-61.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "advanced",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(7)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/advanced-desktop-1280x800-R-005-missing-description-20.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "advanced",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(7)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/advanced-mobile-portrait-390x844-R-005-missing-description-62.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "advanced",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(8)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/advanced-desktop-1280x800-R-005-missing-description-21.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "advanced",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(8)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/advanced-mobile-portrait-390x844-R-005-missing-description-63.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "advanced",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(9)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/advanced-mobile-portrait-390x844-R-005-missing-description-64.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "advanced",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(9)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/advanced-desktop-1280x800-R-005-missing-description-22.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "captions",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(1)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/captions-desktop-1280x800-R-005-missing-description-28.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "captions",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(1)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/captions-mobile-portrait-390x844-R-005-missing-description-70.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "captions",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(10)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/captions-desktop-1280x800-R-005-missing-description-37.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "captions",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(10)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/captions-mobile-portrait-390x844-R-005-missing-description-79.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "captions",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(11)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/captions-desktop-1280x800-R-005-missing-description-38.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "captions",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(11)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/captions-mobile-portrait-390x844-R-005-missing-description-80.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "captions",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(12)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/captions-desktop-1280x800-R-005-missing-description-39.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "captions",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(12)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/captions-mobile-portrait-390x844-R-005-missing-description-81.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "captions",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(13)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/captions-mobile-portrait-390x844-R-005-missing-description-82.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "captions",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(13)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/captions-desktop-1280x800-R-005-missing-description-40.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "captions",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(18)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/captions-desktop-1280x800-R-005-missing-description-41.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "captions",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(18)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/captions-mobile-portrait-390x844-R-005-missing-description-83.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "captions",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(2)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/captions-desktop-1280x800-R-005-missing-description-29.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "captions",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(2)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/captions-mobile-portrait-390x844-R-005-missing-description-71.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "captions",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(3)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/captions-desktop-1280x800-R-005-missing-description-30.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "captions",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(3)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/captions-mobile-portrait-390x844-R-005-missing-description-72.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "captions",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(4)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/captions-desktop-1280x800-R-005-missing-description-31.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "captions",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(4)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/captions-mobile-portrait-390x844-R-005-missing-description-73.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "captions",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(5)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/captions-desktop-1280x800-R-005-missing-description-32.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "captions",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(5)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/captions-mobile-portrait-390x844-R-005-missing-description-74.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "captions",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(6)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/captions-mobile-portrait-390x844-R-005-missing-description-75.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "captions",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(6)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/captions-desktop-1280x800-R-005-missing-description-33.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "captions",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(7)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/captions-desktop-1280x800-R-005-missing-description-34.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "captions",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(7)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/captions-mobile-portrait-390x844-R-005-missing-description-76.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "captions",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(8)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/captions-desktop-1280x800-R-005-missing-description-35.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "captions",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(8)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/captions-mobile-portrait-390x844-R-005-missing-description-77.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "captions",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(9)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/captions-desktop-1280x800-R-005-missing-description-36.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "captions",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(9)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/captions-mobile-portrait-390x844-R-005-missing-description-78.png",
+      "fileHint": "src/components/settings/advanced/AdvancedSettings.tsx"
+    },
+    {
+      "page": "post-process",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(1)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/post-process-desktop-1280x800-R-005-missing-description-7.png",
+      "fileHint": "src/components/settings/post-processing/PostProcessingSettings.tsx"
+    },
+    {
+      "page": "post-process",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(1)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/post-process-mobile-portrait-390x844-R-005-missing-description-49.png",
+      "fileHint": "src/components/settings/post-processing/PostProcessingSettings.tsx"
+    },
+    {
+      "page": "post-process",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(2)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/post-process-mobile-portrait-390x844-R-005-missing-description-50.png",
+      "fileHint": "src/components/settings/post-processing/PostProcessingSettings.tsx"
+    },
+    {
+      "page": "post-process",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(2)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/post-process-desktop-1280x800-R-005-missing-description-8.png",
+      "fileHint": "src/components/settings/post-processing/PostProcessingSettings.tsx"
+    },
+    {
+      "page": "post-process",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(3)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/post-process-desktop-1280x800-R-005-missing-description-9.png",
+      "fileHint": "src/components/settings/post-processing/PostProcessingSettings.tsx"
+    },
+    {
+      "page": "post-process",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(3)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/post-process-mobile-portrait-390x844-R-005-missing-description-51.png",
+      "fileHint": "src/components/settings/post-processing/PostProcessingSettings.tsx"
+    },
+    {
+      "page": "post-process",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(4)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/post-process-desktop-1280x800-R-005-missing-description-10.png",
+      "fileHint": "src/components/settings/post-processing/PostProcessingSettings.tsx"
+    },
+    {
+      "page": "post-process",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(4)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/post-process-mobile-portrait-390x844-R-005-missing-description-52.png",
+      "fileHint": "src/components/settings/post-processing/PostProcessingSettings.tsx"
+    },
+    {
+      "page": "post-process",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(5)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/post-process-desktop-1280x800-R-005-missing-description-11.png",
+      "fileHint": "src/components/settings/post-processing/PostProcessingSettings.tsx"
+    },
+    {
+      "page": "post-process",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(5)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/post-process-mobile-portrait-390x844-R-005-missing-description-53.png",
+      "fileHint": "src/components/settings/post-processing/PostProcessingSettings.tsx"
+    },
+    {
+      "page": "post-process",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(6)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/post-process-desktop-1280x800-R-005-missing-description-12.png",
+      "fileHint": "src/components/settings/post-processing/PostProcessingSettings.tsx"
+    },
+    {
+      "page": "post-process",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(6)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/post-process-mobile-portrait-390x844-R-005-missing-description-54.png",
+      "fileHint": "src/components/settings/post-processing/PostProcessingSettings.tsx"
+    },
+    {
+      "page": "post-process",
+      "viewport": "desktop-1280x800",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(7)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/post-process-desktop-1280x800-R-005-missing-description-13.png",
+      "fileHint": "src/components/settings/post-processing/PostProcessingSettings.tsx"
+    },
+    {
+      "page": "post-process",
+      "viewport": "mobile-portrait-390x844",
+      "rule": "R-005-missing-description",
+      "severity": "major",
+      "selector": "[data-testid=\"setting-row\"]:nth-of-type(7)",
+      "expected": {
+        "descriptionPresent": true,
+        "descriptionNonEmpty": true
+      },
+      "actual": {
+        "descriptionPresent": false,
+        "descriptionText": null
+      },
+      "screenshotPath": "screenshots/post-process-mobile-portrait-390x844-R-005-missing-description-55.png",
+      "fileHint": "src/components/settings/post-processing/PostProcessingSettings.tsx"
+    }
+  ]
+}

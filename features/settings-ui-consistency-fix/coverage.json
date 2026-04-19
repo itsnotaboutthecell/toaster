@@ -1,0 +1,166 @@
+{
+  "_comment_kinds": "Allowed kind values: skill, agent, cargo-test, script, manual, doc-section.",
+  "_comment_script": "kind:script 'command' must contain exactly ONE scripts/* path token.",
+  "_comment_manual": "kind:manual entries MUST include a non-empty 'steps' array.",
+  "feature": "settings-ui-consistency-fix",
+  "acs": {
+    "AC-001-a": {
+      "verifier": "scripts/audit-settings-ui.ps1",
+      "kind": "script",
+      "command": "scripts/audit-settings-ui.ps1",
+      "notes": "Post-fix audit; R-004-desktop-width count == 0 on captions.",
+      "task": "sufx-baseline-reaudit"
+    },
+    "AC-001-b": {
+      "verifier": "live-app",
+      "kind": "manual",
+      "command": "scripts/launch-toaster-monitored.ps1",
+      "steps": [
+        "Launch via scripts/launch-toaster-monitored.ps1 -ObservationSeconds 180",
+        "Navigate to Advanced -> Captions",
+        "Confirm preview shows arrow-boundary + center-line designer (not the creator image)",
+        "Toggle horizontal <-> vertical radio; preview redraws correctly"
+      ],
+      "task": "sufx-liveapp-pass"
+    },
+    "AC-001-c": {
+      "verifier": "scripts/audit-settings-ui.ps1",
+      "kind": "script",
+      "command": "scripts/audit-settings-ui.ps1",
+      "notes": "Desktop-width rule exercised at 1280x800 and 390x844; both return 0 for R-004-desktop-width.",
+      "task": "sufx-baseline-reaudit"
+    },
+    "AC-001-d": {
+      "verifier": "docs/settings-placement.md SSOT section",
+      "kind": "doc-section",
+      "command": "features/settings-ui-consistency-fix/BLUEPRINT.md",
+      "sections": ["Single-source-of-truth enforcement"],
+      "notes": "Reviewer confirms no duplicated caption-sizing constants between src/ and src-tauri/.",
+      "task": "sufx-caption-ssot"
+    },
+    "AC-002-a": {
+      "verifier": "scripts/audit-settings-ui.ps1",
+      "kind": "script",
+      "command": "scripts/audit-settings-ui.ps1",
+      "notes": "R-003-export-two-column count == 0 post-fix.",
+      "task": "sufx-baseline-reaudit"
+    },
+    "AC-002-b": {
+      "verifier": "scripts/audit-settings-ui.ps1",
+      "kind": "script",
+      "command": "scripts/audit-settings-ui.ps1",
+      "notes": "Every export row exposes setting-role=label and setting-role=control per rule R-003.",
+      "task": "sufx-baseline-reaudit"
+    },
+    "AC-003-a": {
+      "verifier": "scripts/audit-settings-ui.ps1",
+      "kind": "script",
+      "command": "scripts/audit-settings-ui.ps1",
+      "notes": "R-003-layout count == 0 on Advanced/Models/Export/Post-process.",
+      "task": "sufx-baseline-reaudit"
+    },
+    "AC-003-b": {
+      "verifier": "BLUEPRINT page-padding decision",
+      "kind": "doc-section",
+      "command": "features/settings-ui-consistency-fix/BLUEPRINT.md",
+      "sections": ["R-003 — Page padding normalization"],
+      "notes": "Reviewer confirms every settings page uses the pageLayout outer classes; no per-page padding overrides.",
+      "task": "sufx-page-padding-std"
+    },
+    "AC-004-a": {
+      "verifier": "scripts/audit-settings-ui.ps1",
+      "kind": "script",
+      "command": "scripts/audit-settings-ui.ps1",
+      "notes": "R-005-range-editable count == 0.",
+      "task": "sufx-baseline-reaudit"
+    },
+    "AC-004-b": {
+      "verifier": "live-app",
+      "kind": "manual",
+      "command": "scripts/launch-toaster-monitored.ps1",
+      "steps": [
+        "Launch monitored app",
+        "Open any slider setting (e.g. Advanced -> Performance)",
+        "Drag slider; observe numeric input mirrors value",
+        "Double-click numeric input, type a new value; observe slider moves"
+      ],
+      "task": "sufx-liveapp-pass"
+    },
+    "AC-005-a": {
+      "verifier": "scripts/audit-settings-ui.ps1",
+      "kind": "script",
+      "command": "scripts/audit-settings-ui.ps1",
+      "notes": "R-005-color-light-grey-on-white count == 0.",
+      "task": "sufx-baseline-reaudit"
+    },
+    "AC-005-b": {
+      "verifier": "repo-auditor",
+      "kind": "agent",
+      "command": "repo-auditor",
+      "notes": "Auditor reads the PR diff; flags any new red-on-dark or light-grey-on-white token combinations as Critical.",
+      "task": "sufx-color-contrast-fix"
+    },
+    "AC-006-a": {
+      "verifier": "scripts/check-translations.ts",
+      "kind": "script",
+      "command": "scripts/check-translations.ts",
+      "notes": "Every new description key exists in all locale files; no hardcoded strings.",
+      "task": "sufx-descriptions-batch"
+    },
+    "AC-006-b": {
+      "verifier": "descoped.md artifact",
+      "kind": "doc-section",
+      "command": "features/settings-ui-consistency-fix/BLUEPRINT.md",
+      "sections": ["R-006 — Missing descriptions burn-down"],
+      "notes": "If any R-005-missing-description row remains, audit-report-after/descoped.md lists it with selector, reason, and follow-up bundle slug.",
+      "task": "sufx-descriptions-batch"
+    },
+    "AC-006-c": {
+      "verifier": "scripts/check-translations.ts",
+      "kind": "script",
+      "command": "scripts/check-translations.ts",
+      "notes": "Parity across all 20+ locale files; exit 0.",
+      "task": "sufx-static-gates"
+    },
+    "AC-007-a": {
+      "verifier": "scripts/audit-settings-ui.ps1",
+      "kind": "script",
+      "command": "scripts/audit-settings-ui.ps1",
+      "notes": "Exit 0; critical == 0.",
+      "task": "sufx-baseline-reaudit"
+    },
+    "AC-007-b": {
+      "verifier": "scripts/audit-settings-ui.ps1",
+      "kind": "script",
+      "command": "scripts/audit-settings-ui.ps1",
+      "notes": "R-004-desktop-width, R-003-export-two-column, R-003-layout, R-005-range-editable, R-005-color-light-grey-on-white all == 0 in audit-report-after/audit.json.",
+      "task": "sufx-baseline-reaudit"
+    },
+    "AC-007-c": {
+      "verifier": "scripts/audit-settings-ui.ps1",
+      "kind": "script",
+      "command": "scripts/audit-settings-ui.ps1",
+      "notes": "R-005-missing-description strictly less than baseline 130 OR ==0; remainder fully covered by descoped.md.",
+      "task": "sufx-baseline-reaudit"
+    },
+    "AC-008-a": {
+      "verifier": "scripts/check-translations.ts",
+      "kind": "script",
+      "command": "scripts/check-translations.ts",
+      "notes": "i18n parity green. (Lint/build also run during sufx-static-gates; tracked informally.)",
+      "task": "sufx-static-gates"
+    },
+    "AC-008-b": {
+      "verifier": "live-app",
+      "kind": "manual",
+      "command": "scripts/launch-toaster-monitored.ps1",
+      "steps": [
+        "Launch monitored app",
+        "Navigate to Advanced -> Captions; confirm preview sizing and orientation toggle",
+        "Drag and type into at least one slider on Advanced -> Performance",
+        "Verify no overflow onto neighboring settings at default window size"
+      ],
+      "task": "sufx-liveapp-pass"
+    }
+  }
+}
