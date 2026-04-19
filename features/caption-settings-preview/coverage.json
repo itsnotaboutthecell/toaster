@@ -16,7 +16,7 @@
     "AC-001-b": {
       "verifier": "check-feature-coverage.ps1",
       "kind": "manual",
-      "command": "pwsh scripts/check-feature-coverage.ps1 -Feature caption-settings-preview",
+      "command": "pwsh scripts/feature/check-feature-coverage.ps1 -Feature caption-settings-preview",
       "task": "csp-qc-scope",
       "steps": [
         "Open features/caption-settings-preview/PRD.md and confirm the 'Out of scope' section lists camera-based preview and names the follow-up slug 'caption-settings-camera-preview'.",
@@ -96,7 +96,7 @@
     "AC-004-a": {
       "verifier": "check-feature-coverage.ps1",
       "kind": "manual",
-      "command": "pwsh scripts/check-feature-coverage.ps1 -Feature caption-settings-preview",
+      "command": "pwsh scripts/feature/check-feature-coverage.ps1 -Feature caption-settings-preview",
       "task": "csp-qc-reuse",
       "steps": [
         "Open src/components/settings/CaptionSettings.tsx and confirm it imports the caption pill renderer (CaptionPill or CaptionOverlay) from src/components/player/CaptionOverlay.tsx.",
@@ -106,7 +106,7 @@
     "AC-004-b": {
       "verifier": "check-feature-coverage.ps1",
       "kind": "manual",
-      "command": "pwsh scripts/check-feature-coverage.ps1 -Feature caption-settings-preview",
+      "command": "pwsh scripts/feature/check-feature-coverage.ps1 -Feature caption-settings-preview",
       "task": "csp-qc-reuse",
       "steps": [
         "Run: rg --files src | rg -i 'Caption.*Render|CaptionPill' to enumerate caption-renderer files.",
@@ -116,7 +116,7 @@
     "AC-004-c": {
       "verifier": "check-feature-coverage.ps1",
       "kind": "manual",
-      "command": "pwsh scripts/check-feature-coverage.ps1 -Feature caption-settings-preview",
+      "command": "pwsh scripts/feature/check-feature-coverage.ps1 -Feature caption-settings-preview",
       "task": "csp-qc-reuse",
       "steps": [
         "Open src/components/settings/CaptionSettings.tsx and the new preview-pane code path; confirm caption settings are read via the existing useSettings hook (line 3 of CaptionSettings.tsx).",
@@ -137,7 +137,7 @@
     "AC-005-b": {
       "verifier": "check-feature-coverage.ps1",
       "kind": "manual",
-      "command": "pwsh scripts/check-feature-coverage.ps1 -Feature caption-settings-preview",
+      "command": "pwsh scripts/feature/check-feature-coverage.ps1 -Feature caption-settings-preview",
       "task": "csp-qc-latency",
       "steps": [
         "Run: rg -n 'debounce|throttle|setTimeout|requestIdleCallback' src/components/settings/CaptionSettings.tsx src/components/player/CaptionOverlay.tsx",

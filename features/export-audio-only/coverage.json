@@ -50,7 +50,7 @@
     "AC-005-a": {
       "verifier": "check-feature-coverage.ps1",
       "kind": "manual",
-      "command": "pwsh scripts/check-feature-coverage.ps1 -Feature export-audio-only",
+      "command": "pwsh scripts/feature/check-feature-coverage.ps1 -Feature export-audio-only",
       "task": "eao-qc-filter-reuse",
       "steps": [
         "Run: rg -n 'fn build_audio_post_filters' src-tauri/src",

@@ -20,7 +20,7 @@
 
 <!--
   AC IDs MUST NOT be bold. Use `AC-001-a` verbatim, never `**AC-001-a**`.
-  The coverage gate regex (scripts/check-feature-coverage.ps1:57) matches
+  The coverage gate regex (scripts/feature/check-feature-coverage.ps1:57) matches
   `^\s*-?\s*AC-\d{3}-[a-z]\b` — a leading `**` breaks extraction and the
   gate fails with "PRD.md has no AC-NNN-x entries".
 -->

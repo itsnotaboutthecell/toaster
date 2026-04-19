@@ -18,7 +18,7 @@
     Feature slug.  Resolves to features/<slug>/tasks.sql.
 
 .EXAMPLE
-    pwsh scripts/check-feature-tasks.ps1 -Feature my-feature
+    pwsh scripts/feature/check-feature-tasks.ps1 -Feature my-feature
 #>
 
 [CmdletBinding()]

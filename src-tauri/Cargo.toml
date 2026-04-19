@@ -76,6 +76,11 @@ sysinfo = { version = "0.33", default-features = false, features = ["system", "d
 # See features/local-llm-model-catalog/BLUEPRINT.md for rationale.
 llama-cpp-2 = { version = "0.1.123", optional = true, default-features = false }
 
+# llama-cpp-2 is gated behind the `local-llm` cargo feature; cargo-machete
+# doesn't trace feature-gated `dep:` entries and reports it as unused.
+[package.metadata.cargo-machete]
+ignored = ["llama-cpp-2"]
+
 [features]
 default = []
 # Enables the in-process GGUF LLM backend used by the post-process

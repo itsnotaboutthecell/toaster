@@ -49,7 +49,7 @@
     "AC-002-d": {
       "kind": "script",
       "verifier": "gate-tsc",
-      "command": "pwsh scripts/gate-tsc.ps1",
+      "command": "pwsh scripts/gate/gate-tsc.ps1",
       "task": "llm-ui-card"
     },
     "AC-003-a": {
@@ -139,7 +139,7 @@
     "AC-008-a": {
       "kind": "script",
       "verifier": "gate-cargo-check-lib",
-      "command": "pwsh scripts/gate-cargo-check-lib.ps1",
+      "command": "pwsh scripts/gate/gate-cargo-check-lib.ps1",
       "task": "llm-settings"
     },
     "AC-008-b": {
@@ -219,19 +219,19 @@
     "AC-014-a": {
       "kind": "script",
       "verifier": "gate-lint",
-      "command": "pwsh scripts/gate-lint.ps1",
+      "command": "pwsh scripts/gate/gate-lint.ps1",
       "task": "llm-dep-hygiene"
     },
     "AC-014-b": {
       "kind": "script",
       "verifier": "gate-tsc",
-      "command": "pwsh scripts/gate-tsc.ps1",
+      "command": "pwsh scripts/gate/gate-tsc.ps1",
       "task": "llm-dep-hygiene"
     },
     "AC-014-c": {
       "kind": "script",
       "verifier": "gate-cargo-check-lib",
-      "command": "pwsh scripts/gate-cargo-check-lib.ps1",
+      "command": "pwsh scripts/gate/gate-cargo-check-lib.ps1",
       "task": "llm-dep-hygiene"
     }
   }

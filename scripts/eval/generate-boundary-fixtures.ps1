@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Regenerate synthetic fixtures for scripts/eval-audio-boundary.ps1.
+    Regenerate synthetic fixtures for scripts/eval/eval-audio-boundary.ps1.
 
 .DESCRIPTION
     Uses only FFmpeg's 'sine' and 'aevalsrc' sources — no TTS dependency,

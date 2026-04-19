@@ -8,9 +8,9 @@
       "task": "remove-history-and-legacy-qc-deletion"
     },
     "AC-001-b": {
-      "verifier": "scripts/eval-verifier.ps1",
+      "verifier": "scripts/eval/eval-verifier.ps1",
       "kind": "script",
-      "command": "pwsh scripts/eval-verifier.ps1 -Pattern 'HistoryManager|HistoryEntry|HistoryUpdatePayload|transcription_history|history_limit|recording_retention_period' -ExpectZero",
+      "command": "pwsh scripts/eval/eval-verifier.ps1 -Pattern 'HistoryManager|HistoryEntry|HistoryUpdatePayload|transcription_history|history_limit|recording_retention_period' -ExpectZero",
       "task": "remove-history-and-legacy-qc-deletion"
     },
     "AC-001-c": {
@@ -39,9 +39,9 @@
       "task": "remove-history-and-legacy-qc-advanced"
     },
     "AC-002-b": {
-      "verifier": "scripts/eval-verifier.ps1",
+      "verifier": "scripts/eval/eval-verifier.ps1",
       "kind": "script",
-      "command": "pwsh scripts/eval-verifier.ps1 -Pattern 'AdvancedSettings|sidebar\\.advanced|settings\\.advanced' -Path src -ExpectZero",
+      "command": "pwsh scripts/eval/eval-verifier.ps1 -Pattern 'AdvancedSettings|sidebar\\.advanced|settings\\.advanced' -Path src -ExpectZero",
       "task": "remove-history-and-legacy-qc-advanced"
     },
     "AC-002-c": {
@@ -63,9 +63,9 @@
       "task": "remove-history-and-legacy-qc-legacy"
     },
     "AC-003-b": {
-      "verifier": "scripts/eval-verifier.ps1",
+      "verifier": "scripts/eval/eval-verifier.ps1",
       "kind": "script",
-      "command": "pwsh scripts/eval-verifier.ps1 -Pattern 'ExperimentalToggle|ExperimentalSimplifyMode|experimental_enabled' -Path 'src;src-tauri/src' -ExpectZero",
+      "command": "pwsh scripts/eval/eval-verifier.ps1 -Pattern 'ExperimentalToggle|ExperimentalSimplifyMode|experimental_enabled' -Path 'src;src-tauri/src' -ExpectZero",
       "task": "remove-history-and-legacy-qc-legacy"
     },
     "AC-004-a": {
@@ -87,9 +87,9 @@
       "task": "remove-history-and-legacy-qc-i18n"
     },
     "AC-005-b": {
-      "verifier": "scripts/eval-verifier.ps1",
+      "verifier": "scripts/eval/eval-verifier.ps1",
       "kind": "script",
-      "command": "pwsh scripts/eval-verifier.ps1 -Pattern 'settings\\.advanced|settings\\.history|sidebar\\.advanced|sidebar\\.history|recordingRetention' -Path src -ExpectZero",
+      "command": "pwsh scripts/eval/eval-verifier.ps1 -Pattern 'settings\\.advanced|settings\\.history|sidebar\\.advanced|sidebar\\.history|recordingRetention' -Path src -ExpectZero",
       "task": "remove-history-and-legacy-qc-i18n"
     },
     "AC-006-a": {
@@ -119,15 +119,15 @@
       "task": "remove-history-and-legacy-qc-live"
     },
     "AC-006-c": {
-      "verifier": "scripts/eval-edit-quality.ps1",
+      "verifier": "scripts/eval/eval-edit-quality.ps1",
       "kind": "script",
-      "command": "pwsh scripts/eval-edit-quality.ps1",
+      "command": "pwsh scripts/eval/eval-edit-quality.ps1",
       "task": "remove-history-and-legacy-qc-live"
     },
     "AC-006-d": {
-      "verifier": "scripts/eval-audio-boundary.ps1",
+      "verifier": "scripts/eval/eval-audio-boundary.ps1",
       "kind": "script",
-      "command": "pwsh scripts/eval-audio-boundary.ps1",
+      "command": "pwsh scripts/eval/eval-audio-boundary.ps1",
       "task": "remove-history-and-legacy-qc-live"
     }
   }

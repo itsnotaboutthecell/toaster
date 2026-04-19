@@ -57,7 +57,7 @@
     "AC-003-b": {
       "verifier": "check-feature-coverage.ps1",
       "kind": "manual",
-      "command": "pwsh scripts/check-feature-coverage.ps1 -Feature export-loudness",
+      "command": "pwsh scripts/feature/check-feature-coverage.ps1 -Feature export-loudness",
       "task": "el-qc-filter-authority",
       "steps": [
         "Run: rg 'loudnorm=' src",
@@ -102,7 +102,7 @@
     "AC-006-a": {
       "verifier": "check-feature-coverage.ps1",
       "kind": "manual",
-      "command": "pwsh scripts/check-feature-coverage.ps1 -Feature export-loudness",
+      "command": "pwsh scripts/feature/check-feature-coverage.ps1 -Feature export-loudness",
       "task": "el-qc-backend-authority",
       "steps": [
         "Run: rg -n 'ebur128|integrated_lufs|truePeak|true_peak|LRA|lra' src",

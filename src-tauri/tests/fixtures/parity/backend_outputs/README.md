@@ -5,7 +5,7 @@ Layout: `backend_outputs/<backend>/<fixture_stem>.result.json`
 Each file is a `NormalizedTranscriptionResult` (see
 `src-tauri/src/managers/transcription/adapter.rs`) captured from a real
 run of `<backend>` against `<fixture_stem>.wav`. The parity runner
-(`scripts/eval-multi-backend-parity.ps1`) consumes these to compute
+(`scripts/eval/eval-multi-backend-parity.ps1`) consumes these to compute
 per-backend boundary error vs the oracle and cross-backend parity.
 
 If no result file exists for a (backend, fixture) pair, the runner logs

@@ -90,7 +90,7 @@ recommended workflow is:
 
 ```powershell
 # Pick a roadmap item, e.g. 1.3 loudness-preflight
-pwsh scripts/scaffold-feature.ps1 -Slug loudness-preflight -Worktree
+pwsh scripts/feature/scaffold-feature.ps1 -Slug loudness-preflight -Worktree
 
 # Then invoke the PM agent (via the feature-pm skill) with a brief
 # that points back at this map:
@@ -116,7 +116,7 @@ features/product-map-v1/PRD.md     <-- this bundle
         |
         | (human picks a roadmap item)
         v
-scripts/scaffold-feature.ps1       <-- creates features/<roadmap-slug>/
+scripts/feature/scaffold-feature.ps1       <-- creates features/<roadmap-slug>/
         |
         v
 feature-pm skill (product-manager) <-- 8-phase loop, scoped to ONE item
@@ -146,4 +146,4 @@ the roadmap item must wait until the in-flight bundle reaches
 | Human resolves §8 open questions inconsistently between roadmap items | Each subsequent bundle must cite the §8 Q# it relies on; cross-bundle conflicts surface at `feature-board.ps1` review | Per-bundle PRD will inherit |
 | FFmpeg item complexity estimate is wrong | S/M/L is a hint, not a contract; each scaffolded bundle re-estimates | Per-bundle PRD will inherit |
 | Roadmap proposes a Handy-era extension by accident | Anti-scope §7 cites `handy-legacy-pruning`; PM agent must invoke that skill before scaffolding any roadmap item that touches a Handy file | AC-006-a |
-| Coverage gate is bypassed | `scripts/check-feature-coverage.ps1 -All` runs in CI per `AGENTS.md:274` | n/a (CI gate) |
+| Coverage gate is bypassed | `scripts/feature/check-feature-coverage.ps1 -All` runs in CI per `AGENTS.md:274` | n/a (CI gate) |

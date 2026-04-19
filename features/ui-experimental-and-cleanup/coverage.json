@@ -36,7 +36,7 @@
     "AC-001-d": {
       "verifier": "check-feature-coverage.ps1",
       "kind": "manual",
-      "command": "pwsh scripts/check-feature-coverage.ps1 -Feature ui-experimental-and-cleanup",
+      "command": "pwsh scripts/feature/check-feature-coverage.ps1 -Feature ui-experimental-and-cleanup",
       "task": "uec-qc-experimental",
       "steps": [
         "Open src/lib/experiments.ts and confirm it exports a readonly array of Experiment objects with the type { id, settingsKey, labelKey, descriptionKey, feedbackUrl }.",
@@ -83,7 +83,7 @@
     "AC-003-b": {
       "verifier": "check-feature-coverage.ps1",
       "kind": "manual",
-      "command": "pwsh scripts/check-feature-coverage.ps1 -Feature ui-experimental-and-cleanup",
+      "command": "pwsh scripts/feature/check-feature-coverage.ps1 -Feature ui-experimental-and-cleanup",
       "task": "uec-qc-apple-purge",
       "steps": [
         "Run: rg -n 'check_apple_intelligence_available|APPLE_INTELLIGENCE_PROVIDER_ID|APPLE_PROVIDER_ID|apple_intelligence|appleIntelligence' src src-tauri",

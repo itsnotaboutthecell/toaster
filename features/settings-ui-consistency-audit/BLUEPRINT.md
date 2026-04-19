@@ -6,7 +6,7 @@
 bun run build (dev server on :1420)
     │
     ▼
-scripts/audit-settings-ui.ps1  ── invokes ──▶  playwright test tests/settingsUIAudit.spec.ts
+scripts/migrate/audit-settings-ui.ps1  ── invokes ──▶  playwright test tests/settingsUIAudit.spec.ts
     │                                                      │
     │                                                      │ emits JSON via custom reporter
     │                                                      ▼
@@ -28,7 +28,7 @@ Per AGENTS.md "Single source of truth for dual-path logic":
 | Route list          | `tests/settingsUIAudit.spec.ts` (const `ROUTES`)    | audit spec           |
 | Viewport list       | `tests/settingsUIAudit.spec.ts` (const `VIEWPORTS`) | audit spec           |
 | Severity classifier | `tests/settingsUIAudit.spec.ts`                     | report writer        |
-| Report schema       | `scripts/audit-settings-ui.ps1`                     | wrapper (validation) |
+| Report schema       | `scripts/migrate/audit-settings-ui.ps1`                     | wrapper (validation) |
 
 Audit attributes (`data-testid`, `data-setting-role`) live on existing
 UI primitives (`SettingContainer`, `CaptionPreviewPane`) — they are the

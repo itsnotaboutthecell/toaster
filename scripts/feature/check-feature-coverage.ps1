@@ -29,8 +29,8 @@
     Validate every feature under features/. Useful in CI.
 
 .EXAMPLE
-    pwsh scripts/check-feature-coverage.ps1 -Feature notification-center
-    pwsh scripts/check-feature-coverage.ps1 -All
+    pwsh scripts/feature/check-feature-coverage.ps1 -Feature notification-center
+    pwsh scripts/feature/check-feature-coverage.ps1 -All
 #>
 
 [CmdletBinding(DefaultParameterSetName = 'Single')]

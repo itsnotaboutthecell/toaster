@@ -67,7 +67,7 @@ substantive. See PRD §AC list.
 
 ## 5. Edge Cases & Constraints
 
-- Coverage gate (`scripts/check-feature-coverage.ps1`) requires every
+- Coverage gate (`scripts/feature/check-feature-coverage.ps1`) requires every
   `AC-NNN-x` to map to a real verifier; planning artifacts must use
   `manual` verifiers with concrete `steps` arrays.
 - Must not add an AGENTS.md duplicate or drift; cite, do not copy.

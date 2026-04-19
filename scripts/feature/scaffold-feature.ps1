@@ -25,9 +25,9 @@
     exits with an error if the directory already exists.
 
 .EXAMPLE
-    pwsh scripts/scaffold-feature.ps1 -Slug notification-center
-    pwsh scripts/scaffold-feature.ps1 -Slug caption-export-v2 -Worktree
-    pwsh scripts/scaffold-feature.ps1 -Slug caption-export-v2 -Force
+    pwsh scripts/feature/scaffold-feature.ps1 -Slug notification-center
+    pwsh scripts/feature/scaffold-feature.ps1 -Slug caption-export-v2 -Worktree
+    pwsh scripts/feature/scaffold-feature.ps1 -Slug caption-export-v2 -Force
 #>
 
 [CmdletBinding()]

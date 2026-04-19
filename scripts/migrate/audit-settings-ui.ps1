@@ -27,8 +27,8 @@
     dev server is guaranteed started by the job runner.
 
 .EXAMPLE
-    pwsh scripts/audit-settings-ui.ps1
-    pwsh scripts/audit-settings-ui.ps1 -Ac AC-004-a -SkipDevServerCheck
+    pwsh scripts/migrate/audit-settings-ui.ps1
+    pwsh scripts/migrate/audit-settings-ui.ps1 -Ac AC-004-a -SkipDevServerCheck
 #>
 [CmdletBinding()]
 param(

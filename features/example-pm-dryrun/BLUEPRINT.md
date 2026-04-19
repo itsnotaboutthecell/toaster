@@ -20,8 +20,8 @@ n/a — no preview/export concern. This is documentation.
 
 ```
 contributor -> reads features/example-pm-dryrun/*
-            -> runs scripts/feature-board.ps1
-            -> runs scripts/check-feature-coverage.ps1 -Feature example-pm-dryrun
+            -> runs scripts/feature/feature-board.ps1
+            -> runs scripts/feature/check-feature-coverage.ps1 -Feature example-pm-dryrun
             -> copies layout to features/<their-slug>/
 ```
 

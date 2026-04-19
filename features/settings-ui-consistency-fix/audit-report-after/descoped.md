@@ -25,7 +25,7 @@ to:
    `audit-report/audit.json`.
 2. For each, add an i18n key pair (label + description) and wire it
    into the corresponding `SettingContainer`.
-3. Re-run `scripts/audit-settings-ui.ps1` targeting the same report
+3. Re-run `scripts/migrate/audit-settings-ui.ps1` targeting the same report
    path; this bundle's `coverage.json` is the template.
 
 Until that bundle lands, this feature is considered complete with

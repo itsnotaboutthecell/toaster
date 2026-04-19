@@ -40,10 +40,8 @@ Cover all six domains on every run. Do not skip domains; mark them "clean" if no
 
 - Compare every guardrail / launch-protocol / convention statement across:
   - `AGENTS.md`
-  - `CLAUDE.md`
   - `.github/copilot-instructions.md`
-  - `CRUSH.md`
-  - `README.md` / `docs/build.md` / `PRD.md` (where overlap occurs)
+  - `README.md` / `docs/build.md` / `docs/PRD.md` (where overlap occurs)
 - Flag every contradiction with file:line references from both sides.
 
 ### 4. Dependency bloat

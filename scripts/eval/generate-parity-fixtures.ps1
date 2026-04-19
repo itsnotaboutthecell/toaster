@@ -161,7 +161,7 @@ function New-Fixture {
                 'would produce on real speech, so the oracle is safe to use',
                 'as the parity gate reference for these synthetic fixtures.'
             ) -join ' '
-            oracle_invocation       = 'scripts/generate-parity-fixtures.ps1'
+            oracle_invocation       = 'scripts/eval/generate-parity-fixtures.ps1'
             preferred_real_speech_oracle = [ordered]@{
                 primary   = 'Gentle (MIT) via Docker: lowerquality/gentle --nthreads=1 --conservative'
                 secondary = 'whisper.cpp with --max-len 1 once authoritative-timings lands'
@@ -193,7 +193,7 @@ Layout: ``backend_outputs/<backend>/<fixture_stem>.result.json``
 Each file is a ``NormalizedTranscriptionResult`` (see
 ``src-tauri/src/managers/transcription/adapter.rs``) captured from a real
 run of ``<backend>`` against ``<fixture_stem>.wav``. The parity runner
-(``scripts/eval-multi-backend-parity.ps1``) consumes these to compute
+(``scripts/eval/eval-multi-backend-parity.ps1``) consumes these to compute
 per-backend boundary error vs the oracle and cross-backend parity.
 
 If no result file exists for a (backend, fixture) pair, the runner logs

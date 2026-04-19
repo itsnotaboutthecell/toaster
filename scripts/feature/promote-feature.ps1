@@ -4,7 +4,7 @@
     coverage gate.
 
 .DESCRIPTION
-    Runs scripts/check-feature-coverage.ps1 for the given feature slug.
+    Runs scripts/feature/check-feature-coverage.ps1 for the given feature slug.
     If it exits 0, updates STATE.md to "planned" and appends a
     timestamped "## Plan complete" entry to journal.md.
 
@@ -15,7 +15,7 @@
     Feature slug.  Resolves to features/<slug>/.
 
 .EXAMPLE
-    pwsh scripts/promote-feature.ps1 -Slug notification-center
+    pwsh scripts/feature/promote-feature.ps1 -Slug notification-center
 #>
 
 [CmdletBinding()]

@@ -22,7 +22,7 @@
     "AC-002-b": {
       "verifier": "audit-unified-model-catalog",
       "kind": "script",
-      "command": "pwsh scripts/audit-unified-model-catalog.ps1 -Check deleted",
+      "command": "pwsh scripts/migrate/audit-unified-model-catalog.ps1 -Check deleted",
       "task": "umc-delete-llm-catalog"
     },
     "AC-003-a": {
@@ -40,7 +40,7 @@
     "AC-004-a": {
       "verifier": "audit-unified-model-catalog",
       "kind": "script",
-      "command": "pwsh scripts/audit-unified-model-catalog.ps1 -Check no-llm-dl",
+      "command": "pwsh scripts/migrate/audit-unified-model-catalog.ps1 -Check no-llm-dl",
       "task": "umc-download-unify"
     },
     "AC-004-b": {
@@ -52,7 +52,7 @@
     "AC-005-a": {
       "verifier": "audit-unified-model-catalog",
       "kind": "script",
-      "command": "pwsh scripts/audit-unified-model-catalog.ps1 -Check single-ev",
+      "command": "pwsh scripts/migrate/audit-unified-model-catalog.ps1 -Check single-ev",
       "task": "umc-event-unify"
     },
     "AC-005-b": {
@@ -78,7 +78,7 @@
     "AC-006-b": {
       "verifier": "build-unified-model-bindings",
       "kind": "script",
-      "command": "pwsh scripts/build-unified-model-bindings.ps1",
+      "command": "pwsh scripts/migrate/build-unified-model-bindings.ps1",
       "task": "umc-command-unify"
     },
     "AC-007-a": {
@@ -119,7 +119,7 @@
     "AC-008-a": {
       "verifier": "audit-unified-model-catalog",
       "kind": "script",
-      "command": "pwsh scripts/audit-unified-model-catalog.ps1 -Check shim-ui",
+      "command": "pwsh scripts/migrate/audit-unified-model-catalog.ps1 -Check shim-ui",
       "task": "umc-post-process-embed"
     },
     "AC-008-b": {

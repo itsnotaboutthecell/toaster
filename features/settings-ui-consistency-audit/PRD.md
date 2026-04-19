@@ -120,7 +120,7 @@ artefacts, `data-testid` decoration on `SettingContainer` and
     `features/settings-ui-consistency-audit/audit-report/audit.md`
     emitted with a summary table (violations per page × severity) and
     per-page subsections embedding the screenshot paths.
-  - AC-006-c — `scripts/audit-settings-ui.ps1` exits 0 when no
+  - AC-006-c — `scripts/migrate/audit-settings-ui.ps1` exits 0 when no
     `critical` violations, exits 1 otherwise. Non-critical (`major`,
     `minor`) do not fail the script — they go in the report for
     triage.

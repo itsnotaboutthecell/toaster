@@ -39,43 +39,28 @@ user asks for:
 
 ## How to invoke
 
-**Do NOT use `agent_type: product-manager` with the `task` tool.** That
-agent type is registered in this CLI environment with a `view`-only tool
-restriction that makes file creation impossible — the agent will narrate
-file contents back instead of writing them (known failure mode, six
-documented occurrences before the fix below).
+In VS Code Copilot Chat, invoke the `@product-manager` agent directly:
 
-Invoke via `general-purpose` with the product-manager role spec inlined
-as the prompt prefix:
-
-```text
-task(
-  agent_type="general-purpose",
-  name="pm-<slug>",
-  mode="background",
-  prompt="""You are acting as the Toaster Product Manager agent. Your
-role specification lives at `.github/agents/product-manager.md` — read
-it fully before starting, then follow it (RULE 0, Startup ritual, 8
-phases, Hand-off self-check).
-
-TASK: <user's feature request, plus slug, plus any fixed inputs>.
-"""
-)
+```
+@product-manager <user's feature request, plus slug, plus any fixed inputs>
 ```
 
-This gives the subagent the full toolset (`create`, `edit`, `view`,
-`powershell`, `grep`, `glob`) so RULE 0 is actually satisfiable.
+The agent is defined at `.github/agents/product-manager.agent.md` and has
+the tools and model it needs. It will read its own role spec on startup
+(RULE 0, Startup ritual, 8 phases, Hand-off self-check).
 
-After the agent completes, the controller MUST verify on disk
-(`Get-ChildItem features/<slug>`) regardless of what the agent reports,
-and rerun `check-feature-coverage.ps1` + `check-feature-tasks.ps1` to
-confirm the gates.
+After the agent completes, verify on disk (`ls features/<slug>/`) and rerun
+the promotion gates:
+
+```bash
+pwsh scripts/feature/check-feature-coverage.ps1 -Feature <slug>
+pwsh scripts/feature/check-feature-tasks.ps1 -Feature <slug>
+```
 
 Expected outcome:
 - `features/<slug>/` with REQUEST, PRD, BLUEPRINT, tasks.sql,
   coverage.json, journal.md, and per-task context briefings.
-- `scripts/check-feature-coverage.ps1 -Feature <slug>` exits 0.
-- `scripts/check-feature-tasks.ps1 -Feature <slug>` exits 0.
+- Both gate scripts exit 0.
 - `features/<slug>/STATE.md` set to `planned`.
 - Hand off to `superpowers:executing-plans` or
    superpowers:subagent-driven-development for implementation.
@@ -91,10 +76,10 @@ Every `AC-NNN-x` in `features/<slug>/PRD.md` must appear as a key in
 | `skill`      | `transcript-precision-eval`, `audio-boundary-eval` |
 | `agent`      | `eval-harness-runner`, `cut-drift-fuzzer`, `waveform-diff` |
 | `cargo-test` | `cd src-tauri; cargo test <name>`              |
-| `script`     | `pwsh scripts/eval-edit-quality.ps1 ...`       |
+| `script`     | `pwsh scripts/eval/eval-edit-quality.ps1 ...`       |
 | `manual`     | `.\scripts\launch-toaster-monitored.ps1` + numbered steps |
 
-`scripts/check-feature-coverage.ps1` enforces this and is wired into CI.
+`scripts/feature/check-feature-coverage.ps1` enforces this and is wired into CI.
 
 ## State machine
 
@@ -108,7 +93,7 @@ Every `AC-NNN-x` in `features/<slug>/PRD.md` must appear as a key in
 - `shipped`   - merged to main.
 - `archived`  - soft-deleted; restorable.
 
-`scripts/feature-board.ps1` reads every `STATE.md` and prints a 6-lane
+`scripts/feature/feature-board.ps1` reads every `STATE.md` and prints a 6-lane
 terminal Kanban. State transitions are made by the relevant skill/agent, not
 by hand.
 
@@ -128,7 +113,7 @@ by hand.
 
 ## Related
 
-- `.github/agents/product-manager.md` - the agent this skill invokes.
+- `.github/agents/product-manager.agent.md` - the agent this skill invokes.
 - `superpowers:brainstorming` - run first if requirements are unclear.
 - `superpowers:writing-plans` - the PM agent's "tasks" phase replaces this
   for full features but the breakdown style (2-5 minute tasks, dep order)

@@ -429,6 +429,7 @@ pub fn download_failed_payload(model_id: &str, error: &str) -> serde_json::Value
 
 // Re-export for test consumers.
 #[cfg(test)]
+#[allow(unused_imports)]
 pub(crate) use inference::MockBackend;
 
 // Needed because the `lock_recovery` helper is internal to the crate.

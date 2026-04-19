@@ -29,7 +29,7 @@ See [features/advanced-menu-restoration/journal.md](../features/advanced-menu-re
 ## Layout invariants
 
 The settings UI is held to four machine-enforced layout invariants, audited by
-`tests/settingsUIAudit.spec.ts` and driven via `scripts/audit-settings-ui.ps1`:
+`tests/settingsUIAudit.spec.ts` and driven via `scripts/migrate/audit-settings-ui.ps1`:
 
 1. **Outer padding.** Every settings page's outer container matches the
    canonical pattern used by `AboutSettings` (`max-w-5xl w-full mx-auto`

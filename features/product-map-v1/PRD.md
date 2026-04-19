@@ -188,14 +188,14 @@ README/AGENTS/settings labels.
 | Capability | Source of truth | State | User-facing surface |
 |---|---|---|---|
 | Windows monitored launcher | `scripts/launch-toaster-monitored.ps1` | shipped | Dev only |
-| Windows env preflight (`Platform`, `CMAKE_GENERATOR_*` strip) | `scripts/setup-env.ps1`, `scripts/check-cmake-ninja-env.ps1` (per `build-env-ninja-hardening` planned) | partial | Dev only |
-| `whisper-rs-sys` cache wipe helper | `scripts/clean-whisper-cache.ps1` | shipped | Dev only |
-| Eval harness orchestrator | `scripts/run-eval-harness.ps1` + `eval-harness-runner` agent | shipped | CI |
-| Precision / boundary / parity evals | `scripts/eval-edit-quality.ps1`, `eval-audio-boundary.ps1`, `eval-multi-backend-parity.ps1` | shipped | CI / agents |
-| Cleanup / disfluency / captions verifier scripts | `scripts/eval-verifier-*.ps1` | shipped | CI / agents |
-| Local LLM rollout gate | `scripts/run-local-llm-eval-gate.ps1` | shipped (undocumented in README) | Dev only |
-| Feature board (terminal Kanban over `STATE.md`) | `scripts/feature-board.ps1` | shipped | Dev only |
-| Coverage gate | `scripts/check-feature-coverage.ps1` | shipped | CI |
+| Windows env preflight (`Platform`, `CMAKE_GENERATOR_*` strip) | `scripts/setup-env.ps1`, `scripts/migrate/check-cmake-ninja-env.ps1` (per `build-env-ninja-hardening` planned) | partial | Dev only |
+| `whisper-rs-sys` cache wipe helper | `scripts/dev/clean-whisper-cache.ps1` | shipped | Dev only |
+| Eval harness orchestrator | `scripts/eval/run-eval-harness.ps1` + `eval-harness-runner` agent | shipped | CI |
+| Precision / boundary / parity evals | `scripts/eval/eval-edit-quality.ps1`, `eval-audio-boundary.ps1`, `eval-multi-backend-parity.ps1` | shipped | CI / agents |
+| Cleanup / disfluency / captions verifier scripts | `scripts/eval/eval-verifier-*.ps1` | shipped | CI / agents |
+| Local LLM rollout gate | `scripts/eval/run-local-llm-eval-gate.ps1` | shipped (undocumented in README) | Dev only |
+| Feature board (terminal Kanban over `STATE.md`) | `scripts/feature/feature-board.ps1` | shipped | Dev only |
+| Coverage gate | `scripts/feature/check-feature-coverage.ps1` | shipped | CI |
 | Translation parity gate | `scripts/check-translations.ts` | shipped | CI |
 | Nix flake / module variants | `flake.nix`, `nix/`, `.nix/` | partial | Linux power users; no docs in README |
 | Code-signed Windows installer | `tauri.conf.json signCommand=""` (`docs/build.md:138-150`) | missing | Unsigned → SmartScreen warning |
@@ -280,11 +280,11 @@ roadmap items, not bugs to silently fix.
     `--start-hidden` and `--debug`. Not in README; only honored when
     the binary is invoked directly (not via `cargo tauri dev`).
 
-12. **`scripts/run-local-llm-eval-gate.ps1`** documented in
+12. **`scripts/eval/run-local-llm-eval-gate.ps1`** documented in
     `docs/build.md:84-103` but not linked from README; new
     contributors will not discover it.
 
-13. **`scripts/dump-debug-state.ps1` / `dump-caption-style.ps1`** —
+13. **`scripts/dev/dump-debug-state.ps1` / `dump-caption-style.ps1`** —
     AGENTS.md mentions them, README does not.
 
 14. **Portable mode** — `src-tauri/src/portable.rs`. Mentioned in
@@ -436,7 +436,7 @@ discovery call; the human can override in §8.
 
 Sequence within each milestone is the suggested execution order; each
 roadmap item will be re-scaffolded as its own `features/<slug>/`
-bundle by the human via `pwsh scripts/scaffold-feature.ps1 -Slug
+bundle by the human via `pwsh scripts/feature/scaffold-feature.ps1 -Slug
 <slug>` then `feature-pm`.
 
 ### Milestone 1 — Foundation (clean house, fix asymmetries)
@@ -450,7 +450,7 @@ F1, F3, F4c.
 | 1.2 | `caption-settings-handlers` | Add backend command handlers for the 5 caption styling keys; resolve the asymmetry between caption settings that have dedicated commands and the 5 that don't. Re-checks dual-path SST. |
 | 1.3 | `loudness-preflight` | Wire `splice::loudness::measure_loudness` (`loudness.rs:40`) into export preflight; surface a "Normalize loudness" toggle with a preflight readout (current LUFS, target LUFS, true-peak). |
 | 1.4 | `audio-only-export` | mp3 / wav / m4a / opus presets in the export dialog; reuse current audio filter chain, drop `:v` stream. |
-| 1.5 | `caption-parity-eval` | Standing eval (`scripts/eval-verifier-captions.ps1` extension) that asserts preview-rendered caption block geometry equals ASS-burn output to within 1 px / 1 frame. Catches the next caption regression before it ships. |
+| 1.5 | `caption-parity-eval` | Standing eval (`scripts/eval/eval-verifier-captions.ps1` extension) that asserts preview-rendered caption block geometry equals ASS-burn output to within 1 px / 1 frame. Catches the next caption regression before it ships. |
 
 **Exit criteria:**
 - All §3 items 4-6 and 9 (orphan UI / namespace) are either gone or
@@ -586,7 +586,7 @@ them.
    bundle uses `manual` verifiers that point back at the PRD. The
    gate accepts that, but it conflates "the doc says what it
    should" with real verification. Should
-   `scripts/check-feature-coverage.ps1` learn a `kind: doc-section`
+   `scripts/feature/check-feature-coverage.ps1` learn a `kind: doc-section`
    or `--planning-only` mode? Documented in `journal.md` as a
    proposed amendment, not made.
 

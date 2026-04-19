@@ -5,8 +5,8 @@
 - AGENTS.md "Skills and agents" enumerates 7 local skills + 5 local agents;
   this bundle adds neither, only an example consumed by `feature-pm`.
 - No Handy-era surface implicated.
-- Verifier surface: `scripts/check-feature-coverage.ps1` (new) and
-  `scripts/feature-board.ps1` (new).
+- Verifier surface: `scripts/feature/check-feature-coverage.ps1` (new) and
+  `scripts/feature/feature-board.ps1` (new).
 
 ## Plan complete
 

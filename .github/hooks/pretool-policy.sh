@@ -86,7 +86,7 @@ if [ "$tool_name" = "create" ]; then
     root_norm="${repo_root%/}"
     if [ "$parent_norm" = "$root_norm" ] && printf '%s' "$leaf" | grep -qE '\.md$'; then
       case "$leaf" in
-        AGENTS.md|CLAUDE.md|CRUSH.md|CONTRIBUTING.md|CONTRIBUTING_TRANSLATIONS.md|README.md|SECURITY.md|PRD.md)
+        AGENTS.md|CONTRIBUTING.md|CONTRIBUTING_TRANSLATIONS.md|README.md|SECURITY.md)
           ;;
         *)
           if [ "${COPILOT_ALLOW_ROOT_MARKDOWN:-}" != "1" ]; then

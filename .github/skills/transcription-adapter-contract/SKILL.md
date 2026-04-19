@@ -77,18 +77,18 @@ struct CanonicalWord {
 
 ```powershell
 # Full runner — JSON + markdown under eval/output/multi-backend-parity/<ts>/
-pwsh -NoProfile -File scripts/eval-multi-backend-parity.ps1
+pwsh -NoProfile -File scripts/eval/eval-multi-backend-parity.ps1
 
 # One fixture only
-pwsh -NoProfile -File scripts/eval-multi-backend-parity.ps1 -Fixture phrase_alpha
+pwsh -NoProfile -File scripts/eval/eval-multi-backend-parity.ps1 -Fixture phrase_alpha
 
 # Negative tests — prove the gates fire on known-bad adapter shapes
-pwsh -NoProfile -File scripts/eval-multi-backend-parity.ps1 -ForceRegression equal-duration
-pwsh -NoProfile -File scripts/eval-multi-backend-parity.ps1 -ForceRegression pre-speech-padding
-pwsh -NoProfile -File scripts/eval-multi-backend-parity.ps1 -ForceRegression authoritative-lie
+pwsh -NoProfile -File scripts/eval/eval-multi-backend-parity.ps1 -ForceRegression equal-duration
+pwsh -NoProfile -File scripts/eval/eval-multi-backend-parity.ps1 -ForceRegression pre-speech-padding
+pwsh -NoProfile -File scripts/eval/eval-multi-backend-parity.ps1 -ForceRegression authoritative-lie
 
 # CI mode — missing backend outputs promote from skip to fail
-pwsh -NoProfile -File scripts/eval-multi-backend-parity.ps1 -StrictMode
+pwsh -NoProfile -File scripts/eval/eval-multi-backend-parity.ps1 -StrictMode
 
 # Rust-side CI entry (same thresholds, cargo-native)
 cd src-tauri && cargo test --test precision_eval_multi_backend
@@ -127,7 +127,7 @@ A backend adapter change must re-cache these from a real adapter run
 before the gate is meaningful. Fixtures without a backend result are
 logged as `skip`; in `-StrictMode` skip promotes to fail (CI behavior).
 
-Regenerate fixtures: `pwsh -NoProfile -File scripts/generate-parity-fixtures.ps1`.
+Regenerate fixtures: `pwsh -NoProfile -File scripts/eval/generate-parity-fixtures.ps1`.
 
 
 ## Red Flags — STOP
@@ -144,7 +144,7 @@ Regenerate fixtures: `pwsh -NoProfile -File scripts/generate-parity-fixtures.ps1
 - `transcript-precision-eval` — the round-trip test above runs it; this skill assumes its gates exist.
 - `audio-boundary-eval` — a backend that jitters word ends by even a few milliseconds can push seams into click territory; both must pass.
 - `dep-hygiene` — new backends usually come with new crates; justify them.
-- `multi-backend-parity` (runner `scripts/eval-multi-backend-parity.ps1` +
+- `multi-backend-parity` (runner `scripts/eval/eval-multi-backend-parity.ps1` +
   `src-tauri/tests/precision_eval_multi_backend.rs`) is owned by this skill;
   invoke it whenever an adapter changes.
 

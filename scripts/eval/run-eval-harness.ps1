@@ -8,8 +8,8 @@
     agent (see .github/agents/eval-harness-runner.md):
 
       1. Rust precision eval        -> cargo test precision_eval
-      2. Audio-boundary eval         -> scripts/eval-audio-boundary.ps1
-      3. Export parity eval          -> scripts/eval-edit-quality.ps1
+      2. Audio-boundary eval         -> scripts/eval/eval-audio-boundary.ps1
+      3. Export parity eval          -> scripts/eval/eval-edit-quality.ps1
 
     Evals that require running app state or fixtures that are not yet
     available are reported as status="skip" with a reason, NOT silently
@@ -109,7 +109,7 @@ if ($SkipAudioBoundary.IsPresent) {
     $boundaryNotes = 'eval-audio-boundary.ps1 not present'
 } elseif (-not (Test-Path $boundaryFixturesRoot)) {
     $boundaryStatus = 'skip'
-    $boundaryNotes = 'boundary fixtures not present; run scripts/generate-boundary-fixtures.ps1'
+    $boundaryNotes = 'boundary fixtures not present; run scripts/eval/generate-boundary-fixtures.ps1'
 } else {
     try {
         & pwsh -NoProfile -File $boundaryScript | Out-Null
@@ -123,7 +123,7 @@ if ($SkipAudioBoundary.IsPresent) {
 $sw.Stop()
 $evals += New-EvalEntry `
     -Name 'audio_boundary' `
-    -Command 'scripts/eval-audio-boundary.ps1' `
+    -Command 'scripts/eval/eval-audio-boundary.ps1' `
     -Status $boundaryStatus `
     -DurationS ($sw.Elapsed.TotalSeconds) `
     -Details $boundaryDetails `
@@ -180,7 +180,7 @@ if ($SkipExportParity.IsPresent) {
 $sw.Stop()
 $evals += New-EvalEntry `
     -Name 'export_parity' `
-    -Command 'scripts/eval-edit-quality.ps1' `
+    -Command 'scripts/eval/eval-edit-quality.ps1' `
     -Status $exportStatus `
     -DurationS ($sw.Elapsed.TotalSeconds) `
     -Details $exportDetails `

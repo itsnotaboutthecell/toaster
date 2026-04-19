@@ -30,7 +30,7 @@ concrete findings.
 
 ## 2. Desired Outcome & Acceptance Criteria
 
-- `scripts/audit-settings-ui.ps1` examines all 5 settings routes (About,
+- `scripts/migrate/audit-settings-ui.ps1` examines all 5 settings routes (About,
   Models, Post-Process, Advanced, Editor-adjacent captions tab) at both
   desktop (1280x800) and mobile-portrait (390x844) viewports.
 - For each page it asserts:
@@ -59,7 +59,7 @@ See `PRD.md` for the formalised ACs.
 
 - New Playwright spec `tests/settingsUIAudit.spec.ts` covering the rules
   above.
-- New PowerShell wrapper `scripts/audit-settings-ui.ps1` that launches
+- New PowerShell wrapper `scripts/migrate/audit-settings-ui.ps1` that launches
   the spec, post-processes the Playwright JSON reporter output, and
   writes `audit.json` + `audit.md`.
 - Extending `SettingContainer` and `CaptionPreviewPane` with

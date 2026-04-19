@@ -9,7 +9,7 @@
     (local-models/LlmModelCatalog.tsx deleted or <= 40 lines).
 
     Planned until the unified-model-catalog feature is executed.
-    Exits 2 so `scripts/check-feature-coverage.ps1` can validate the
+    Exits 2 so `scripts/feature/check-feature-coverage.ps1` can validate the
     script path exists without pretending the audit is green.
 
 .PARAMETER Check

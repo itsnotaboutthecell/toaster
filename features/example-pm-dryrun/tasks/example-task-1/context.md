@@ -20,7 +20,7 @@ R-001 and R-002.
 ## Files to read first
 
 - `.github/agents/product-manager.md` (Phase 8 — defines the file layout)
-- `scripts/check-feature-coverage.ps1` (the gate)
+- `scripts/feature/check-feature-coverage.ps1` (the gate)
 
 ## Files to write
 
@@ -35,7 +35,7 @@ R-001 and R-002.
 ## Verifier (from coverage.json)
 
 ```
-pwsh scripts/check-feature-coverage.ps1 -Feature example-pm-dryrun
+pwsh scripts/feature/check-feature-coverage.ps1 -Feature example-pm-dryrun
 ```
 
 Expect exit code 0.

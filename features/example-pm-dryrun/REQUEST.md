@@ -2,7 +2,7 @@
 
 > Reference example illustrating the six-element REQUEST format consumed by
 > `.github/agents/product-manager.md`. Not a real feature; do not execute.
-> Lives at state `defined` so `scripts/feature-board.ps1` shows it in the
+> Lives at state `defined` so `scripts/feature/feature-board.ps1` shows it in the
 > first lane.
 
 ## 1. Problem & Goals
@@ -13,14 +13,14 @@ BLUEPRINT + tasks.sql + coverage.json) makes the feature-pm skill
 self-documenting.
 
 **Goal:** ship a checked-in example feature directory that
-`scripts/check-feature-coverage.ps1 -All` accepts, so contributors can copy
+`scripts/feature/check-feature-coverage.ps1 -All` accepts, so contributors can copy
 the structure for real features.
 
 ## 2. Desired Outcome & Acceptance Criteria
 
-When a contributor runs `pwsh scripts/feature-board.ps1`, they see this
+When a contributor runs `pwsh scripts/feature/feature-board.ps1`, they see this
 feature in the `defined` lane with its short title.
-When they run `pwsh scripts/check-feature-coverage.ps1 -Feature example-pm-dryrun`,
+When they run `pwsh scripts/feature/check-feature-coverage.ps1 -Feature example-pm-dryrun`,
 the script exits 0.
 
 (See `PRD.md` for the formalised AC list.)
@@ -43,8 +43,8 @@ the script exits 0.
 
 - `.github/agents/product-manager.md` — the agent that consumes this format.
 - `.github/skills/feature-pm/SKILL.md` — the skill that invokes the agent.
-- `scripts/check-feature-coverage.ps1` — the gate that this example must pass.
-- `scripts/feature-board.ps1` — the terminal Kanban that surfaces this lane.
+- `scripts/feature/check-feature-coverage.ps1` — the gate that this example must pass.
+- `scripts/feature/feature-board.ps1` — the terminal Kanban that surfaces this lane.
 
 ## 5. Edge Cases & Constraints
 

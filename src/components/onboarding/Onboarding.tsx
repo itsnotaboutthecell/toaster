@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import type { ModelInfo } from "@/bindings";
 import type { ModelCardStatus } from "./ModelCard";
 import ModelCard from "./ModelCard";
-import toasterLogo from "../../../toaster_text.svg";
+import toasterLogo from "../../assets/toaster_text.svg";
 
 import { useModelStore } from "../../stores/modelStore";
 

@@ -9,8 +9,8 @@ for real features. See `REQUEST.md` for the full motivation.
 
 ### In scope
 - Static example artifacts under `features/example-pm-dryrun/`.
-- Inclusion in `scripts/check-feature-coverage.ps1 -All` and
-  `scripts/feature-board.ps1` output.
+- Inclusion in `scripts/feature/check-feature-coverage.ps1 -All` and
+  `scripts/feature/feature-board.ps1` output.
 
 ### Out of scope (explicit)
 - Production code edits.
@@ -26,7 +26,7 @@ for real features. See `REQUEST.md` for the full motivation.
 - Rationale: a contributor cloning the structure must see a green example.
 - Acceptance Criteria
   - AC-001-a — `features/example-pm-dryrun/{STATE.md,REQUEST.md,PRD.md,BLUEPRINT.md,tasks.sql,coverage.json,journal.md}` all exist.
-  - AC-001-b — `pwsh scripts/check-feature-coverage.ps1 -Feature example-pm-dryrun` exits 0.
+  - AC-001-b — `pwsh scripts/feature/check-feature-coverage.ps1 -Feature example-pm-dryrun` exits 0.
 
 ### R-002 — Bundle remains inert
 

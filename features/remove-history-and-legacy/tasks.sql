@@ -30,7 +30,7 @@ INSERT INTO todos (id, title, description, status) VALUES
 
   ('remove-history-and-legacy-update-agents-md',
    'Update AGENTS.md repo-layout block',
-   'Edit AGENTS.md line ~71 to drop the managers/history/ entry. Re-verify the rest of the layout block still matches the actual managers/ tree. Single source of truth: do NOT mirror this change into CLAUDE.md, CRUSH.md, or .github/copilot-instructions.md (canonical-instructions skill).',
+   'Edit AGENTS.md line ~71 to drop the managers/history/ entry. Re-verify the rest of the layout block still matches the actual managers/ tree. Single source of truth: do NOT mirror this change into .github/copilot-instructions.md (canonical-instructions skill).',
    'pending'),
 
   ('remove-history-and-legacy-i18n-sweep',

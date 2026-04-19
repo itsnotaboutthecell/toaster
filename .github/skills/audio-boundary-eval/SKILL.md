@@ -26,25 +26,25 @@ description: 'Use on any PR that modifies managers/editor, commands/waveform, ex
 
 ## Runner
 
-Harness: **`scripts/eval-audio-boundary.ps1`** (owner: `p2-eval-bundle`).
+Harness: **[scripts/eval/eval-audio-boundary.ps1](../../../scripts/eval/eval-audio-boundary.ps1)** (owner: `p2-eval-bundle`).
 
 ```powershell
 # Run every fixture (CI-ready; non-zero exit on any failing gate).
-pwsh -NoProfile -File scripts/eval-audio-boundary.ps1
+pwsh -NoProfile -File scripts/eval/eval-audio-boundary.ps1
 
 # One fixture only.
-pwsh -NoProfile -File scripts/eval-audio-boundary.ps1 -Fixture phrase_01
+pwsh -NoProfile -File scripts/eval/eval-audio-boundary.ps1 -Fixture phrase_01
 
 # Negative test — swaps phrase_01_edited_leaky.wav in to prove gates fire.
-pwsh -NoProfile -File scripts/eval-audio-boundary.ps1 -Fixture phrase_01 -ForceLeaky
+pwsh -NoProfile -File scripts/eval/eval-audio-boundary.ps1 -Fixture phrase_01 -ForceLeaky
 ```
 
 Reports land at `eval/output/audio-boundary/<fixture>/<timestamp>/{report.json,report.md}`.
 
-Helper library: `scripts/lib/AudioBoundary.psm1`
+Helper library: [scripts/lib/AudioBoundary.psm1](../../../scripts/lib/AudioBoundary.psm1)
 (normalized cross-correlation, spectral-discontinuity z-score, WER, sample-boundary).
 
-Fixture generator: `scripts/generate-boundary-fixtures.ps1`
+Fixture generator: [scripts/eval/generate-boundary-fixtures.ps1](../../../scripts/eval/generate-boundary-fixtures.ps1)
 (deterministic synthetic tones — no TTS dep, no licensed audio).
 
 ### Gates implemented
@@ -78,7 +78,7 @@ Fixture generator: `scripts/generate-boundary-fixtures.ps1`
 - `eval/fixtures/toaster_example.mp4` and `eval/fixtures/toaster_example-edited.mp4` as source material.
 - `src-tauri/tests/fixtures/boundary/phrase_01.*` — synthetic 3-tone phrase with manifest, stems, clean edit, leaky edit, preview parity target, expected-transcript JSON.
 - `src-tauri/tests/fixtures/boundary/multicut_01.*` — 4-tone edge-to-edge fixture for ≥3-seam preview↔export parity (E3).
-- Regenerate on demand: `pwsh -NoProfile -File scripts/generate-boundary-fixtures.ps1`.
+- Regenerate on demand: `pwsh -NoProfile -File scripts/eval/generate-boundary-fixtures.ps1`. See [generate-boundary-fixtures.ps1](../../../scripts/eval/generate-boundary-fixtures.ps1).
 
 ## Gate Function
 

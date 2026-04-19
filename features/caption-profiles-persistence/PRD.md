@@ -80,9 +80,9 @@ New keys for Desktop / Mobile / Auto, profile tab labels, orientation radio, and
 
 ## R-011 — Static gates
 
-- AC-011-a — `pwsh scripts/gate-lint.ps1` exit 0.
-- AC-011-b — `pwsh scripts/gate-tsc.ps1` exit 0.
-- AC-011-c — `pwsh scripts/gate-cargo-check-lib.ps1` exit 0.
+- AC-011-a — `pwsh scripts/gate/gate-lint.ps1` exit 0.
+- AC-011-b — `pwsh scripts/gate/gate-tsc.ps1` exit 0.
+- AC-011-c — `pwsh scripts/gate/gate-cargo-check-lib.ps1` exit 0.
 - AC-011-d — `cargo test -p toaster --lib captions` exits 0 (all new caption tests).
 
 ## R-012 — Live-app smoke

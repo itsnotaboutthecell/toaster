@@ -193,10 +193,10 @@ in one coherent pass and proves the editor still works end-to-end.
     delete the third word in the transcript, press Cmd/Ctrl+Z, observe
     the word reappear; press Cmd/Ctrl+Y (or Cmd+Shift+Z), observe the
     word disappear again.
-  - AC-006-c — `pwsh scripts/eval-edit-quality.ps1` exits 0
+  - AC-006-c — `pwsh scripts/eval/eval-edit-quality.ps1` exits 0
     (regression gate that the editor's keep-segment + time-mapping
     logic still satisfies the precision invariants).
-  - AC-006-d — `pwsh scripts/eval-audio-boundary.ps1` exits 0
+  - AC-006-d — `pwsh scripts/eval/eval-audio-boundary.ps1` exits 0
     (regression gate that splice boundaries are unaffected).
 
 ## Edge cases & constraints
@@ -226,5 +226,5 @@ No additions. Removals tabulated in REQUEST.md section 6.
 - No file in the diff exceeds 800 lines (AGENTS.md cap).
 - All planning artifacts and code comments are ASCII; no smart quotes.
 - Single source of truth: nothing about the deletion is duplicated
-  into `CLAUDE.md`, `CRUSH.md`, or `.github/copilot-instructions.md`;
+  into `.github/copilot-instructions.md`;
   AGENTS.md is updated and the others remain pointer files.

@@ -66,7 +66,7 @@
 
 ### R-007 / R-008 — Gates
 
-- Re-run `scripts/audit-settings-ui.ps1` as the final machine gate.
+- Re-run `scripts/migrate/audit-settings-ui.ps1` as the final machine gate.
 - Run `bun run lint`, `bun run build`, `scripts/check-translations.ts`.
 - Live-app pass per `scripts/launch-toaster-monitored.ps1`.
 
@@ -106,5 +106,5 @@
 ## Dependencies & tooling
 
 - No new npm or cargo deps. `dep-hygiene` skill applies before adding any.
-- Existing Playwright + the `scripts/audit-settings-ui.ps1` wrapper are
+- Existing Playwright + the `scripts/migrate/audit-settings-ui.ps1` wrapper are
   sufficient.

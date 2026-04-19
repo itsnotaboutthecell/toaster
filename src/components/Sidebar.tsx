@@ -1,7 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Info, Cpu, Scissors, Wand2, SlidersHorizontal } from "lucide-react";
-import toasterLogo from "../../toaster_text.svg";
+import toasterLogo from "../assets/toaster_text.svg";
 import {
   AboutSettings,
   ModelsSettings,

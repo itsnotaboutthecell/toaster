@@ -123,17 +123,17 @@
     },
     "1.4-audio-only-export": {
       "kind": "script",
-      "verifier": "scripts/eval-edit-quality.ps1",
+      "verifier": "scripts/eval/eval-edit-quality.ps1",
       "note": "Extend with audio-only export presets; transcript-precision-eval skill already covers content invariants."
     },
     "1.5-caption-parity-eval": {
       "kind": "script",
-      "verifier": "scripts/eval-verifier-captions.ps1",
+      "verifier": "scripts/eval/eval-verifier-captions.ps1",
       "note": "Extend with new preview-vs-burn-in geometry assertion. To-be-extended; script exists."
     },
     "2.1-export-format-mov": {
       "kind": "script",
-      "verifier": "scripts/eval-audio-boundary.ps1",
+      "verifier": "scripts/eval/eval-audio-boundary.ps1",
       "note": "Boundary eval re-runs against new container; to-be-extended with mov fixture."
     },
     "2.2-hardware-encoder-fallback": {
@@ -193,7 +193,7 @@
     },
     "3.6-first-run-smoke-eval": {
       "kind": "script",
-      "verifier": "to-be-created scripts/eval-first-run-smoke.ps1",
+      "verifier": "to-be-created scripts/eval/eval-first-run-smoke.ps1",
       "note": "New cross-platform script; gates Milestone 3 exit."
     }
   }

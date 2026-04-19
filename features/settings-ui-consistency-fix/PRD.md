@@ -6,7 +6,7 @@ Resolve the violation clusters surfaced by the `settings-ui-consistency-audit`
 baseline report (`features/settings-ui-consistency-audit/audit-report/`) and
 burn down AGENTS.md "Settings UI contract" drift to zero across the settings
 surface. Primary success metric is a clean re-run of
-`scripts/audit-settings-ui.ps1` (critical = 0; targeted rule counts = 0 per
+`scripts/migrate/audit-settings-ui.ps1` (critical = 0; targeted rule counts = 0 per
 R-007).
 
 ## Scope
@@ -39,7 +39,7 @@ R-007).
 - Rationale: User-verbatim complaint; AGENTS.md dual-path SSOT rule requires
   preview to share the sizing policy with export.
 - Acceptance Criteria
-  - AC-001-a — Re-running `scripts/audit-settings-ui.ps1` shows zero
+  - AC-001-a — Re-running `scripts/migrate/audit-settings-ui.ps1` shows zero
     `R-004-desktop-width` violations on the captions page at 1280x800.
   - AC-001-b — The preview pane visually matches the `caption-mock-h-and-w.png`
     reference: arrow boundaries + center lines only, toggleable horizontal
@@ -59,7 +59,7 @@ R-007).
   `SettingContainer` or an equivalent two-column layout.
 - Rationale: User-verbatim complaint; matches About's conformant pattern.
 - Acceptance Criteria
-  - AC-002-a — Re-running `scripts/audit-settings-ui.ps1` shows zero
+  - AC-002-a — Re-running `scripts/migrate/audit-settings-ui.ps1` shows zero
     `R-003-export-two-column` violations on the export page.
   - AC-002-b — Every user-editable export setting appears as a row with a
     label (left) and control (right) at desktop viewport, matching About's
@@ -74,7 +74,7 @@ R-007).
 - Rationale: User-verbatim complaint ("cutting right up against borders");
   audit R-003-layout = 10.
 - Acceptance Criteria
-  - AC-003-a — Re-running `scripts/audit-settings-ui.ps1` shows zero
+  - AC-003-a — Re-running `scripts/migrate/audit-settings-ui.ps1` shows zero
     `R-003-layout` violations across Advanced, Models, Export, Post-process.
   - AC-003-b — Each settings page outer div uses the same padding/spacing
     token (same class pair as About; no page uses `space-y-4` while a
@@ -87,7 +87,7 @@ R-007).
   support alongside drag.
 - Rationale: AGENTS.md hard rule; user-reported in prior session.
 - Acceptance Criteria
-  - AC-004-a — Re-running `scripts/audit-settings-ui.ps1` shows zero
+  - AC-004-a — Re-running `scripts/migrate/audit-settings-ui.ps1` shows zero
     `R-005-range-editable` violations.
   - AC-004-b — Every `input[type=range]` has an adjacent `input[type=number]`
     bound to the same state; typing a value moves the slider and vice versa.
@@ -99,7 +99,7 @@ R-007).
 - Rationale: AGENTS.md "Settings UI contract"; repeatedly reported
   readability regression.
 - Acceptance Criteria
-  - AC-005-a — Re-running `scripts/audit-settings-ui.ps1` shows zero
+  - AC-005-a — Re-running `scripts/migrate/audit-settings-ui.ps1` shows zero
     `R-005-color-light-grey-on-white` violations.
   - AC-005-b — Only existing color tokens are used; no new greys or reds
     introduced (verified by reviewer via `git diff` inspection on
@@ -127,7 +127,7 @@ R-007).
 - Description: Re-run the audit; numeric gates per cluster.
 - Rationale: Single machine-enforced finish line.
 - Acceptance Criteria
-  - AC-007-a — `scripts/audit-settings-ui.ps1` exits 0 (`critical == 0`).
+  - AC-007-a — `scripts/migrate/audit-settings-ui.ps1` exits 0 (`critical == 0`).
   - AC-007-b — `R-004-desktop-width`, `R-003-export-two-column`,
     `R-003-layout`, `R-005-range-editable`, `R-005-color-light-grey-on-white`
     all equal 0 in the new `audit.json`.

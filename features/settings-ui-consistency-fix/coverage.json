@@ -5,9 +5,9 @@
   "feature": "settings-ui-consistency-fix",
   "acs": {
     "AC-001-a": {
-      "verifier": "scripts/audit-settings-ui.ps1",
+      "verifier": "scripts/migrate/audit-settings-ui.ps1",
       "kind": "script",
-      "command": "scripts/audit-settings-ui.ps1",
+      "command": "scripts/migrate/audit-settings-ui.ps1",
       "notes": "Post-fix audit; R-004-desktop-width count == 0 on captions.",
       "task": "sufx-baseline-reaudit"
     },
@@ -24,9 +24,9 @@
       "task": "sufx-liveapp-pass"
     },
     "AC-001-c": {
-      "verifier": "scripts/audit-settings-ui.ps1",
+      "verifier": "scripts/migrate/audit-settings-ui.ps1",
       "kind": "script",
-      "command": "scripts/audit-settings-ui.ps1",
+      "command": "scripts/migrate/audit-settings-ui.ps1",
       "notes": "Desktop-width rule exercised at 1280x800 and 390x844; both return 0 for R-004-desktop-width.",
       "task": "sufx-baseline-reaudit"
     },
@@ -39,23 +39,23 @@
       "task": "sufx-caption-ssot"
     },
     "AC-002-a": {
-      "verifier": "scripts/audit-settings-ui.ps1",
+      "verifier": "scripts/migrate/audit-settings-ui.ps1",
       "kind": "script",
-      "command": "scripts/audit-settings-ui.ps1",
+      "command": "scripts/migrate/audit-settings-ui.ps1",
       "notes": "R-003-export-two-column count == 0 post-fix.",
       "task": "sufx-baseline-reaudit"
     },
     "AC-002-b": {
-      "verifier": "scripts/audit-settings-ui.ps1",
+      "verifier": "scripts/migrate/audit-settings-ui.ps1",
       "kind": "script",
-      "command": "scripts/audit-settings-ui.ps1",
+      "command": "scripts/migrate/audit-settings-ui.ps1",
       "notes": "Every export row exposes setting-role=label and setting-role=control per rule R-003.",
       "task": "sufx-baseline-reaudit"
     },
     "AC-003-a": {
-      "verifier": "scripts/audit-settings-ui.ps1",
+      "verifier": "scripts/migrate/audit-settings-ui.ps1",
       "kind": "script",
-      "command": "scripts/audit-settings-ui.ps1",
+      "command": "scripts/migrate/audit-settings-ui.ps1",
       "notes": "R-003-layout count == 0 on Advanced/Models/Export/Post-process.",
       "task": "sufx-baseline-reaudit"
     },
@@ -68,9 +68,9 @@
       "task": "sufx-page-padding-std"
     },
     "AC-004-a": {
-      "verifier": "scripts/audit-settings-ui.ps1",
+      "verifier": "scripts/migrate/audit-settings-ui.ps1",
       "kind": "script",
-      "command": "scripts/audit-settings-ui.ps1",
+      "command": "scripts/migrate/audit-settings-ui.ps1",
       "notes": "R-005-range-editable count == 0.",
       "task": "sufx-baseline-reaudit"
     },
@@ -87,9 +87,9 @@
       "task": "sufx-liveapp-pass"
     },
     "AC-005-a": {
-      "verifier": "scripts/audit-settings-ui.ps1",
+      "verifier": "scripts/migrate/audit-settings-ui.ps1",
       "kind": "script",
-      "command": "scripts/audit-settings-ui.ps1",
+      "command": "scripts/migrate/audit-settings-ui.ps1",
       "notes": "R-005-color-light-grey-on-white count == 0.",
       "task": "sufx-baseline-reaudit"
     },
@@ -123,23 +123,23 @@
       "task": "sufx-static-gates"
     },
     "AC-007-a": {
-      "verifier": "scripts/audit-settings-ui.ps1",
+      "verifier": "scripts/migrate/audit-settings-ui.ps1",
       "kind": "script",
-      "command": "scripts/audit-settings-ui.ps1",
+      "command": "scripts/migrate/audit-settings-ui.ps1",
       "notes": "Exit 0; critical == 0.",
       "task": "sufx-baseline-reaudit"
     },
     "AC-007-b": {
-      "verifier": "scripts/audit-settings-ui.ps1",
+      "verifier": "scripts/migrate/audit-settings-ui.ps1",
       "kind": "script",
-      "command": "scripts/audit-settings-ui.ps1",
+      "command": "scripts/migrate/audit-settings-ui.ps1",
       "notes": "R-004-desktop-width, R-003-export-two-column, R-003-layout, R-005-range-editable, R-005-color-light-grey-on-white all == 0 in audit-report-after/audit.json.",
       "task": "sufx-baseline-reaudit"
     },
     "AC-007-c": {
-      "verifier": "scripts/audit-settings-ui.ps1",
+      "verifier": "scripts/migrate/audit-settings-ui.ps1",
       "kind": "script",
-      "command": "scripts/audit-settings-ui.ps1",
+      "command": "scripts/migrate/audit-settings-ui.ps1",
       "notes": "R-005-missing-description strictly less than baseline 130 OR ==0; remainder fully covered by descoped.md.",
       "task": "sufx-baseline-reaudit"
     },

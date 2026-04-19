@@ -14,7 +14,7 @@
     "AC-001-b": {
       "kind": "script",
       "verifier": "gate-lint",
-      "command": "pwsh scripts/gate-lint.ps1",
+      "command": "pwsh scripts/gate/gate-lint.ps1",
       "task": "slr-static-gates"
     },
     "AC-002-a": {
@@ -39,7 +39,7 @@
     "AC-003-a": {
       "kind": "script",
       "verifier": "gate-ripgrep-absent",
-      "command": "pwsh scripts/gate-ripgrep-absent.ps1 -Pattern 'ModelUnloadTimeoutSetting|CaptionSettings' -Path src/components/settings/models",
+      "command": "pwsh scripts/gate/gate-ripgrep-absent.ps1 -Pattern 'ModelUnloadTimeoutSetting|CaptionSettings' -Path src/components/settings/models",
       "task": "slr-models-strip"
     },
     "AC-003-b": {
@@ -65,13 +65,13 @@
     "AC-004-b": {
       "kind": "script",
       "verifier": "gate-ripgrep-absent",
-      "command": "pwsh scripts/gate-ripgrep-absent.ps1 -Pattern '^\\s*export:\\s*\\{' -Path src/components/Sidebar.tsx",
+      "command": "pwsh scripts/gate/gate-ripgrep-absent.ps1 -Pattern '^\\s*export:\\s*\\{' -Path src/components/Sidebar.tsx",
       "task": "slr-sidebar-strip"
     },
     "AC-005-a": {
       "kind": "script",
       "verifier": "gate-cargo-check-lib",
-      "command": "pwsh scripts/gate-cargo-check-lib.ps1",
+      "command": "pwsh scripts/gate/gate-cargo-check-lib.ps1",
       "task": "slr-static-gates"
     },
     "AC-005-b": {
@@ -126,7 +126,7 @@
     "AC-007-b": {
       "kind": "script",
       "verifier": "gate-ripgrep-absent",
-      "command": "pwsh scripts/gate-ripgrep-absent.ps1 -Pattern 'sidebar\\.export|sidebar\\.experimental' -Path src/i18n/locales",
+      "command": "pwsh scripts/gate/gate-ripgrep-absent.ps1 -Pattern 'sidebar\\.export|sidebar\\.experimental' -Path src/i18n/locales",
       "task": "slr-i18n"
     },
     "AC-007-c": {
@@ -138,19 +138,19 @@
     "AC-008-a": {
       "kind": "script",
       "verifier": "gate-lint",
-      "command": "pwsh scripts/gate-lint.ps1",
+      "command": "pwsh scripts/gate/gate-lint.ps1",
       "task": "slr-static-gates"
     },
     "AC-008-b": {
       "kind": "script",
       "verifier": "gate-tsc",
-      "command": "pwsh scripts/gate-tsc.ps1",
+      "command": "pwsh scripts/gate/gate-tsc.ps1",
       "task": "slr-static-gates"
     },
     "AC-008-c": {
       "kind": "script",
       "verifier": "gate-cargo-check-lib",
-      "command": "pwsh scripts/gate-cargo-check-lib.ps1",
+      "command": "pwsh scripts/gate/gate-cargo-check-lib.ps1",
       "task": "slr-static-gates"
     },
     "AC-009-a": {

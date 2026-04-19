@@ -89,7 +89,7 @@ if ($toolName -eq 'create') {
             $parent = Split-Path -Parent $full
             $isRoot = ($parent.TrimEnd('\','/') -ieq $repoRoot.TrimEnd('\','/'))
             if ($isRoot -and $leaf -match '\.md$') {
-                $allow = @('AGENTS.md','CLAUDE.md','CRUSH.md','CONTRIBUTING.md','CONTRIBUTING_TRANSLATIONS.md','README.md','SECURITY.md','PRD.md')
+                $allow = @('AGENTS.md','CONTRIBUTING.md','CONTRIBUTING_TRANSLATIONS.md','README.md','SECURITY.md')
                 # -ccontains is case-SENSITIVE; -contains is not. Enforce canonical casing.
                 $onAllowlist = $allow -ccontains $leaf
                 if (-not $onAllowlist -and $env:COPILOT_ALLOW_ROOT_MARKDOWN -ne '1') {

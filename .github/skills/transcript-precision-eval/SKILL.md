@@ -7,7 +7,7 @@ description: 'Use when adding or modifying word operations, keep-segment logic, 
 
 ## Overview
 
-The PRD requires precise transcript-driven editing with per-word timing preserved, no synthetic equal-duration timestamps, and clean midstream-deletion replay (including delete/undo cycles). These criteria are repeated across `AGENTS.md`, `CLAUDE.md`, and `.github/copilot-instructions.md` — yet currently there is **no automated eval** that fails a PR when any of them is violated.
+The PRD requires precise transcript-driven editing with per-word timing preserved, no synthetic equal-duration timestamps, and clean midstream-deletion replay (including delete/undo cycles). These criteria are stated in `AGENTS.md` and `.github/copilot-instructions.md` — yet currently there is **no automated eval** that fails a PR when any of them is violated.
 
 **Core principle:** The acceptance gate stated in guardrails must be machine-enforced, not agent-enforced.
 
@@ -17,7 +17,7 @@ The PRD requires precise transcript-driven editing with per-word timing preserve
 2. **Keep-segment arithmetic** — deleting a middle segment and computing source → edit time mapping must round-trip correctly for a set of sampled points.
 3. **Midstream replay cleanliness** — after deletion, the rendered preview audio at the cut point contains no material from the deleted region (checked via a short silence window at the splice and absence of deleted-word phonemes in a re-transcription sanity pass).
 4. **Undo round-trip** — delete → undo must restore the original timeline byte-for-byte in the serialized project state.
-5. **Export parity** — `scripts/eval-edit-quality.ps1` output compared against a stored baseline for duration, silence gaps, and leading/trailing silence.
+5. **Export parity** — `scripts/eval/eval-edit-quality.ps1` output compared against a stored baseline for duration, silence gaps, and leading/trailing silence.
 
 ## Fixture Assets
 
@@ -50,7 +50,7 @@ The PRD requires precise transcript-driven editing with per-word timing preserve
 **Modifying export:**
 
 ```
-1. Run scripts/eval-edit-quality.ps1 -Original eval/fixtures/toaster_example.mp4 \
+1. Run [scripts/eval/eval-edit-quality.ps1](../../../scripts/eval/eval-edit-quality.ps1) -Original eval/fixtures/toaster_example.mp4 \
      -Edited <path/to/your/export.mp4> -OutputJson eval-before.json
 2. Apply your change.
 3. Re-run, outputting eval-after.json.
@@ -70,8 +70,8 @@ The PRD requires precise transcript-driven editing with per-word timing preserve
 When this skill graduates from "manual" to "gated", the following are expected to run on every PR touching backend timeline or export code:
 
 - `cargo test precision_eval -- --nocapture`
-- `pwsh scripts/eval-edit-quality.ps1` against the fixture, compared to baseline
-- `pwsh scripts/eval-audio-boundary.ps1` against checked-in boundary fixtures
+- `pwsh scripts/eval/eval-edit-quality.ps1` against the fixture, compared to baseline
+- `pwsh scripts/eval/eval-audio-boundary.ps1` against checked-in boundary fixtures
 
 Track progress under the `eval-precision-fixture`, `eval-midstream-ci`, and `eval-export-parity` todos.
 

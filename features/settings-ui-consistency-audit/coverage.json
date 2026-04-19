@@ -4,115 +4,115 @@
     "AC-001-a": {
       "verifier": "audit-settings-ui.ps1",
       "kind": "script",
-      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-001-a",
+      "command": "pwsh scripts/migrate/audit-settings-ui.ps1 -Ac AC-001-a",
       "task": "sua-playwright-spec"
     },
     "AC-001-b": {
       "verifier": "audit-settings-ui.ps1",
       "kind": "script",
-      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-001-b",
+      "command": "pwsh scripts/migrate/audit-settings-ui.ps1 -Ac AC-001-b",
       "task": "sua-playwright-spec"
     },
     "AC-001-c": {
       "verifier": "audit-settings-ui.ps1",
       "kind": "script",
-      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-001-c",
+      "command": "pwsh scripts/migrate/audit-settings-ui.ps1 -Ac AC-001-c",
       "task": "sua-wrapper-script"
     },
     "AC-002-a": {
       "verifier": "audit-settings-ui.ps1",
       "kind": "script",
-      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-002-a",
+      "command": "pwsh scripts/migrate/audit-settings-ui.ps1 -Ac AC-002-a",
       "task": "sua-playwright-spec"
     },
     "AC-002-b": {
       "verifier": "audit-settings-ui.ps1",
       "kind": "script",
-      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-002-b",
+      "command": "pwsh scripts/migrate/audit-settings-ui.ps1 -Ac AC-002-b",
       "task": "sua-playwright-spec"
     },
     "AC-002-c": {
       "verifier": "audit-settings-ui.ps1",
       "kind": "script",
-      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-002-c",
+      "command": "pwsh scripts/migrate/audit-settings-ui.ps1 -Ac AC-002-c",
       "task": "sua-wrapper-script"
     },
     "AC-003-a": {
       "verifier": "audit-settings-ui.ps1",
       "kind": "script",
-      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-003-a",
+      "command": "pwsh scripts/migrate/audit-settings-ui.ps1 -Ac AC-003-a",
       "task": "sua-playwright-spec"
     },
     "AC-003-b": {
       "verifier": "audit-settings-ui.ps1",
       "kind": "script",
-      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-003-b",
+      "command": "pwsh scripts/migrate/audit-settings-ui.ps1 -Ac AC-003-b",
       "task": "sua-playwright-spec"
     },
     "AC-003-c": {
       "verifier": "audit-settings-ui.ps1",
       "kind": "script",
-      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-003-c",
+      "command": "pwsh scripts/migrate/audit-settings-ui.ps1 -Ac AC-003-c",
       "task": "sua-playwright-spec"
     },
     "AC-004-a": {
       "verifier": "audit-settings-ui.ps1",
       "kind": "script",
-      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-004-a",
+      "command": "pwsh scripts/migrate/audit-settings-ui.ps1 -Ac AC-004-a",
       "task": "sua-playwright-spec"
     },
     "AC-004-b": {
       "verifier": "audit-settings-ui.ps1",
       "kind": "script",
-      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-004-b",
+      "command": "pwsh scripts/migrate/audit-settings-ui.ps1 -Ac AC-004-b",
       "task": "sua-playwright-spec"
     },
     "AC-004-c": {
       "verifier": "audit-settings-ui.ps1",
       "kind": "script",
-      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-004-c",
+      "command": "pwsh scripts/migrate/audit-settings-ui.ps1 -Ac AC-004-c",
       "task": "sua-playwright-spec"
     },
     "AC-005-a": {
       "verifier": "audit-settings-ui.ps1",
       "kind": "script",
-      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-005-a",
+      "command": "pwsh scripts/migrate/audit-settings-ui.ps1 -Ac AC-005-a",
       "task": "sua-playwright-spec"
     },
     "AC-005-b": {
       "verifier": "audit-settings-ui.ps1",
       "kind": "script",
-      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-005-b",
+      "command": "pwsh scripts/migrate/audit-settings-ui.ps1 -Ac AC-005-b",
       "task": "sua-playwright-spec"
     },
     "AC-005-c": {
       "verifier": "audit-settings-ui.ps1",
       "kind": "script",
-      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-005-c",
+      "command": "pwsh scripts/migrate/audit-settings-ui.ps1 -Ac AC-005-c",
       "task": "sua-playwright-spec"
     },
     "AC-005-d": {
       "verifier": "audit-settings-ui.ps1",
       "kind": "script",
-      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-005-d",
+      "command": "pwsh scripts/migrate/audit-settings-ui.ps1 -Ac AC-005-d",
       "task": "sua-playwright-spec"
     },
     "AC-006-a": {
       "verifier": "audit-settings-ui.ps1",
       "kind": "script",
-      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-006-a",
+      "command": "pwsh scripts/migrate/audit-settings-ui.ps1 -Ac AC-006-a",
       "task": "sua-wrapper-script"
     },
     "AC-006-b": {
       "verifier": "audit-settings-ui.ps1",
       "kind": "script",
-      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-006-b",
+      "command": "pwsh scripts/migrate/audit-settings-ui.ps1 -Ac AC-006-b",
       "task": "sua-wrapper-script"
     },
     "AC-006-c": {
       "verifier": "audit-settings-ui.ps1",
       "kind": "script",
-      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-006-c",
+      "command": "pwsh scripts/migrate/audit-settings-ui.ps1 -Ac AC-006-c",
       "task": "sua-wrapper-script"
     },
     "AC-007-a": {
@@ -150,7 +150,7 @@
       "steps": [
         "Open docs/settings-placement.md in the repo.",
         "Confirm a level-2 heading '## Layout invariants' is present.",
-        "Confirm the section names the four rules (padding, two-column, preview-clamp, contract) and links to scripts/audit-settings-ui.ps1 and tests/settingsUIAudit.spec.ts."
+        "Confirm the section names the four rules (padding, two-column, preview-clamp, contract) and links to scripts/migrate/audit-settings-ui.ps1 and tests/settingsUIAudit.spec.ts."
       ]
     }
   }

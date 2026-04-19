@@ -31,7 +31,7 @@ it grows out of scope.
 
 At the end of this feature:
 
-- Re-running `scripts/audit-settings-ui.ps1` produces `critical == 0`.
+- Re-running `scripts/migrate/audit-settings-ui.ps1` produces `critical == 0`.
 - Targeted rule counts drop to 0 for: `R-004-desktop-width`,
   `R-003-export-two-column`, `R-003-layout`, `R-005-range-editable`,
   `R-005-color-light-grey-on-white`.
@@ -59,7 +59,7 @@ Full PRD AC list: `PRD.md`.
 - Slider keyboard-entry sibling input (per AGENTS.md "Settings UI contract").
 - Color token cleanup on affected rows.
 - i18n additions for any new labels/descriptions; no string left hardcoded.
-- Re-run of `scripts/audit-settings-ui.ps1` as the final gate.
+- Re-run of `scripts/migrate/audit-settings-ui.ps1` as the final gate.
 
 ### Out of scope
 
@@ -80,7 +80,7 @@ Full PRD AC list: `PRD.md`.
   readable copy of the same; ordered.
 - `tests/settingsUIAudit.spec.ts` — rule implementation; re-read before
   changing any rule threshold.
-- `scripts/audit-settings-ui.ps1` — audit wrapper, used as a verifier here.
+- `scripts/migrate/audit-settings-ui.ps1` — audit wrapper, used as a verifier here.
 - `src/components/ui/SettingContainer.tsx` — 4 return paths, already
   data-testid decorated.
 - `src/components/settings/{about,advanced,models,post-processing,export}/*`

@@ -1,6 +1,6 @@
 ---
 name: handy-legacy-pruning
-description: 'Use before editing any file in the Handy-era dictation surface (actions.rs, shortcut/, overlay.rs, tray*.rs, clipboard.rs, input.rs, audio_feedback.rs, apple_intelligence.rs, audio_toolkit/audio/recorder.rs, audio_toolkit/vad/, PushToTalk.tsx, AudioFeedback.tsx, AccessibilityPermissions.tsx, HandyKeysShortcutInput.tsx). Forces the question "is this still on the transcript-editor path?" before extending dead code.'
+description: 'Use before extending any remaining Handy-era code (dead settings fields in settings/types.rs and settings/defaults.rs, open_recordings_folder command in commands/mod.rs, llm_client.rs). Most dictation-era modules have been deleted; this skill guards residual dead code from receiving new features.'
 ---
 
 # Handy Legacy Pruning
@@ -18,33 +18,23 @@ IF A MODULE IS ONLY REACHABLE FROM THE DICTATION FLOW,
 IT DOES NOT RECEIVE NEW CODE.
 ```
 
-## Dictation-Era Surface (High-Confidence)
+## Dictation-Era Surface (Remaining)
+
+Most Handy-era dictation modules have been deleted. The following residual code remains:
 
 Backend (`src-tauri/src/`):
 
-- `actions.rs` — record / transcribe / paste pipeline
-- `shortcut/` — global hotkey, PTT, paste method, auto-submit, typing tools
-- `overlay.rs` — recording overlay window
-- `tray.rs`, `tray_i18n.rs` — dictation-centric tray menu
-- `clipboard.rs`, `input.rs` — paste to focused app / keyboard synthesis
-- `audio_feedback.rs` — start/stop recording sounds
-- `apple_intelligence.rs` (+ `src-tauri/swift/apple_intelligence*`) — dictation cleanup LLM
-- `audio_toolkit/audio/recorder.rs`, `audio_toolkit/vad/*` — live mic capture + VAD
-
-Frontend (`src/components/`):
-
-- `AccessibilityPermissions.tsx` (partial — onboarding still live)
-- `settings/general/GeneralSettings.tsx` and every component it imports (PushToTalk, AudioFeedback, VolumeSlider, MuteWhileRecording, PasteMethod, TypingTool, ClipboardHandling, AutoSubmit, AutostartToggle, StartHidden, ShowTrayIcon, SoundPicker, GlobalShortcutInput) — unreachable via Sidebar
-- `settings/HandyKeysShortcutInput.tsx`
-- `settings/debug/KeyboardImplementationSelector.tsx`
-- Dictation-specific settings in `stores/settingsStore.ts` (19 fields: `audio_feedback*`, `sound_theme`, `start_hidden`, `autostart_enabled`, `push_to_talk`, `paste_delay_ms`, `paste_method`, `typing_tool`, `external_script_path`, `clipboard_handling`, `auto_submit*`, `mute_while_recording`, `append_trailing_space`, `extra_recording_buffer_ms`, `show_tray_icon`, `overlay_position`)
+- `commands/mod.rs` — `open_recordings_folder` command (dead, no UI caller)
+- `settings/types.rs` — dead fields: `ShortcutBinding`, `start_hidden`, `bindings`, and related dictation settings
+- `settings/defaults.rs` — default values for the dead settings fields above
 
 Ambiguous (audit before touching):
 
 - `llm_client.rs` — used by dictation cleanup AND possibly the editor local-cleanup-review flow (see `LocalLlmWordProposal`, `LocalCleanupReviewState`)
-- `audio_toolkit/text.rs` — may still be used by transcription segment post-processing
-- `AccessibilityPermissions.tsx` + `AccessibilityOnboarding.tsx` — still rendered from `App.tsx` during onboarding; decide whether onboarding stays
-- `post-processing/*` — UI components appear dead but the review modal in `App.tsx` is live
+
+### Previously Deleted (for reference)
+
+The following have been fully removed: `actions.rs`, `shortcut/`, `overlay.rs`, `tray.rs`, `tray_i18n.rs`, `clipboard.rs`, `input.rs`, `audio_feedback.rs`, `apple_intelligence.rs`, `audio_toolkit/audio/recorder.rs`, `audio_toolkit/vad/*`, `PushToTalk.tsx`, `AudioFeedback.tsx`, `AccessibilityPermissions.tsx`, `HandyKeysShortcutInput.tsx`, `GeneralSettings.tsx` and all its sub-components, `KeyboardImplementationSelector.tsx`.
 
 ## Gate Function
 
@@ -69,13 +59,11 @@ Important: Sidebar `SECTIONS_CONFIG` (`src/components/Sidebar.tsx`) is the gatin
 
 ## Red Flags — STOP
 
-- Adding a new function to `actions.rs`
-- Adding a new `change_*_setting` command to `shortcut/mod.rs`
 - Adding a new field to `AppSettings` that only dictation UI reads
 - Adding a new i18n key under a dictation-only group (`tray.*`, `settings.sound.*`, `settings.advanced.{autoSubmit,pasteMethod,typingTool,clipboardHandling,startHidden,autostart,showTrayIcon,overlay}`, `settings.debug.{soundTheme,muteWhileRecording,appendTrailingSpace,pasteDelay,recordingBuffer,alwaysOnMicrophone,keyboardImplementation}`)
-- Adding a new npm dep because "the push-to-talk screen needs it"
 - Extending `llm_client.rs` before determining whether the call is dictation or editor local-cleanup-review
-- Adding a new screen under `settings/` that mirrors a dictation concern (sounds, paste, shortcuts, keyboard synth)
+- Extending `open_recordings_folder` or adding callers to it
+- Adding new default values in `settings/defaults.rs` for dead dictation fields
 
 ## Removal Procedure
 
@@ -91,7 +79,8 @@ When an audit verdict is FULLY DEAD:
 
 ## When To Apply
 
-- Before ANY edit to the files listed above
-- When a new feature request touches recording, push-to-talk, paste, tray, overlay, shortcuts, accessibility permissions, audio feedback
+- Before ANY edit to the remaining Handy-era files listed above
+- When a new feature request touches dead settings fields (`ShortcutBinding`, `start_hidden`, etc.)
+- Before extending `llm_client.rs` or `open_recordings_folder`
 - Before adding a new `change_*_setting` Tauri command
 - Before adding a new top-level settings screen

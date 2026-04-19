@@ -2,7 +2,7 @@
   "fixture": "phrase_alpha",
   "oracle_source": "analytical_ground_truth",
   "oracle_source_rationale": "Fixture audio is synthesized from FFmpeg sine bursts at known sample offsets. Per-word start_us/end_us are exact by construction (cumulative word/gap durations, microsecond- precise). This is strictly tighter than any forced aligner would produce on real speech, so the oracle is safe to use as the parity gate reference for these synthetic fixtures.",
-  "oracle_invocation": "scripts/generate-parity-fixtures.ps1",
+  "oracle_invocation": "scripts/eval/generate-parity-fixtures.ps1",
   "preferred_real_speech_oracle": {
     "primary": "Gentle (MIT) via Docker: lowerquality/gentle --nthreads=1 --conservative",
     "secondary": "whisper.cpp with --max-len 1 once authoritative-timings lands",

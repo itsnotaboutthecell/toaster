@@ -5,12 +5,12 @@ description: 'Use when deleting, renaming, or adding any user-visible i18next ke
 
 # i18n Pruning
 
-Toaster ships 22 locale files under `src/i18n/locales/*/translation.json`.
+Toaster ships 20 locale files under `src/i18n/locales/*/translation.json`.
 `scripts/check-translations.ts` enforces parity and fails CI if they drift.
 
 ```
 DELETING A KEY IN en/translation.json =
-DELETING IT IN ALL 22 LOCALES, IN THE SAME COMMIT.
+DELETING IT IN ALL 20 LOCALES, IN THE SAME COMMIT.
 ```
 
 ## Deleting a component or setting screen

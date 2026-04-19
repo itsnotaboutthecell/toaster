@@ -91,7 +91,7 @@
     "AC-005-a": {
       "verifier": "check-feature-coverage.ps1",
       "kind": "manual",
-      "command": "pwsh scripts/check-feature-coverage.ps1 -Feature export-hardware-encoder",
+      "command": "pwsh scripts/feature/check-feature-coverage.ps1 -Feature export-hardware-encoder",
       "task": "ehe-qc-ssot",
       "steps": [
         "Run: rg -n 'h264_nvenc|h264_qsv|h264_videotoolbox|h264_vaapi' src",

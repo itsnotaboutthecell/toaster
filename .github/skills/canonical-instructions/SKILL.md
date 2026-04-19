@@ -1,6 +1,6 @@
 ---
 name: canonical-instructions
-description: 'Use whenever editing AI-instruction files (AGENTS.md, CLAUDE.md, .github/copilot-instructions.md, CRUSH.md, PRD.md, README.md). Prevents instruction sprawl and contradictions by enforcing AGENTS.md as the single source of truth.'
+description: 'Use whenever editing AI-instruction files (AGENTS.md, .github/copilot-instructions.md, README.md). Prevents instruction sprawl and contradictions by enforcing AGENTS.md as the single source of truth.'
 ---
 
 # Canonical Instructions
@@ -24,11 +24,9 @@ If a rule exists in more than one place, the copies will drift. Do not introduce
 | File | Purpose | May contain |
 | --- | --- | --- |
 | `AGENTS.md` | Canonical rules, launch protocol, boundaries, skills/agents index | Everything |
-| `CLAUDE.md` | Pointer for Claude tooling | "See AGENTS.md" + tooling-specific notes only |
 | `.github/copilot-instructions.md` | Pointer for GitHub Copilot | "See AGENTS.md" + tooling-specific notes only |
-| `CRUSH.md` | Pointer for Crush | "See AGENTS.md" + tooling-specific notes only |
 | `README.md` | Human-oriented project overview | User-facing description, quick start; must not contradict AGENTS.md |
-| `PRD.md` | Product requirements | Vision / scope / acceptance criteria |
+| `docs/PRD.md` | Product requirements | Vision / scope / acceptance criteria |
 | `docs/build.md` | Platform build setup | Toolchain details referenced from AGENTS.md |
 
 ## Gate Function
@@ -47,7 +45,7 @@ Before editing any instruction file:
 
 - About to paste the same paragraph into two files
 - Updating a launch-protocol number in one file but not AGENTS.md
-- Adding a new guardrail to CLAUDE.md because "that's where I'm reading from"
+- Adding a new guardrail to a pointer file because "that's where I'm reading from"
 - Creating a new `*.md` instruction file at the repo root
 
 ## Reconciliation Procedure
@@ -61,7 +59,7 @@ If you discover a contradiction:
 
 ## When To Apply
 
-- Any edit to `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `CRUSH.md`
+- Any edit to `AGENTS.md`, `.github/copilot-instructions.md`
 - Any time you notice the same instruction in two files
 - Before adding a new top-level `*.md` to the repo
 - Whenever a launch-protocol or guardrail number changes

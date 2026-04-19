@@ -10,14 +10,6 @@ description: >
 
 # Toaster Product Manager
 
-> **Invocation contract.** This file is a **role spec**, NOT a custom
-> agent_type. Dispatch it by invoking `task` with
-> `agent_type: general-purpose` and this file's full content (or a
-> pointer to it) inlined into the prompt. The CLI's registered
-> `product-manager` agent_type has a tool restriction that makes file
-> creation impossible — see `.github/skills/feature-pm/SKILL.md` "How
-> to invoke" for the supported dispatch pattern.
-
 Convert an informal feature request into a complete, machine-checkable
 planning bundle so that `superpowers:executing-plans` and
 `superpowers:subagent-driven-development` can build the feature without
@@ -120,7 +112,7 @@ the coverage gate or by reviewers. Every run must avoid them:
 
 - **PRD AC IDs are NEVER bold.** Write `AC-001-a — ...`, not
   `**AC-001-a** — ...`. The coverage-gate regex at
-  `scripts/check-feature-coverage.ps1:57` is
+  `scripts/feature/check-feature-coverage.ps1:57` is
   `^\s*-?\s*AC-\d{3}-[a-z]\b`. A leading `**` silently makes the parser
   report "PRD.md has no AC-NNN-x entries".
 - **`tasks.sql` schema is fixed.** The only columns are
@@ -171,7 +163,7 @@ Starter templates live in `features/.templates/`. A scaffold script
 automates Phase 1:
 
 ```powershell
-pwsh scripts/scaffold-feature.ps1 -Slug <feature-slug> -Worktree
+pwsh scripts/feature/scaffold-feature.ps1 -Slug <feature-slug> -Worktree
 ```
 
 This creates `features/<slug>/` with `STATE.md` (set to `defined`),
@@ -182,7 +174,7 @@ tasks.sql from the templates directory.
 A separate script automates Phase 8 promotion:
 
 ```powershell
-pwsh scripts/promote-feature.ps1 -Slug <feature-slug>
+pwsh scripts/feature/promote-feature.ps1 -Slug <feature-slug>
 ```
 
 This runs the coverage gate and, on success, sets `STATE.md` to
@@ -202,7 +194,7 @@ complete a phase.
 ### Phase 1 — Initialize
 
 ```powershell
-pwsh scripts/scaffold-feature.ps1 -Slug <slug> -Worktree
+pwsh scripts/feature/scaffold-feature.ps1 -Slug <slug> -Worktree
 ```
 
 This creates the feature directory, stamps all templates, and sets up
@@ -288,7 +280,7 @@ Fill in the scaffolded `features/<slug>/BLUEPRINT.md` (structure from
 
 5. Promote the feature:
    ```powershell
-   pwsh scripts/promote-feature.ps1 -Slug <slug>
+   pwsh scripts/feature/promote-feature.ps1 -Slug <slug>
    ```
    This runs the coverage gate, and on success updates `STATE.md` to
    `planned` and appends a timestamped `## Plan complete` entry to
@@ -302,8 +294,8 @@ Before returning to the controller, run this self-check as your last
 tool calls:
 
 1. `powershell`: `Get-ChildItem features\<slug> -Recurse | Select-Object FullName, Length`
-2. `powershell`: `pwsh scripts/check-feature-coverage.ps1 -Feature <slug>`
-3. `powershell`: `pwsh scripts/check-feature-tasks.ps1 -Feature <slug>`
+2. `powershell`: `pwsh scripts/feature/check-feature-coverage.ps1 -Feature <slug>`
+3. `powershell`: `pwsh scripts/feature/check-feature-tasks.ps1 -Feature <slug>`
 
 If the directory listing is empty or only contains STATE.md, you have
 narrated instead of writing files — return BLOCKED and explain. Do not

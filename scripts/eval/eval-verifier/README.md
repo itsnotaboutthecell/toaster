@@ -18,7 +18,7 @@ harness does Best-of-N ranking with:
 - **Criteria decomposition** (3 orthogonal rubrics).
 - **Round-robin tournament** over all backend pairs.
 
-It is complementary to `scripts/eval-multi-backend-parity.ps1`, not a
+It is complementary to `scripts/eval/eval-multi-backend-parity.ps1`, not a
 replacement. The numeric parity eval is the acceptance gate; this harness
 produces a calibrated *preference* between backends for the same audio.
 
@@ -29,7 +29,7 @@ produces a calibrated *preference* between backends for the same audio.
   AGENTS.md "Local-only inference".
 - **NOT a replacement for objective gates.** Audio-boundary seam gates
   (xcorr, HF-burst energy, sample discontinuity) stay in
-  `scripts/eval-audio-boundary.ps1`; LLM judgement adds noise there.
+  `scripts/eval/eval-audio-boundary.ps1`; LLM judgement adds noise there.
 
 ## Usage
 
@@ -66,10 +66,10 @@ Four runners ship today. Each takes the same backend flags and emits a
 
 | Wrapper | Fixtures | Criteria |
 | --- | --- | --- |
-| `scripts/eval-verifier.ps1` | `src-tauri/tests/fixtures/parity/` | ASR transcription + timing + authoritative-claim honesty |
-| `scripts/eval-verifier-cleanup.ps1` | `src-tauri/tests/fixtures/cleanup/` | Filler removal recall, content preservation, timing monotonicity, deleted-region audibility |
-| `scripts/eval-verifier-captions.ps1` | `src-tauri/tests/fixtures/captions/` | Readability, punctuation respect, line-length balance, timing coverage |
-| `scripts/eval-verifier-disfluency.ps1` | `src-tauri/tests/fixtures/disfluency/` | Group collapse completeness, audio-aware survivor clarity, audio-aware cut placement cleanliness, pacing agreement (vs. human oracle), timing monotonicity |
+| `scripts/eval/eval-verifier.ps1` | `src-tauri/tests/fixtures/parity/` | ASR transcription + timing + authoritative-claim honesty |
+| `scripts/eval/eval-verifier-cleanup.ps1` | `src-tauri/tests/fixtures/cleanup/` | Filler removal recall, content preservation, timing monotonicity, deleted-region audibility |
+| `scripts/eval/eval-verifier-captions.ps1` | `src-tauri/tests/fixtures/captions/` | Readability, punctuation respect, line-length balance, timing coverage |
+| `scripts/eval/eval-verifier-disfluency.ps1` | `src-tauri/tests/fixtures/disfluency/` | Group collapse completeness, audio-aware survivor clarity, audio-aware cut placement cleanliness, pacing agreement (vs. human oracle), timing monotonicity |
 
 The cleanup and disfluency runners both pick up ``audio_path`` from
 their fixture JSON (resolved relative to the fixture file) and use

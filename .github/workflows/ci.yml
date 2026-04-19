@@ -143,7 +143,7 @@ jobs:
         #   - export-parity:  eval/fixtures/toaster_example*.mp4 + tests/fixtures/edit-quality.baseline.json
         # ffmpeg is installed above for the export-parity eval.
         shell: pwsh
-        run: pwsh -NoProfile -File scripts/run-eval-harness.ps1
+        run: pwsh -NoProfile -File scripts/eval/run-eval-harness.ps1
 
       - name: Upload eval harness report
         if: always()

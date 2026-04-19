@@ -1,7 +1,7 @@
 # Settings UI consistency audit — baseline report
 
 This directory contains the baseline audit output produced by running
-`scripts/audit-settings-ui.ps1` against the repo at the time
+`scripts/migrate/audit-settings-ui.ps1` against the repo at the time
 `settings-ui-consistency-audit` was promoted to `reviewing`.
 
 ## Files
@@ -38,7 +38,7 @@ separate batch that the designer collaboration can triage.
 
 ```powershell
 bun run dev                 # terminal 1
-pwsh scripts/audit-settings-ui.ps1   # terminal 2, repo root
+pwsh scripts/migrate/audit-settings-ui.ps1   # terminal 2, repo root
 ```
 
 A passing run exits 0 (critical == 0). A failing run exits 1 and still

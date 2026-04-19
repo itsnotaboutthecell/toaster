@@ -1,6 +1,6 @@
 ---
 name: eval-harness-runner
-description: 'Use to run the Toaster precision / boundary / export evals with one command and produce a pass/fail JSON consumable by CI. Wraps scripts/eval-edit-quality.ps1, scripts/eval-audio-boundary.ps1, and the cargo precision test.'
+description: 'Use to run the Toaster precision / boundary / export evals with one command and produce a pass/fail JSON consumable by CI. Wraps scripts/eval/eval-edit-quality.ps1, scripts/eval/eval-audio-boundary.ps1, and the cargo precision test.'
 model: GPT-4.1 (copilot)
 tools:
   - execute/runInTerminal
@@ -42,7 +42,7 @@ Record: pass/fail, number of assertions, runtime.
 ### 3. Audio-boundary eval
 
 ```powershell
-pwsh scripts/eval-audio-boundary.ps1
+pwsh scripts/eval/eval-audio-boundary.ps1
 ```
 
 Runs the five sample-resolution gates (leak xcorr, seam z-score, preview↔export parity, WER, sample-boundary quantization) against the checked-in `phrase_01` and `multicut_01` fixtures. Headless — no app, no proprietary assets.
@@ -52,7 +52,7 @@ Record: pass/fail per fixture, worst-seam metrics, fixture variant.
 ### 4. Export parity
 
 ```powershell
-pwsh scripts/eval-edit-quality.ps1 `
+pwsh scripts/eval/eval-edit-quality.ps1 `
     -Original eval/fixtures/toaster_example.mp4 `
     -Edited eval/fixtures/toaster_example-edited.mp4 `
     -OutputJson .eval-output/edit-quality.json
@@ -63,7 +63,7 @@ Compare the JSON against `tests/fixtures/edit-quality.baseline.json` (when avail
 ### 5. Local LLM gate (optional)
 
 ```powershell
-pwsh scripts/run-local-llm-eval-gate.ps1
+pwsh scripts/eval/run-local-llm-eval-gate.ps1
 ```
 
 Only run if the gate is enabled in the current context. Record skip reason otherwise.

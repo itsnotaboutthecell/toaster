@@ -17,7 +17,7 @@
       - manual / archive policy: any -> archived
 
 .EXAMPLE
-    pwsh scripts/feature-board.ps1
+    pwsh scripts/feature/feature-board.ps1
 #>
 
 [CmdletBinding()]

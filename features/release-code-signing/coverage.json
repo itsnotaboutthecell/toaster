@@ -87,7 +87,7 @@
     "AC-004-a": {
       "verifier": "check-feature-coverage.ps1",
       "kind": "manual",
-      "command": "pwsh scripts/check-feature-coverage.ps1 -Feature release-code-signing",
+      "command": "pwsh scripts/feature/check-feature-coverage.ps1 -Feature release-code-signing",
       "task": "rcs-qc-ci",
       "steps": [
         "Open .github/workflows/release.yml and find the signing job.",
@@ -98,7 +98,7 @@
     "AC-004-b": {
       "verifier": "check-feature-coverage.ps1",
       "kind": "manual",
-      "command": "pwsh scripts/check-feature-coverage.ps1 -Feature release-code-signing",
+      "command": "pwsh scripts/feature/check-feature-coverage.ps1 -Feature release-code-signing",
       "task": "rcs-qc-ci",
       "steps": [
         "Run: rg -i 'MII[A-Za-z0-9+/]{20,}|-----BEGIN (CERTIFICATE|PRIVATE KEY|PGP PRIVATE)' . --glob '!node_modules' --glob '!target' --glob '!dist'",
