@@ -140,7 +140,7 @@ jobs:
         # Fixtures required for all three evals are committed to the repo:
         #   - precision:      src-tauri/tests/fixtures/
         #   - audio-boundary: src-tauri/tests/fixtures/boundary/
-        #   - export-parity:  extras/toaster_example*.mp4 + tests/fixtures/edit-quality.baseline.json
+        #   - export-parity:  eval/fixtures/toaster_example*.mp4 + tests/fixtures/edit-quality.baseline.json
         # ffmpeg is installed above for the export-parity eval.
         shell: pwsh
         run: pwsh -NoProfile -File scripts/run-eval-harness.ps1

@@ -24,6 +24,36 @@ if ($vulkanDir) {
 # CMake generator
 $env:CMAKE_GENERATOR = "Ninja"
 
+# Canonical Ninja-hostile-vars list -- declared early so the snapshot
+# below can run BEFORE vcvars sources its own copy of these names.
+# Keep in sync with docs/build.md "Ninja-hostile vcvars vars".
+$script:NinjaHostileVars = @(
+    'Platform',                  # MSBuild arch -- CMake reads as default CMAKE_GENERATOR_PLATFORM
+    'CMAKE_GENERATOR_PLATFORM',  # -A flag equivalent; Ninja rejects
+    'CMAKE_GENERATOR_TOOLSET',   # -T flag equivalent; Ninja rejects
+    'CMAKE_GENERATOR_INSTANCE',  # VS install path; Ninja rejects
+    'VSINSTALLDIR',              # vcvars-side; cmake-rs promotes to CMAKE_GENERATOR_INSTANCE
+    'VCINSTALLDIR',              # vcvars-side; cmake-rs hint for VS install root
+    'VCToolsInstallDir',         # vcvars-side; cmake-rs hint for toolset path
+    'VisualStudioVersion'        # vcvars-side; cmake-rs hint for VS major version
+)
+
+# Snapshot the INHERITED env (parent shell / user injection) BEFORE we
+# source vcvars64.bat. vcvars adds its own copies of VSINSTALLDIR /
+# VCINSTALLDIR / etc., so any snapshot taken after vcvars cannot
+# distinguish "user-injected leak" from "vcvars set it just now".
+#
+# $wasReSource suppresses the inherited-leak preflight on re-source
+# inside an already-configured shell. Without it, devs who source
+# setup-env once and then invoke the launcher from the same shell
+# would hit a spurious FAIL on every launch.
+$wasReSource = ($env:TOASTER_ENV_INITIALIZED -eq '1')
+$inheritedHostile = @{}
+foreach ($v in $script:NinjaHostileVars) {
+    $val = [Environment]::GetEnvironmentVariable($v, 'Process')
+    if ($val) { $inheritedHostile[$v] = $val }
+}
+
 # Source MSVC environment (Visual Studio Build Tools)
 $vcvarsall = "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
 if (Test-Path $vcvarsall) {
@@ -38,17 +68,23 @@ if (Test-Path $vcvarsall) {
     Write-Host "WARNING: VS Build Tools not found. Install C++ workload." -ForegroundColor Yellow
 }
 
-# Strip the MSBuild `Platform=x64` env var that vcvars64.bat exports.
+# Strip Ninja-hostile vcvars exports.
 #
-# Root cause: CMake on Windows reads `Platform` (capital P) as the implicit
-# default for `CMAKE_GENERATOR_PLATFORM`. We force `CMAKE_GENERATOR=Ninja`
-# above; Ninja rejects platform specs, so every `project()` call fails with:
-#   "Generator Ninja does not support platform specification, but
-#    platform x64 was specified"
-# We build with cl.exe + Ninja, never with MSBuild, so `Platform` has no
-# legitimate consumer here. Do NOT delete this without re-reading the
-# Build environment gotchas section in docs/build.md.
-Remove-Item Env:Platform -ErrorAction SilentlyContinue
+# vcvars64.bat exports a pile of env vars meant to drive MSBuild and the
+# Visual Studio generators. CMake (and the cmake-rs crate that whisper-rs-sys
+# uses) read several of them and forward as -D flags or generator-instance
+# hints. Because we force `CMAKE_GENERATOR=Ninja` above, any of these will
+# trip Ninja's "does not support {platform,toolset,instance} specification"
+# rejection at the first `project()` call -- 4 minutes deep into a
+# whisper-rs-sys build.
+#
+# We build exclusively with cl.exe + Ninja, never with MSBuild or the VS
+# generators, so these vars have no legitimate consumer in this shell.
+# Do NOT delete this block without re-reading
+# docs/build.md > Build environment gotchas > Ninja-hostile vcvars vars.
+foreach ($v in $script:NinjaHostileVars) {
+    if (Test-Path "Env:$v") { Remove-Item "Env:$v" -ErrorAction SilentlyContinue }
+}
 
 # Bindgen clang include paths
 $msvcBase = "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC"
@@ -109,13 +145,47 @@ foreach ($check in $checks) {
 
 Write-Host "`nEnvironment ready. Run 'cargo tauri dev' to start." -ForegroundColor Cyan
 
-# Preflight: catch future regressions of the vcvars `Platform` leak (or any
-# other process setting CMAKE_GENERATOR_PLATFORM) on day zero. If either is
-# set while CMAKE_GENERATOR=Ninja, every CMake-driven build (whisper-rs-sys,
-# ggml, ffmpeg) will fail with "Generator Ninja does not support platform
-# specification". Better to scream here than to debug a 5-minute cold cmake
-# error.
-if ($env:CMAKE_GENERATOR -eq "Ninja" -and ($env:Platform -or $env:CMAKE_GENERATOR_PLATFORM)) {
-    Write-Host "`n[FAIL] Build env corrupted: CMAKE_GENERATOR=Ninja but Platform=[$env:Platform] CMAKE_GENERATOR_PLATFORM=[$env:CMAKE_GENERATOR_PLATFORM]" -ForegroundColor Red
-    Write-Host "       CMake will reject the platform spec. See docs/build.md > Build environment gotchas." -ForegroundColor Red
+# Preflight: catch future regressions of the vcvars leak class on day zero.
+# Two failure modes:
+#   1. Inherited leak -- the parent shell (or a prior run of this script)
+#      had a Ninja-hostile var set when we started. Strip neutralised it,
+#      but we still want to scream so the user fixes their profile or
+#      stops re-sourcing setup-env in a polluted shell. Captured into
+#      $inheritedHostile above, before strip ran.
+#   2. Post-strip leak -- something between strip and here re-exported a
+#      tracked var (a future bug in this script, or a sourced helper).
+#      Caught by re-scanning the env now.
+#
+# Sets $global:ToasterEnvPreflightOk so launch-toaster-monitored.ps1 can
+# refuse to invoke `cargo tauri dev` on a corrupted env.
+$global:ToasterEnvPreflightOk = $true
+if ($env:CMAKE_GENERATOR -eq 'Ninja') {
+    if ($inheritedHostile.Count -gt 0 -and -not $wasReSource) {
+        Write-Host "`n[FAIL] Build env: Ninja-hostile vars inherited from parent shell:" -ForegroundColor Red
+        foreach ($kv in $inheritedHostile.GetEnumerator()) {
+            Write-Host "       $($kv.Key)=$($kv.Value)" -ForegroundColor Red
+        }
+        Write-Host "       Strip cleaned them, but fix your shell profile or open a fresh window." -ForegroundColor Red
+        Write-Host "       See docs/build.md > Build environment gotchas > Ninja-hostile vcvars vars." -ForegroundColor Red
+        $global:ToasterEnvPreflightOk = $false
+    }
+    $leaked = @()
+    foreach ($v in $script:NinjaHostileVars) {
+        $val = [Environment]::GetEnvironmentVariable($v, 'Process')
+        if ($val) { $leaked += "$v=$val" }
+    }
+    if ($leaked.Count -gt 0) {
+        Write-Host "`n[FAIL] Build env corrupted post-strip: tracked vars re-appeared:" -ForegroundColor Red
+        foreach ($l in $leaked) { Write-Host "       $l" -ForegroundColor Red }
+        Write-Host "       CMake will reject these. See docs/build.md > Build environment gotchas." -ForegroundColor Red
+        $global:ToasterEnvPreflightOk = $false
+    }
+}
+
+# Sentinel: marks this shell as having completed setup-env at least once.
+# Read by the inherited-leak preflight above on re-source to suppress the
+# FAIL that would otherwise fire on every legitimate re-source / launcher
+# invocation from an already-configured shell.
+if ($global:ToasterEnvPreflightOk) {
+    $env:TOASTER_ENV_INITIALIZED = '1'
 }

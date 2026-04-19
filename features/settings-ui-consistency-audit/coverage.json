@@ -1,0 +1,157 @@
+{
+  "feature": "settings-ui-consistency-audit",
+  "acs": {
+    "AC-001-a": {
+      "verifier": "audit-settings-ui.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-001-a",
+      "task": "sua-playwright-spec"
+    },
+    "AC-001-b": {
+      "verifier": "audit-settings-ui.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-001-b",
+      "task": "sua-playwright-spec"
+    },
+    "AC-001-c": {
+      "verifier": "audit-settings-ui.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-001-c",
+      "task": "sua-wrapper-script"
+    },
+    "AC-002-a": {
+      "verifier": "audit-settings-ui.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-002-a",
+      "task": "sua-playwright-spec"
+    },
+    "AC-002-b": {
+      "verifier": "audit-settings-ui.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-002-b",
+      "task": "sua-playwright-spec"
+    },
+    "AC-002-c": {
+      "verifier": "audit-settings-ui.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-002-c",
+      "task": "sua-wrapper-script"
+    },
+    "AC-003-a": {
+      "verifier": "audit-settings-ui.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-003-a",
+      "task": "sua-playwright-spec"
+    },
+    "AC-003-b": {
+      "verifier": "audit-settings-ui.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-003-b",
+      "task": "sua-playwright-spec"
+    },
+    "AC-003-c": {
+      "verifier": "audit-settings-ui.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-003-c",
+      "task": "sua-playwright-spec"
+    },
+    "AC-004-a": {
+      "verifier": "audit-settings-ui.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-004-a",
+      "task": "sua-playwright-spec"
+    },
+    "AC-004-b": {
+      "verifier": "audit-settings-ui.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-004-b",
+      "task": "sua-playwright-spec"
+    },
+    "AC-004-c": {
+      "verifier": "audit-settings-ui.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-004-c",
+      "task": "sua-playwright-spec"
+    },
+    "AC-005-a": {
+      "verifier": "audit-settings-ui.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-005-a",
+      "task": "sua-playwright-spec"
+    },
+    "AC-005-b": {
+      "verifier": "audit-settings-ui.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-005-b",
+      "task": "sua-playwright-spec"
+    },
+    "AC-005-c": {
+      "verifier": "audit-settings-ui.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-005-c",
+      "task": "sua-playwright-spec"
+    },
+    "AC-005-d": {
+      "verifier": "audit-settings-ui.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-005-d",
+      "task": "sua-playwright-spec"
+    },
+    "AC-006-a": {
+      "verifier": "audit-settings-ui.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-006-a",
+      "task": "sua-wrapper-script"
+    },
+    "AC-006-b": {
+      "verifier": "audit-settings-ui.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-006-b",
+      "task": "sua-wrapper-script"
+    },
+    "AC-006-c": {
+      "verifier": "audit-settings-ui.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/audit-settings-ui.ps1 -Ac AC-006-c",
+      "task": "sua-wrapper-script"
+    },
+    "AC-007-a": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 60",
+      "task": "sua-static-gates",
+      "steps": [
+        "In a fresh PowerShell session run `. .\\scripts\\setup-env.ps1`.",
+        "Run `cd src-tauri; cargo check -p toaster --lib`.",
+        "Confirm exit code 0 and zero new warnings versus the baseline listed in plan.md."
+      ]
+    },
+    "AC-007-b": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 60",
+      "task": "sua-static-gates",
+      "steps": [
+        "Run `bun run build` from the repo root.",
+        "Confirm exit code 0 and no new TypeScript errors."
+      ]
+    },
+    "AC-007-c": {
+      "verifier": "check-translations.ts",
+      "kind": "script",
+      "command": "bun run scripts/check-translations.ts",
+      "task": "sua-static-gates"
+    },
+    "AC-008-a": {
+      "verifier": "settings-placement.md",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 10",
+      "task": "sua-docs-appendix",
+      "steps": [
+        "Open docs/settings-placement.md in the repo.",
+        "Confirm a level-2 heading '## Layout invariants' is present.",
+        "Confirm the section names the four rules (padding, two-column, preview-clamp, contract) and links to scripts/audit-settings-ui.ps1 and tests/settingsUIAudit.spec.ts."
+      ]
+    }
+  }
+}

@@ -1,0 +1,238 @@
+{
+  "feature": "local-llm-model-catalog",
+  "acs": {
+    "AC-001-a": {
+      "kind": "cargo-test",
+      "verifier": "cargo test",
+      "command": "cd src-tauri; cargo test -p toaster --lib llm_catalog_is_nonempty_and_has_exactly_one_default -- --nocapture",
+      "task": "llm-catalog"
+    },
+    "AC-001-b": {
+      "kind": "cargo-test",
+      "verifier": "cargo test",
+      "command": "cd src-tauri; cargo test -p toaster --lib llm_catalog_entries_have_required_fields -- --nocapture",
+      "task": "llm-catalog"
+    },
+    "AC-002-a": {
+      "kind": "manual",
+      "verifier": "launch-toaster-monitored.ps1",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 600",
+      "task": "llm-live-qc",
+      "steps": [
+        "Post-Process > Local models: click Download on the smallest entry.",
+        "Observe progress + speed update; wait for verify to complete.",
+        "Confirm card transitions to 'available' / 'selected'."
+      ]
+    },
+    "AC-002-b": {
+      "kind": "manual",
+      "verifier": "launch-toaster-monitored.ps1",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 300",
+      "task": "llm-live-qc",
+      "steps": [
+        "Delete the downloaded model via the card Delete action.",
+        "Confirm card returns to 'downloadable' state.",
+        "Confirm the GGUF file is removed from <app-data>/llm/."
+      ]
+    },
+    "AC-002-c": {
+      "kind": "manual",
+      "verifier": "launch-toaster-monitored.ps1",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 300",
+      "task": "llm-live-qc",
+      "steps": [
+        "Start a download, click Cancel mid-progress.",
+        "Confirm card returns to 'downloadable'.",
+        "Confirm the partial file under <app-data>/llm/ is cleaned up."
+      ]
+    },
+    "AC-002-d": {
+      "kind": "script",
+      "verifier": "gate-tsc",
+      "command": "pwsh scripts/gate-tsc.ps1",
+      "task": "llm-ui-card"
+    },
+    "AC-003-a": {
+      "kind": "cargo-test",
+      "verifier": "cargo test",
+      "command": "cd src-tauri; cargo test -p toaster --lib llm_download_writes_under_llm_subdir -- --nocapture",
+      "task": "llm-download"
+    },
+    "AC-003-b": {
+      "kind": "manual",
+      "verifier": "launch-toaster-monitored.ps1",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 600",
+      "task": "llm-live-qc",
+      "steps": [
+        "After successful download, open <app-data>/llm/ in the OS file browser.",
+        "Confirm <id>.gguf exists with size matching the catalog entry size_bytes."
+      ]
+    },
+    "AC-004-a": {
+      "kind": "cargo-test",
+      "verifier": "cargo test",
+      "command": "cd src-tauri; cargo test -p toaster --lib llm_download_preflight_errors_when_disk_tight -- --nocapture",
+      "task": "llm-download"
+    },
+    "AC-004-b": {
+      "kind": "manual",
+      "verifier": "launch-toaster-monitored.ps1",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 180",
+      "task": "llm-live-qc",
+      "steps": [
+        "On a drive with free space < 2x the selected model size, click Download.",
+        "Confirm a user-readable warning surfaces before any network activity starts."
+      ]
+    },
+    "AC-005-a": {
+      "kind": "cargo-test",
+      "verifier": "cargo test",
+      "command": "cd src-tauri; cargo test -p toaster --lib llm_manager_lazy_loads_on_first_complete -- --nocapture",
+      "task": "llm-manager"
+    },
+    "AC-005-b": {
+      "kind": "cargo-test",
+      "verifier": "cargo test",
+      "command": "cd src-tauri; cargo test -p toaster --lib llm_manager_unloads_after_timeout -- --nocapture",
+      "task": "llm-manager"
+    },
+    "AC-005-c": {
+      "kind": "cargo-test",
+      "verifier": "cargo test",
+      "command": "cd src-tauri; cargo test -p toaster --lib llm_manager_errors_cleanly_when_model_missing -- --nocapture",
+      "task": "llm-manager"
+    },
+    "AC-006-a": {
+      "kind": "cargo-test",
+      "verifier": "cargo test",
+      "command": "cd src-tauri; cargo test -p toaster --lib llm_manager_errors_when_ram_insufficient -- --nocapture",
+      "task": "llm-manager"
+    },
+    "AC-006-b": {
+      "kind": "manual",
+      "verifier": "launch-toaster-monitored.ps1",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 180",
+      "task": "llm-live-qc",
+      "steps": [
+        "Select the largest catalog model on a RAM-constrained machine (if available).",
+        "Confirm the UI shows an actionable error; the app does not crash."
+      ]
+    },
+    "AC-007-a": {
+      "kind": "cargo-test",
+      "verifier": "cargo test",
+      "command": "cd src-tauri; cargo test -p toaster --lib cleanup_dispatch_routes_local_gguf_through_llm_manager -- --nocapture",
+      "task": "llm-dispatch"
+    },
+    "AC-007-b": {
+      "kind": "cargo-test",
+      "verifier": "cargo test",
+      "command": "cd src-tauri; cargo test -p toaster --lib cleanup",
+      "task": "llm-dispatch"
+    },
+    "AC-007-c": {
+      "kind": "cargo-test",
+      "verifier": "cargo test",
+      "command": "cd src-tauri; cargo test -p toaster --lib cleanup_prompt_contract_passes_under_local_path -- --nocapture",
+      "task": "llm-dispatch"
+    },
+    "AC-008-a": {
+      "kind": "script",
+      "verifier": "gate-cargo-check-lib",
+      "command": "pwsh scripts/gate-cargo-check-lib.ps1",
+      "task": "llm-settings"
+    },
+    "AC-008-b": {
+      "kind": "manual",
+      "verifier": "launch-toaster-monitored.ps1",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 180",
+      "task": "llm-live-qc",
+      "steps": [
+        "Switch Post-Process provider selector to Local (in-process).",
+        "Confirm HTTP-only fields (Base URL, API key, model name) disappear.",
+        "Confirm local-models catalog becomes the primary config surface."
+      ]
+    },
+    "AC-009-a": {
+      "kind": "manual",
+      "verifier": "launch-toaster-monitored.ps1",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 600",
+      "task": "llm-live-qc",
+      "steps": [
+        "Download the smallest catalog model.",
+        "Disable network (airplane mode or firewall-block the app).",
+        "Run cleanup on a fixture media file.",
+        "Confirm cleanup completes successfully with the network off."
+      ]
+    },
+    "AC-009-b": {
+      "kind": "skill",
+      "verifier": "dep-hygiene",
+      "command": "invoke skill dep-hygiene",
+      "task": "llm-dep-hygiene"
+    },
+    "AC-010-a": {
+      "kind": "skill",
+      "verifier": "transcript-precision-eval",
+      "command": "invoke skill transcript-precision-eval",
+      "task": "llm-precision"
+    },
+    "AC-010-b": {
+      "kind": "cargo-test",
+      "verifier": "cargo test",
+      "command": "cd src-tauri; cargo test -p toaster --lib rejects_output_when_protected_tokens_are_dropped -- --nocapture",
+      "task": "llm-dispatch"
+    },
+    "AC-011-a": {
+      "kind": "skill",
+      "verifier": "dep-hygiene",
+      "command": "invoke skill dep-hygiene",
+      "task": "llm-dep-hygiene"
+    },
+    "AC-012-a": {
+      "kind": "manual",
+      "verifier": "launch-toaster-monitored.ps1",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 300",
+      "task": "llm-live-qc",
+      "steps": [
+        "Switch provider selector back to OpenAI-compatible (HTTP).",
+        "Configure base URL + model for a running local Ollama instance.",
+        "Run cleanup on a fixture; confirm success via the HTTP path."
+      ]
+    },
+    "AC-013-a": {
+      "kind": "script",
+      "verifier": "check-translations.ts",
+      "command": "bun run scripts/check-translations.ts",
+      "task": "llm-i18n"
+    },
+    "AC-013-b": {
+      "kind": "manual",
+      "verifier": "docs/post-processing.md review",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 60",
+      "task": "llm-i18n",
+      "steps": [
+        "Open docs/post-processing.md after the i18n task completes.",
+        "Confirm the doc describes Local (in-process) as the default path, with Ollama/LM Studio/llama.cpp listed as advanced fallback."
+      ]
+    },
+    "AC-014-a": {
+      "kind": "script",
+      "verifier": "gate-lint",
+      "command": "pwsh scripts/gate-lint.ps1",
+      "task": "llm-dep-hygiene"
+    },
+    "AC-014-b": {
+      "kind": "script",
+      "verifier": "gate-tsc",
+      "command": "pwsh scripts/gate-tsc.ps1",
+      "task": "llm-dep-hygiene"
+    },
+    "AC-014-c": {
+      "kind": "script",
+      "verifier": "gate-cargo-check-lib",
+      "command": "pwsh scripts/gate-cargo-check-lib.ps1",
+      "task": "llm-dep-hygiene"
+    }
+  }
+}

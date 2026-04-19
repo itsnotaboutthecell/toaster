@@ -13,7 +13,7 @@ src/                  React + TypeScript + Tailwind UI
   stores/             Zustand state
   i18n/               localization files
 src-tauri/src/        Rust backend
-  managers/           business logic domains (audio/model/transcription/editor/media/export/project/history)
+  managers/           business logic domains (audio/model/transcription/editor/media/export/project)
   commands/           Tauri command handlers
   audio_toolkit/      lower-level audio/VAD/text helpers
 ```
@@ -32,14 +32,22 @@ toaster/
 ├── docs/
 │   ├── build.md               # platform build setup (was BUILD.md)
 │   └── build-macos.md         # macOS NSPanel / private API notes
-├── extras/                    # eval fixture media (mp4/png) — see extras/README.md
-├── evals/                     # gitignored eval outputs (audio-boundary/, multi-backend-parity/)
+├── eval/                      # evaluation ecosystem
+│   ├── fixtures/              # committed fixture media (mp4/png) — see eval/fixtures/README.md
+│   └── output/                # gitignored eval run outputs (audio-boundary/, multi-backend-parity/)
+├── features/                  # spec-driven planning bundles (see "Spec-driven development" below)
+│   └── .templates/            # starter templates for REQUEST/PRD/BLUEPRINT/coverage/tasks
 ├── scripts/                   # PowerShell tooling
 │   ├── setup-env.ps1          # MSVC + LLVM + Vulkan env (run first on Windows)
+│   ├── scaffold-feature.ps1   # create features/<slug>/ from templates
+│   ├── promote-feature.ps1   # coverage + tasks.sql gates; promotion to "planned"
 │   ├── launch-toaster-monitored.ps1
 │   ├── eval-edit-quality.ps1
 │   ├── eval-audio-boundary.ps1
 │   ├── eval-multi-backend-parity.ps1
+│   ├── check-feature-coverage.ps1  # PM coverage gate (every AC -> verifier)
+│   ├── check-feature-tasks.ps1     # tasks.sql schema gate (columns/statuses)
+│   ├── feature-board.ps1           # terminal Kanban over features/*/STATE.md
 │   └── lib/                   # shared PS modules (AudioBoundary.psm1, ...)
 ├── src/                       # React + TypeScript + Tailwind frontend
 │   ├── App.tsx
@@ -53,14 +61,13 @@ toaster/
 │   ├── src/
 │   │   ├── lib.rs             # app entry, plugin registration
 │   │   ├── audio_toolkit/     # timing, forced_alignment, vad/, text helpers, constants
-│   │   ├── commands/          # Tauri command handlers (transcribe_file/, waveform/, history.rs, ...)
+│   │   ├── commands/          # Tauri command handlers (transcribe_file/, waveform/, ...)
 │   │   └── managers/          # business logic
 │   │       ├── transcription/ # adapter trait + backend implementations
 │   │       ├── editor/        # keep-segments, time mapping (backend authority)
 │   │       ├── cleanup/       # filler-word removal, post-processing
 │   │       ├── model/         # ASR model lifecycle
 │   │       ├── project/       # project save/load
-│   │       ├── history/       # undo/redo
 │   │       └── export/        # FFmpeg-driven render pipeline
 │   └── tests/                 # Rust integration tests
 │       └── fixtures/          # alignment/, boundary/, parity/, mock_transcription_sample.json
@@ -103,7 +110,7 @@ npm run lint
 When the user says **"launch toaster"** (or equivalent), enter live dev mode:
 
 1. Run `.\scripts\setup-env.ps1` in the shell first.
-2. Start the app with `.\scripts\launch-toaster-monitored.ps1 -ObservationSeconds 120` (async mode, keep running).
+2. Start the app with `.\scripts\launch-toaster-monitored.ps1 -ObservationSeconds 300` (async mode, keep running).
 3. Monitor startup output for compilation errors, 404s, runtime panics, or failed initialization.
 4. On failure signals, immediately gather logs and do first-line debugging before reporting status.
 5. On success, report the app is running and stay ready to inspect logs on demand.
@@ -199,6 +206,7 @@ Skills are not optional. If a skill applies to what you're doing, you must invok
 - **transcript-precision-eval** — Invoke when touching word operations, keep-segment logic, time mapping, transcription post-processing, or export.
 - **audio-boundary-eval** — Invoke on any PR that modifies `managers/editor`, `commands/waveform`, export splice logic, preview audio rendering, or boundary snapping. Extends `transcript-precision-eval` with seam-level gates: cross-seam leakage `xcorr < 0.15` over 0–80 ms, click-free seams (`z < 4.0`), and preview↔export within 1 sample / `-40 dBFS` RMS.
 - **transcription-adapter-contract** — Invoke before merging any PR that adds or swaps an ASR / forced-alignment backend. Enforces the `NormalizedTranscriptionResult` schema (monotonic non-overlap, no zero-duration words, stripped non-speech tokens, no silent equal-duration synthesis) and requires a round-trip fixture test that keeps precision + boundary gates green with the new backend.
+- **feature-pm** — Invoke whenever a user request would otherwise jump straight into code without a PRD/Blueprint/coverage map (new features, multi-file refactors, migrations, related-bug-fix batches). Forces invocation of the `product-manager` agent to produce `features/<slug>/` planning artifacts and a machine-checkable `coverage.json` before any production edit. Toaster's spec-driven discipline; afkode-inspired.
 
 Build, lint, and test command reference lives in [Development commands](#development-commands) and [Windows requirements](#windows-requirements) above; see `docs/build.md` for Windows toolchain troubleshooting.
 
@@ -221,10 +229,56 @@ When `superpowers:code-reviewer` reviews a Toaster PR, it must also apply `.gith
 - **waveform-diff** — Invoke after audio-path milestones, or when a bug report sounds like "tiny remnants / clicks / drift". Renders preview and export to PCM, measures seam neighborhoods at sample level (cross-correlation, HF-burst energy, sample discontinuity, preview↔export parity), and emits JSON + human-readable findings. Does not fix code; reports only.
 - **cut-drift-fuzzer** — Invoke before merging any edit-engine / time-mapping / undo-redo / export change. Runs seeded deterministic sequences (1000 ops) over synthetic beacon and real fixtures, asserting monotonic time maps, no cumulative duration drift (≤ 21 µs), no panics, and beacon preservation within 1 sample on PCM export. Emits pass/fail JSON.
 - **toaster-review-addendum** (not an agent, consumed by `superpowers:code-reviewer`) — Toaster-specific architecture boundaries, verification gates, and hygiene rules the generic reviewer layers on top of its protocol.
+- **product-manager** — Invoke (via the `feature-pm` skill) to turn an informal feature request into a complete `features/<slug>/` planning bundle: REQUEST (six-element) → PRD with `R-NNN` / `AC-NNN-x` IDs → Blueprint → task graph (`tasks.sql`) → per-task curated context briefings → `coverage.json` mapping every AC to a real verifier (skill / agent / cargo-test / script / live-app). Hands off to `superpowers:executing-plans` once `scripts/check-feature-coverage.ps1` is green. Does not write production code. **Dispatch via `agent_type: general-purpose` with `.github/agents/product-manager.md` inlined into the prompt, not `agent_type: product-manager` — the latter is registered in this CLI with a `view`-only tool restriction that makes file creation impossible (six documented narrate-instead-of-write failures).**
 
 The previous local `code-reviewer` agent has been removed in favor of `superpowers:code-reviewer` + the addendum above.
 
 ## Hooks
 
 Tool-call enforcement for the rules above lives in .github/hooks/. See .github/hooks/README.md for the list and bypass env vars.
+
+## Spec-driven development (Product Manager agent)
+
+Toaster runs an afkode-inspired ([afkode.ai/docs](https://afkode.ai/docs)) spec-driven loop on top of the superpowers chain. Any work above a single-file fix should go through it.
+
+### Lifecycle
+
+```
+Define -> Plan -> Execute -> Review -> Ship
+ user    PM       superpowers:        superpowers:    finishing-a-
+ (slug + agent    executing-plans /   code-reviewer + development-
+ 6-elt           subagent-driven-     toaster-review-  branch
+ REQUEST)        development           addendum
+```
+
+State lives in `features/<slug>/STATE.md`, one of: `defined`, `planned`, `executing`, `reviewing`, `shipped`, `archived`. Run `pwsh scripts/feature-board.ps1` for the terminal Kanban.
+
+### Per-feature artifacts
+
+Under `features/<slug>/`:
+
+| File | Purpose | Tracked? |
+|------|---------|----------|
+| `STATE.md` | Lifecycle state (single line) | yes |
+| `REQUEST.md` | Six-element user request (Problem & Goals / Outcome & AC / Scope / Code refs / Edge cases / Data model) | yes |
+| `PRD.md` | Requirements with `R-NNN` IDs and `AC-NNN-x` acceptance criteria | yes |
+| `BLUEPRINT.md` | Architecture decisions per R-ID, single-source-of-truth placement, risk register | yes |
+| `tasks.sql` | `INSERT INTO todos / todo_deps` for the session SQL store | yes |
+| `coverage.json` | Every AC -> verifier (skill / agent / cargo-test / script / manual live-app) | yes |
+| `journal.md` | Operational journal (gitignored except for the example) | no |
+| `tasks/<id>/context.md` | Curated per-task briefing for fresh subagents (gitignored except for the example) | no |
+
+The `feature-pm` skill + `product-manager` agent generate this bundle; see [`features/example-pm-dryrun/`](features/example-pm-dryrun/) for a worked reference.
+
+### Coverage gate
+
+`scripts/check-feature-coverage.ps1 -Feature <slug>` (or `-All` in CI) verifies every `AC-NNN-x` in `PRD.md` has a real verifier in `coverage.json`. `scripts/check-feature-tasks.ps1 -Feature <slug>` validates the `tasks.sql` schema (column list, status literals, forbidden columns). Both gates run inside `scripts/promote-feature.ps1` and must exit 0 before `STATE.md` advances from `defined` to `planned`. This is the machine-enforced incarnation of the rule called out in the `transcript-precision-eval` skill ("must be machine-enforced, not agent-enforced").
+
+### Curated context per task
+
+Each `tasks/<id>/context.md` is the only file the dispatched subagent should load (plus the files it cites). This mirrors afkode's "fresh session per task" model so task 50 runs with the same precision as task 1, without dragging the full PRD into every context window.
+
+### Project-wide testing knowledge
+
+`docs/testing-kb.md` accumulates empirical testing facts across features (cargo timing, fixture regeneration, i18n parity, file-size cap, live-app verification). QC tasks should append discoveries here so feature N+1 does not re-hit feature N's walls.
 

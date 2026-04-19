@@ -1,0 +1,200 @@
+{
+  "feature": "product-map-v1",
+  "_note": "Planning artifact, not implementable. Each AC is a 'manual' verifier whose 'steps' point the reader at a specific PRD section to confirm structural completeness. The 'roadmap_hints' object below is a forward-looking map (one entry per PRD section 6 roadmap item) that subsequent feature bundles will cite when scaffolded; the coverage gate ignores keys it does not know.",
+  "acs": {
+    "AC-001-a": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "scripts/launch-toaster-monitored.ps1",
+      "task": "product-map-v1-doc-review",
+      "steps": [
+        "Open features/product-map-v1/PRD.md.",
+        "Locate Section 2 'Current capability inventory'.",
+        "Confirm a table exists for each of the 7 domains: Transcription, Editing, Captions, Export/FFmpeg pipeline, Project/persistence, UX/shell, Build & ops.",
+        "Confirm at least 30 capability rows in total across all 7 tables.",
+        "Confirm every row has a 'Source of truth' file path."
+      ]
+    },
+    "AC-002-a": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "scripts/launch-toaster-monitored.ps1",
+      "task": "product-map-v1-doc-review",
+      "steps": [
+        "Open features/product-map-v1/PRD.md.",
+        "Locate Section 3 'Undocumented or under-documented capabilities'.",
+        "Confirm at least 10 numbered items.",
+        "Confirm each item cites at least one file path (line number where useful).",
+        "Spot-check by opening one of the cited files and confirming the named symbol exists."
+      ]
+    },
+    "AC-003-a": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "scripts/launch-toaster-monitored.ps1",
+      "task": "product-map-v1-doc-review",
+      "steps": [
+        "Open features/product-map-v1/PRD.md.",
+        "Locate Section 4 'Gap analysis to v1.0 launch'.",
+        "Confirm three subsections exist: Blockers, Strongly Recommended, Nice-to-have.",
+        "Confirm every gap has a stable ID matching the prefix of its subsection (B#, SR#, NH#)."
+      ]
+    },
+    "AC-004-a": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "scripts/launch-toaster-monitored.ps1",
+      "task": "product-map-v1-doc-review",
+      "steps": [
+        "Open features/product-map-v1/PRD.md.",
+        "Locate Section 5 'FFmpeg opportunity map'.",
+        "Confirm the table covers all 12 focus areas listed in the original brief: loudness normalization, per-clip / crossfades, burn-in caption parity, format/container choices, hardware encoder selection, aspect-ratio reframe, speed/pitch-preserving time stretch, per-segment volume / ducking, chapter markers, thumbnail / poster frame, subtitle sidecar export including ASS, loudness / clipping warnings (ebur128 panel).",
+        "Confirm each row has Value, Complexity (S/M/L), UX risk (Low/Med/High), and Recommend (Include/Defer/Reject) columns filled in.",
+        "Confirm no row recommends a network-dependent capability."
+      ]
+    },
+    "AC-005-a": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "scripts/launch-toaster-monitored.ps1",
+      "task": "product-map-v1-doc-review",
+      "steps": [
+        "Open features/product-map-v1/PRD.md.",
+        "Locate Section 6 'Proposed roadmap to v1.0'.",
+        "Confirm exactly 3 milestones: Foundation, Polish, Launch-Ready.",
+        "Confirm each milestone has: a 'Closes' line citing §4 IDs, an 'Includes FFmpeg' line citing §5 IDs, an ordered table of slugs, and an 'Exit criteria' bullet list.",
+        "Confirm slug ordering matches dependency order described in the BLUEPRINT methodology."
+      ]
+    },
+    "AC-006-a": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "scripts/launch-toaster-monitored.ps1",
+      "task": "product-map-v1-doc-review",
+      "steps": [
+        "Open features/product-map-v1/PRD.md.",
+        "Locate Section 7 'Anti-scope (explicitly NOT for v1.0)'.",
+        "Confirm at least 6 numbered exclusions (AS#).",
+        "Confirm each exclusion cites a file:line in AGENTS.md or PRD.md as justification.",
+        "Spot-check one citation by opening AGENTS.md at the cited line and confirming the rule is stated there."
+      ]
+    },
+    "AC-007-a": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "scripts/launch-toaster-monitored.ps1",
+      "task": "product-map-v1-doc-review",
+      "steps": [
+        "Open features/product-map-v1/PRD.md.",
+        "Locate Section 8 'Risks & open questions for the human'.",
+        "Confirm at least 8 numbered questions (Q1...Q8 or higher).",
+        "Confirm each is phrased as a binary or short-list decision (not open-ended)."
+      ]
+    },
+    "AC-008-a": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "scripts/launch-toaster-monitored.ps1",
+      "task": "product-map-v1-doc-review",
+      "steps": [
+        "Open features/product-map-v1/coverage.json.",
+        "Locate the 'roadmap_hints' object below.",
+        "Confirm it contains one key per roadmap item in PRD.md §6 (1.1-1.5, 2.1-2.7, 3.1-3.6).",
+        "Confirm each entry names a verifier kind (skill / agent / cargo-test / script / manual) and verifier name.",
+        "Confirm any 'to-be-created' verifier is explicitly labelled as such."
+      ]
+    }
+  },
+  "roadmap_hints": {
+    "1.1-unreachable-surface-purge": {
+      "kind": "skill",
+      "verifier": "i18n-pruning",
+      "note": "Plus dep-hygiene for any orphan modules deleted; manual live-app QC for sidebar reachability."
+    },
+    "1.2-caption-settings-handlers": {
+      "kind": "manual",
+      "verifier": "launch-toaster-monitored.ps1",
+      "note": "Plus existing audio-boundary-eval skill to verify caption preview/export parity unchanged."
+    },
+    "1.3-loudness-preflight": {
+      "kind": "cargo-test",
+      "verifier": "splice::loudness measurement tests",
+      "note": "Existing tests in src-tauri/src/managers/splice/loudness.rs cover deterministic LUFS; add live-app manual step for the preflight UI."
+    },
+    "1.4-audio-only-export": {
+      "kind": "script",
+      "verifier": "scripts/eval-edit-quality.ps1",
+      "note": "Extend with audio-only export presets; transcript-precision-eval skill already covers content invariants."
+    },
+    "1.5-caption-parity-eval": {
+      "kind": "script",
+      "verifier": "scripts/eval-verifier-captions.ps1",
+      "note": "Extend with new preview-vs-burn-in geometry assertion. To-be-extended; script exists."
+    },
+    "2.1-export-format-mov": {
+      "kind": "script",
+      "verifier": "scripts/eval-audio-boundary.ps1",
+      "note": "Boundary eval re-runs against new container; to-be-extended with mov fixture."
+    },
+    "2.2-hardware-encoder-fallback": {
+      "kind": "manual",
+      "verifier": "launch-toaster-monitored.ps1",
+      "note": "Hardware-dependent; CI smoke = CPU fallback path. Manual GPU verification per platform."
+    },
+    "2.3-time-stretch-segments": {
+      "kind": "agent",
+      "verifier": "cut-drift-fuzzer",
+      "note": "Time-mapping change requires drift-fuzzer + transcript-precision-eval skill."
+    },
+    "2.4-chapter-markers": {
+      "kind": "cargo-test",
+      "verifier": "to-be-created chapter-marker generation tests",
+      "note": "New cargo-test module under managers/export or managers/captions."
+    },
+    "2.5-ass-sidecar-export": {
+      "kind": "skill",
+      "verifier": "transcript-precision-eval",
+      "note": "Plus a new fixture-based round-trip test for the .ass file."
+    },
+    "2.6-keyboard-shortcuts-cheatsheet": {
+      "kind": "manual",
+      "verifier": "launch-toaster-monitored.ps1",
+      "note": "Pure UI surface; manual reachability + i18n-pruning for any new strings."
+    },
+    "2.7-restore-or-delete-post-processing-ui": {
+      "kind": "skill",
+      "verifier": "dep-hygiene",
+      "note": "If deletion path: dep-hygiene + i18n-pruning. If restore path: manual + transcript-precision-eval to confirm cleanup pipeline still passes."
+    },
+    "3.1-windows-code-signing": {
+      "kind": "manual",
+      "verifier": "to-be-created clean-VM signed-installer smoke",
+      "note": "Verifier is hands-on on a clean Windows VM; no automated equivalent without infrastructure investment."
+    },
+    "3.2-macos-build-verify": {
+      "kind": "manual",
+      "verifier": "to-be-created macOS build smoke",
+      "note": "Restores docs/build-macos.md; verifier is hands-on per AGENTS.md 'Verified means the live app'."
+    },
+    "3.3-linux-build-verify": {
+      "kind": "manual",
+      "verifier": "to-be-created Linux build smoke",
+      "note": "Includes Nix flake verification; hands-on per platform."
+    },
+    "3.4-readme-launch-pass": {
+      "kind": "skill",
+      "verifier": "canonical-instructions",
+      "note": "Plus manual review against AGENTS.md to ensure README does not duplicate canonical rules."
+    },
+    "3.5-poster-frame-export": {
+      "kind": "cargo-test",
+      "verifier": "to-be-created poster-frame extraction test",
+      "note": "Single FFmpeg invocation; deterministic output size + format check."
+    },
+    "3.6-first-run-smoke-eval": {
+      "kind": "script",
+      "verifier": "to-be-created scripts/eval-first-run-smoke.ps1",
+      "note": "New cross-platform script; gates Milestone 3 exit."
+    }
+  }
+}

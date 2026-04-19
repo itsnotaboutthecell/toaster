@@ -39,7 +39,7 @@ pwsh -NoProfile -File scripts/eval-audio-boundary.ps1 -Fixture phrase_01
 pwsh -NoProfile -File scripts/eval-audio-boundary.ps1 -Fixture phrase_01 -ForceLeaky
 ```
 
-Reports land at `evals/audio-boundary/<fixture>/<timestamp>/{report.json,report.md}`.
+Reports land at `eval/output/audio-boundary/<fixture>/<timestamp>/{report.json,report.md}`.
 
 Helper library: `scripts/lib/AudioBoundary.psm1`
 (normalized cross-correlation, spectral-discontinuity z-score, WER, sample-boundary).
@@ -75,7 +75,7 @@ Fixture generator: `scripts/generate-boundary-fixtures.ps1`
 
 ## Fixture Assets
 
-- `extras/toaster_example.mp4` and `extras/toaster_example-edited.mp4` as source material.
+- `eval/fixtures/toaster_example.mp4` and `eval/fixtures/toaster_example-edited.mp4` as source material.
 - `src-tauri/tests/fixtures/boundary/phrase_01.*` — synthetic 3-tone phrase with manifest, stems, clean edit, leaky edit, preview parity target, expected-transcript JSON.
 - `src-tauri/tests/fixtures/boundary/multicut_01.*` — 4-tone edge-to-edge fixture for ≥3-seam preview↔export parity (E3).
 - Regenerate on demand: `pwsh -NoProfile -File scripts/generate-boundary-fixtures.ps1`.

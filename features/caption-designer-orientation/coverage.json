@@ -1,0 +1,118 @@
+{
+  "feature": "caption-designer-orientation",
+  "acs": {
+    "AC-001-a": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 120",
+      "task": "caption-designer-orientation-qc",
+      "steps": [
+        "Launch via pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 120.",
+        "Open Settings -> Captions.",
+        "Confirm the preview pane shows a frame outline with rounded corners, horizontal + vertical centerlines, and double-headed arrows on each outer edge.",
+        "Confirm there is NO photographic background image of any kind."
+      ]
+    },
+    "AC-001-b": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 120",
+      "task": "caption-designer-orientation-qc",
+      "steps": [
+        "In the running app DevTools inspect the SVG strokes used by CaptionMockFrame.",
+        "Confirm stroke colors map to the existing tokens (#EEEEEE rest, #E8A838 accent on hover or focus); no invented greys or reds."
+      ]
+    },
+    "AC-001-c": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 120",
+      "task": "caption-designer-orientation-qc",
+      "steps": [
+        "Inspect the rendered preview frame visually and via DOM.",
+        "Confirm there are no <text> SVG nodes with pixel-dimension strings (no '1920x1080', '480x800', etc.).",
+        "Confirm only the caption pill text is rendered as text inside the frame area."
+      ]
+    },
+    "AC-002-a": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 180",
+      "task": "caption-designer-orientation-qc",
+      "steps": [
+        "Open Settings -> Captions.",
+        "Locate the Orientation select; confirm it has options Horizontal and Vertical.",
+        "Toggle to Vertical; confirm the preview pane re-renders to a 9:16 aspect (taller than wide) without reloading the page.",
+        "Toggle back to Horizontal; confirm the pane returns to 16:9."
+      ]
+    },
+    "AC-002-b": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 180",
+      "task": "caption-designer-orientation-qc",
+      "steps": [
+        "With caption_position = 90, caption_font_size = 40 (defaults), confirm the caption pill in Horizontal sits near the bottom of the frame.",
+        "Toggle to Vertical; confirm the pill is still positioned at the same proportional location (~10% from the bottom of the new vertical frame).",
+        "Confirm pill visual font size on screen is comparable (within ~20%) across the two orientations - no orientation-induced 1.78x scale jump."
+      ]
+    },
+    "AC-002-c": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 180",
+      "task": "caption-designer-orientation-qc",
+      "steps": [
+        "Set caption_max_width_percent = 100 and caption_font_size = 72; switch to a long sample line.",
+        "In Horizontal: confirm pill stays inside the frame outline.",
+        "Toggle to Vertical: confirm pill still stays inside the frame outline (text wraps if needed)."
+      ]
+    },
+    "AC-002-d": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 60",
+      "task": "caption-designer-orientation-qc",
+      "steps": [
+        "Cold-launch the app (close it first).",
+        "Open Settings -> Captions; confirm the orientation select is set to Horizontal."
+      ]
+    },
+    "AC-003-a": {
+      "verifier": "cargo test caption_profile_set_has_distinct_desktop_and_mobile_defaults",
+      "kind": "cargo-test",
+      "command": ". .\\scripts\\setup-env.ps1; cd src-tauri; cargo test -p toaster --lib caption_profile_set_has_distinct_desktop_and_mobile_defaults",
+      "task": "caption-designer-orientation-ssot-audit",
+      "notes": "Retargeted after caption-profiles-persistence Slice B landed the real caption_layout tests. Slice A's orientation-designer UI is backed by the desktop/mobile default-profile contract; this test asserts the two defaults are distinct (AC-001-a in Slice B PRD). See journal.md for retarget history."
+    },
+    "AC-003-b": {
+      "verifier": "code review",
+      "kind": "manual",
+      "command": "git diff --stat src-tauri/src/managers/captions/",
+      "task": "caption-designer-orientation-ssot-audit",
+      "steps": [
+        "Run git diff --stat src-tauri/src/managers/captions/ on the feature branch.",
+        "Confirm zero lines changed (this PR must not touch the backend caption manager).",
+        "Run git diff --stat src-tauri/src/commands/ | rg caption; confirm no new caption Tauri command was added.",
+        "Read the React diff for CaptionSettings.tsx; confirm orientation lives only in useState, never passed to invoke() / a Tauri command."
+      ]
+    },
+    "AC-004-a": {
+      "verifier": "rg",
+      "kind": "manual",
+      "command": "rg \"caption-preview-frame\" src",
+      "task": "caption-designer-orientation-asset-cleanup",
+      "steps": [
+        "From repo root run: rg \"caption-preview-frame\" src",
+        "Confirm zero matches.",
+        "Confirm src/assets/caption-preview-frame.png does not exist on disk."
+      ]
+    },
+    "AC-004-b": {
+      "verifier": "check-translations.ts",
+      "kind": "script",
+      "command": "bun run scripts/check-translations.ts",
+      "task": "caption-designer-orientation-qc"
+    }
+  }
+}

@@ -55,7 +55,7 @@ param(
     [switch]$StrictMode,
     [ValidateSet('','equal-duration','pre-speech-padding','authoritative-lie')]
     [string]$ForceRegression = '',
-    [string]$OutputRoot = (Join-Path $PSScriptRoot '..\evals\multi-backend-parity')
+    [string]$OutputRoot = (Join-Path $PSScriptRoot '..\eval\output\multi-backend-parity')
 )
 
 $ErrorActionPreference = 'Stop'

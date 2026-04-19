@@ -1,0 +1,184 @@
+{
+  "feature": "sidebar-5-lane-restructure",
+  "acs": {
+    "AC-001-a": {
+      "kind": "manual",
+      "verifier": "launch-toaster-monitored.ps1",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 180",
+      "task": "slr-live-qc",
+      "steps": [
+        "Launch monitored app.",
+        "Confirm sidebar renders exactly 5 items in order: Editor, Models, Post-Process, Advanced, About."
+      ]
+    },
+    "AC-001-b": {
+      "kind": "script",
+      "verifier": "gate-lint",
+      "command": "pwsh scripts/gate-lint.ps1",
+      "task": "slr-static-gates"
+    },
+    "AC-002-a": {
+      "kind": "manual",
+      "verifier": "launch-toaster-monitored.ps1",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 180",
+      "task": "slr-live-qc",
+      "steps": [
+        "Open Advanced.",
+        "Confirm 5 SettingsGroup headers in order: Words, Performance, Captions, Export, Experimental."
+      ]
+    },
+    "AC-002-b": {
+      "kind": "manual",
+      "verifier": "launch-toaster-monitored.ps1",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 180",
+      "task": "slr-live-qc",
+      "steps": [
+        "In Advanced > Words, confirm DiscardWords and AllowWords lists load and accept add/remove."
+      ]
+    },
+    "AC-003-a": {
+      "kind": "script",
+      "verifier": "gate-ripgrep-absent",
+      "command": "pwsh scripts/gate-ripgrep-absent.ps1 -Pattern 'ModelUnloadTimeoutSetting|CaptionSettings' -Path src/components/settings/models",
+      "task": "slr-models-strip"
+    },
+    "AC-003-b": {
+      "kind": "manual",
+      "verifier": "launch-toaster-monitored.ps1",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 180",
+      "task": "slr-live-qc",
+      "steps": [
+        "Open Models.",
+        "Confirm only the model catalog (cards + language filter) renders; no Performance or Captions sections."
+      ]
+    },
+    "AC-004-a": {
+      "kind": "manual",
+      "verifier": "launch-toaster-monitored.ps1",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 180",
+      "task": "slr-live-qc",
+      "steps": [
+        "Open Advanced > Export.",
+        "Confirm every control that previously lived on the Export sidebar page is present and interactive."
+      ]
+    },
+    "AC-004-b": {
+      "kind": "script",
+      "verifier": "gate-ripgrep-absent",
+      "command": "pwsh scripts/gate-ripgrep-absent.ps1 -Pattern '^\\s*export:\\s*\\{' -Path src/components/Sidebar.tsx",
+      "task": "slr-sidebar-strip"
+    },
+    "AC-005-a": {
+      "kind": "script",
+      "verifier": "gate-cargo-check-lib",
+      "command": "pwsh scripts/gate-cargo-check-lib.ps1",
+      "task": "slr-static-gates"
+    },
+    "AC-005-b": {
+      "kind": "manual",
+      "verifier": "launch-toaster-monitored.ps1",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 180",
+      "task": "slr-live-qc",
+      "steps": [
+        "Advanced > Experimental: flip master OFF then ON; confirm per-flag list hidden then revealed.",
+        "Flip ON -> OFF; confirm list hides again."
+      ]
+    },
+    "AC-005-c": {
+      "kind": "manual",
+      "verifier": "launch-toaster-monitored.ps1",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 120",
+      "task": "slr-live-qc",
+      "steps": [
+        "Delete the user settings file for a fresh-install simulation.",
+        "Relaunch; navigate to Advanced > Experimental; confirm master toggle defaults OFF and per-flag list is hidden."
+      ]
+    },
+    "AC-006-a": {
+      "kind": "cargo-test",
+      "verifier": "cargo test",
+      "command": "cd src-tauri; cargo test -p toaster --lib experiment_getter_returns_false_when_master_disabled -- --nocapture",
+      "task": "slr-getter-tests"
+    },
+    "AC-006-b": {
+      "kind": "cargo-test",
+      "verifier": "cargo test",
+      "command": "cd src-tauri; cargo test -p toaster --lib experiment_getter_returns_stored_value_when_master_enabled -- --nocapture",
+      "task": "slr-getter-tests"
+    },
+    "AC-006-c": {
+      "kind": "manual",
+      "verifier": "launch-toaster-monitored.ps1",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 180",
+      "task": "slr-live-qc",
+      "steps": [
+        "Enable master toggle, enable one experiment, observe the feature active in the UI.",
+        "Flip master OFF without clearing the per-flag toggle; confirm the feature becomes inactive.",
+        "Flip master ON again; confirm the feature returns (stored per-flag value preserved)."
+      ]
+    },
+    "AC-007-a": {
+      "kind": "script",
+      "verifier": "check-translations.ts",
+      "command": "bun run scripts/check-translations.ts",
+      "task": "slr-i18n"
+    },
+    "AC-007-b": {
+      "kind": "script",
+      "verifier": "gate-ripgrep-absent",
+      "command": "pwsh scripts/gate-ripgrep-absent.ps1 -Pattern 'sidebar\\.export|sidebar\\.experimental' -Path src/i18n/locales",
+      "task": "slr-i18n"
+    },
+    "AC-007-c": {
+      "kind": "script",
+      "verifier": "check-translations.ts",
+      "command": "bun run scripts/check-translations.ts",
+      "task": "slr-i18n"
+    },
+    "AC-008-a": {
+      "kind": "script",
+      "verifier": "gate-lint",
+      "command": "pwsh scripts/gate-lint.ps1",
+      "task": "slr-static-gates"
+    },
+    "AC-008-b": {
+      "kind": "script",
+      "verifier": "gate-tsc",
+      "command": "pwsh scripts/gate-tsc.ps1",
+      "task": "slr-static-gates"
+    },
+    "AC-008-c": {
+      "kind": "script",
+      "verifier": "gate-cargo-check-lib",
+      "command": "pwsh scripts/gate-cargo-check-lib.ps1",
+      "task": "slr-static-gates"
+    },
+    "AC-009-a": {
+      "kind": "manual",
+      "verifier": "launch-toaster-monitored.ps1",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 180",
+      "task": "slr-live-qc",
+      "steps": [
+        "Launch monitored, click through all 5 sidebar items, confirm no runtime error or 404 in the log."
+      ]
+    },
+    "AC-009-b": {
+      "kind": "manual",
+      "verifier": "launch-toaster-monitored.ps1",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 180",
+      "task": "slr-live-qc",
+      "steps": [
+        "Scroll Advanced and exercise one control per group (add a word, change unload timeout, tweak a caption, change an export setting, toggle master experimental)."
+      ]
+    },
+    "AC-009-c": {
+      "kind": "manual",
+      "verifier": "launch-toaster-monitored.ps1",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 180",
+      "task": "slr-live-qc",
+      "steps": [
+        "Flip experimental_enabled OFF -> ON -> OFF in one session; confirm the per-flag list appears and disappears without reload."
+      ]
+    }
+  }
+}

@@ -1,0 +1,36 @@
+-- local-llm-model-catalog task graph
+INSERT INTO todos (id, title, description, status) VALUES
+ ('llm-crate', 'Add llama-cpp-2 crate + smoke build', 'Edit src-tauri/Cargo.toml; add llama-cpp-2 with feature flags (CPU-only v1). Run cargo check -p toaster --lib. Document new cold-build time in AGENTS.md Cargo runtime expectations if delta > 2 min.', 'pending'),
+ ('llm-catalog', 'Curated catalog + tests', 'Create src-tauri/src/managers/llm/catalog.rs with 3-5 entries (qwen2.5-0.5b-q4, llama-3.2-1b-q4 default, llama-3.2-3b-q4, qwen2.5-7b-q4). Cargo tests for AC-001-a and AC-001-b.', 'pending'),
+ ('llm-download', 'Download/verify/delete/cancel machinery', 'Create src-tauri/src/managers/llm/download.rs. Reuse or port managers/model/download.rs shape. Disk-space preflight (2x size). Cargo tests for AC-003-a and AC-004-a.', 'pending'),
+ ('llm-manager', 'LlmManager lifecycle', 'Create src-tauri/src/managers/llm/mod.rs + inference.rs. Lazy load, unload on model_unload_timeout. Cargo tests AC-005-a/b/c and AC-006-a (mock inference backend OK).', 'pending'),
+ ('llm-commands', 'Tauri commands', 'Add download_llm_model, delete_llm_model, cancel_llm_download, list_llm_models commands mirroring the Whisper surface. Wire into src-tauri/src/lib.rs handlers. Regenerate bindings.', 'pending'),
+ ('llm-settings', 'Add local_llm_model_id setting', 'Edit src-tauri/src/settings/defaults.rs: add local_llm_model_id: Option<String> (default None). Regen TS bindings. Verify AC-008-a (cargo check -p toaster --lib).', 'pending'),
+ ('llm-dispatch', 'Dispatch third branch', 'Edit src-tauri/src/managers/cleanup/llm_dispatch.rs: add DispatchBackend enum with Http/LocalGguf; select branch from settings. Existing tests untouched. Parameterize new tests AC-007-a/b/c.', 'pending'),
+ ('llm-event-gen', 'Generalize DownloadableAssetEvent (or parallel enum)', 'Decision deferred to this task per blueprint. If generalization touches >50 lines of Whisper code, ship a parallel enum for v1 and file follow-up for merge.', 'pending'),
+ ('llm-ui-card', 'LlmModelCatalog component + Post-Process integration', 'Create src/components/settings/post-processing/local-models/LlmModelCatalog.tsx. Generalize ModelCard via a source prop OR fork. Add provider-selector option Local (in-process). Hide HTTP fields when selected. AC-002-d + AC-008-b live.', 'pending'),
+ ('llm-i18n', 'i18n + docs update', 'Add keys: settings.postProcessing.localModels.*, settings.postProcessing.provider.local.*. Update all 20 locales. Update docs/post-processing.md to reflect in-app default. check-translations.ts exit 0.', 'pending'),
+ ('llm-dep-hygiene', 'Dep-hygiene + static gates', 'Run cargo machete, verify no orphan crates. Run npm run lint, npx tsc --noEmit, cargo check -p toaster --lib. AC-011-a + AC-014-a/b/c.', 'pending'),
+ ('llm-precision', 'Precision eval on local path', 'Run transcript-precision-eval skill with post_process_provider_id=local and recommended default model. AC-010-a. If 1b default fails, promote default to 3b per blueprint contingency and document.', 'pending'),
+ ('llm-live-qc', 'Live-app QC', 'launch-toaster-monitored. Run the 5-step AC-002/AC-003/AC-004/AC-009/AC-012 scenario: download smallest catalog model, disable network, run cleanup offline, switch to HTTP path + back, delete model. Record evidence in journal.md.', 'pending');
+
+INSERT INTO todo_deps (todo_id, depends_on) VALUES
+ ('llm-catalog', 'llm-crate'),
+ ('llm-download', 'llm-crate'),
+ ('llm-manager', 'llm-crate'),
+ ('llm-commands', 'llm-download'),
+ ('llm-commands', 'llm-manager'),
+ ('llm-settings', 'llm-crate'),
+ ('llm-dispatch', 'llm-manager'),
+ ('llm-dispatch', 'llm-settings'),
+ ('llm-event-gen', 'llm-download'),
+ ('llm-ui-card', 'llm-commands'),
+ ('llm-ui-card', 'llm-event-gen'),
+ ('llm-ui-card', 'llm-settings'),
+ ('llm-i18n', 'llm-ui-card'),
+ ('llm-dep-hygiene', 'llm-ui-card'),
+ ('llm-dep-hygiene', 'llm-dispatch'),
+ ('llm-dep-hygiene', 'llm-i18n'),
+ ('llm-precision', 'llm-dispatch'),
+ ('llm-live-qc', 'llm-dep-hygiene'),
+ ('llm-live-qc', 'llm-precision');

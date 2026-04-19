@@ -1,0 +1,109 @@
+{
+  "feature": "export-hardware-encoder",
+  "acs": {
+    "AC-001-a": {
+      "verifier": "parse_ffmpeg_encoders_output",
+      "kind": "cargo-test",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml parse_ffmpeg_encoders_output",
+      "task": "ehe-qc-detect"
+    },
+    "AC-001-b": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "ehe-qc-detect",
+      "steps": [
+        "Launch the app on a machine whose hardware encoders you know.",
+        "Open Settings -> Export and click the Encoder Select.",
+        "Confirm the listed options match the expected set (Auto + CPU + the available HW encoders for this machine).",
+        "On a machine without an NVIDIA GPU, confirm NVENC is not listed."
+      ]
+    },
+    "AC-001-c": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "ehe-qc-detect",
+      "steps": [
+        "Time app launch on a machine where ffmpeg is on PATH; confirm time-to-window is not delayed by more than 1 s vs. baseline.",
+        "Temporarily move the ffmpeg binary out of PATH and relaunch.",
+        "Confirm the app still launches and the Encoder Select shows only Auto + CPU."
+      ]
+    },
+    "AC-002-a": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "ehe-qc-picker",
+      "steps": [
+        "On a machine with NVENC available, set Settings -> Export -> Encoder to NVENC.",
+        "Export a 10 s video fixture.",
+        "Run: ffprobe -hide_banner -show_streams <output.mp4>",
+        "Confirm codec_name is h264 and a stream tag (encoder/handler_name) references nvenc."
+      ]
+    },
+    "AC-002-b": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "ehe-qc-picker",
+      "steps": [
+        "Set Settings -> Export -> Encoder to CPU and export the same 10 s fixture.",
+        "Run ffprobe and confirm the encoder tag references libx264."
+      ]
+    },
+    "AC-003-a": {
+      "verifier": "hardware_encoder_fallback",
+      "kind": "cargo-test",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml hardware_encoder_fallback",
+      "task": "ehe-qc-fallback"
+    },
+    "AC-003-b": {
+      "verifier": "hardware_encoder_fallback_no_loop",
+      "kind": "cargo-test",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml hardware_encoder_fallback_no_loop",
+      "task": "ehe-qc-fallback"
+    },
+    "AC-003-c": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "ehe-qc-fallback",
+      "steps": [
+        "On a clean VM with no GPU drivers, force Settings -> Export -> Encoder = NVENC.",
+        "Export a 10 s fixture.",
+        "Confirm a non-blocking toast appears stating the hardware encoder failed and CPU was used.",
+        "Confirm the exported file plays and ffprobe shows libx264 as the encoder."
+      ]
+    },
+    "AC-004-a": {
+      "verifier": "cut-drift-fuzzer",
+      "kind": "agent",
+      "command": "Run cut-drift-fuzzer agent on eval/fixtures/toaster_example.mp4 with the chosen hardware encoder",
+      "task": "ehe-qc-parity"
+    },
+    "AC-004-b": {
+      "verifier": "audio-boundary-eval",
+      "kind": "skill",
+      "command": "Run audio-boundary-eval skill on eval/fixtures/toaster_example.mp4",
+      "task": "ehe-qc-parity"
+    },
+    "AC-005-a": {
+      "verifier": "check-feature-coverage.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/check-feature-coverage.ps1 -Feature export-hardware-encoder",
+      "task": "ehe-qc-ssot",
+      "steps": [
+        "Run: rg -n 'h264_nvenc|h264_qsv|h264_videotoolbox|h264_vaapi' src",
+        "Confirm zero matches. The codec strings only appear in src-tauri/src/managers/export/encoders.rs."
+      ]
+    },
+    "AC-005-b": {
+      "verifier": "BLUEPRINT.md",
+      "kind": "doc-section",
+      "command": "features/export-hardware-encoder/BLUEPRINT.md",
+      "sections": ["Single-source-of-truth placement"],
+      "task": "ehe-qc-ssot"
+    }
+  }
+}

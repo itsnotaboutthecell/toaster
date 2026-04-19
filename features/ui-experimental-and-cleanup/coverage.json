@@ -1,0 +1,132 @@
+{
+  "feature": "ui-experimental-and-cleanup",
+  "acs": {
+    "AC-001-a": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "uec-qc-experimental",
+      "steps": [
+        "Launch the app via scripts/launch-toaster-monitored.ps1.",
+        "Open Settings and confirm an 'Experimental' entry appears in the sidebar.",
+        "Click Experimental and confirm the first element of the panel is a warning banner whose text reads (or whose i18n key resolves to) 'These features are under active development and may change or be removed.'"
+      ]
+    },
+    "AC-001-b": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "uec-qc-experimental",
+      "steps": [
+        "In Settings -> Experimental, confirm exactly one row is rendered for experimental_simplify_mode.",
+        "Confirm the row has a label, a one-line description, and a link to a feedback issue template URL."
+      ]
+    },
+    "AC-001-c": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "uec-qc-experimental",
+      "steps": [
+        "Toggle experimental_simplify_mode in the Experimental panel.",
+        "Close the app, relaunch via scripts/launch-toaster-monitored.ps1, and re-open Settings -> Experimental.",
+        "Confirm the toggle reflects the value chosen before the restart."
+      ]
+    },
+    "AC-001-d": {
+      "verifier": "check-feature-coverage.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/check-feature-coverage.ps1 -Feature ui-experimental-and-cleanup",
+      "task": "uec-qc-experimental",
+      "steps": [
+        "Open src/lib/experiments.ts and confirm it exports a readonly array of Experiment objects with the type { id, settingsKey, labelKey, descriptionKey, feedbackUrl }.",
+        "Mentally simulate adding a second experiment: confirm the only files that would change are src/lib/experiments.ts and the locale JSON files (no panel-component edit needed)."
+      ]
+    },
+    "AC-002-a": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "uec-qc-postprocessing",
+      "steps": [
+        "Launch the app and open Settings.",
+        "Confirm a 'Post Process' entry appears in the sidebar (sidebar.postProcessing).",
+        "Click it and confirm the PostProcessingSettings panel renders the existing prompt + provider UI."
+      ]
+    },
+    "AC-002-b": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "uec-qc-postprocessing",
+      "steps": [
+        "Run a local OpenAI-compatible loopback server (e.g. lmstudio or vllm at http://localhost:1234/v1).",
+        "In Post Process settings, configure provider with that base URL and a placeholder API key; save.",
+        "Open a transcript fixture and trigger the cleanup action.",
+        "Confirm cleanup completes without error and the transcript reflects cleaned output.",
+        "Bonus: configure a non-loopback URL (e.g. https://api.openai.com/v1) and confirm the backend rejects the request (managers/cleanup loopback enforcement)."
+      ]
+    },
+    "AC-002-c": {
+      "verifier": "BLUEPRINT.md",
+      "kind": "doc-section",
+      "command": "features/ui-experimental-and-cleanup/BLUEPRINT.md",
+      "sections": ["Architecture decisions"],
+      "task": "uec-qc-postprocessing"
+    },
+    "AC-003-a": {
+      "verifier": "apple_stub_removed",
+      "kind": "cargo-test",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml --workspace",
+      "task": "uec-qc-apple-purge"
+    },
+    "AC-003-b": {
+      "verifier": "check-feature-coverage.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/check-feature-coverage.ps1 -Feature ui-experimental-and-cleanup",
+      "task": "uec-qc-apple-purge",
+      "steps": [
+        "Run: rg -n 'check_apple_intelligence_available|APPLE_INTELLIGENCE_PROVIDER_ID|APPLE_PROVIDER_ID|apple_intelligence|appleIntelligence' src src-tauri",
+        "Confirm zero matches outside vendored dependencies / generated bindings / build artifacts."
+      ]
+    },
+    "AC-003-c": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "uec-qc-apple-purge",
+      "steps": [
+        "Hand-edit a settings.json to set the post-processing provider id to 'apple_intelligence'.",
+        "Launch the app via scripts/launch-toaster-monitored.ps1.",
+        "Open Settings -> Post Process and confirm the provider Select shows the default provider (no Apple Intelligence option, no crash, no console error).",
+        "Confirm cleanup still runs against the default provider."
+      ]
+    },
+    "AC-004-a": {
+      "verifier": "check-translations.ts",
+      "kind": "script",
+      "command": "bun run scripts/check-translations.ts",
+      "task": "uec-qc-i18n"
+    },
+    "AC-004-b": {
+      "verifier": "i18n-pruning",
+      "kind": "skill",
+      "command": "Run i18n-pruning skill across all 20 locale files",
+      "task": "uec-qc-i18n"
+    },
+    "AC-004-c": {
+      "verifier": "BLUEPRINT.md",
+      "kind": "doc-section",
+      "command": "features/ui-experimental-and-cleanup/BLUEPRINT.md",
+      "sections": ["Migration / compatibility"],
+      "task": "uec-qc-i18n"
+    },
+    "AC-005-a": {
+      "verifier": "journal.md",
+      "kind": "doc-section",
+      "command": "features/ui-experimental-and-cleanup/journal.md",
+      "sections": ["Apple stub deletion rationale"],
+      "task": "uec-qc-handy-legacy"
+    }
+  }
+}

@@ -52,7 +52,7 @@ $env:GEMINI_API_KEY = "<key>"
 .\scripts\eval-verifier.ps1 -Backend gemini
 ```
 
-Output lands under `evals/verifier-parity/<stamp>/` as `report.json` and
+Output lands under `eval/output/verifier-parity/<stamp>/` as `report.json` and
 `report.md`. Exit code is non-zero if any fixture fails the pass policy:
 
 - winning trial's `p95_err_us` exceeds `--p95-floor-us` (default 40 000 µs,
@@ -62,7 +62,7 @@ Output lands under `evals/verifier-parity/<stamp>/` as `report.json` and
 ## Runners
 
 Four runners ship today. Each takes the same backend flags and emits a
-`report.json` + `report.md` under `evals/verifier-<runner>/<stamp>/`.
+`report.json` + `report.md` under `eval/output/verifier-<runner>/<stamp>/`.
 
 | Wrapper | Fixtures | Criteria |
 | --- | --- | --- |

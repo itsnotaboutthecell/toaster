@@ -1,0 +1,159 @@
+{
+  "feature": "brand-title-sizing",
+  "acs": {
+    "AC-001-a": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "brand-title-sizing-qc-visual",
+      "steps": [
+        "Launch the app at 1280x800 (resize the window if needed).",
+        "Open DevTools (Ctrl+Shift+I).",
+        "In the Elements panel, select the <img alt=\"Toaster\"> in the sidebar.",
+        "Read the computed CSS width.",
+        "Confirm width is >=140 px and <=144 px."
+      ]
+    },
+    "AC-001-b": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "brand-title-sizing-qc-visual",
+      "steps": [
+        "At 1280x800, select the wordmark <img> in DevTools.",
+        "Read its bounding-client-rect right edge.",
+        "Select the sidebar container (.flex.flex-col.w-40.h-full ...) and read its right edge.",
+        "Confirm the wordmark right edge is <= the sidebar container right edge."
+      ]
+    },
+    "AC-001-c": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "brand-title-sizing-qc-visual",
+      "steps": [
+        "Inspect the <img alt=\"Toaster\"> src attribute.",
+        "Confirm it resolves to the existing toaster_text.svg asset (imported at src/components/Sidebar.tsx:4).",
+        "Confirm no new image file was added under the repository root or src/."
+      ]
+    },
+    "AC-002-a": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "brand-title-sizing-qc-visual",
+      "steps": [
+        "Launch the app at 1280x800.",
+        "Open the Editor section from the sidebar.",
+        "In DevTools, select the <div class=\"max-w-... w-full mx-auto space-y-6\"> inside EditorView.",
+        "Read its computed CSS width.",
+        "Confirm width is >=1024 px."
+      ]
+    },
+    "AC-002-b": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "brand-title-sizing-qc-visual",
+      "steps": [
+        "At 1280x800, in DevTools select the sidebar and the editor root container.",
+        "Read the right edge of the sidebar and the left edge of the editor root container.",
+        "Confirm the difference is <= 8 px (the surviving outer horizontal padding)."
+      ]
+    },
+    "AC-002-c": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "brand-title-sizing-qc-visual",
+      "steps": [
+        "At 1280x800, navigate to the About settings pane and select its root <div class=\"max-w-... w-full mx-auto ...\">; read width.",
+        "Repeat for the Advanced, History, and Models settings panes.",
+        "Confirm each measured width is >= 960 px."
+      ]
+    },
+    "AC-003-a": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "brand-title-sizing-qc-responsive",
+      "steps": [
+        "Resize the window to 720x800.",
+        "Open the Editor view.",
+        "In DevTools console run: document.documentElement.scrollWidth <= window.innerWidth.",
+        "Confirm the result is true."
+      ]
+    },
+    "AC-003-b": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "brand-title-sizing-qc-responsive",
+      "steps": [
+        "Resize the window to 1920x1080.",
+        "Open the Editor view.",
+        "In DevTools, select the editor root container and read its computed CSS width.",
+        "Confirm width is <= 1152 px (the max-w-6xl cap)."
+      ]
+    },
+    "AC-003-c": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "brand-title-sizing-qc-responsive",
+      "steps": [
+        "Resize the window to 720x800.",
+        "In DevTools, select the wordmark <img> and the sidebar container.",
+        "Confirm the wordmark right edge is <= the sidebar right edge."
+      ]
+    },
+    "AC-004-a": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "brand-title-sizing-qc-regression",
+      "steps": [
+        "At 1280x800, open the Editor view.",
+        "Visually confirm, in this top-to-bottom order: the import-media block, the project-actions block, the transcription-start block, and the edit-toolbar block.",
+        "Cross-reference EditorView.tsx lines 402, 484, 500, 527 to confirm every SettingsGroup heading still renders."
+      ]
+    },
+    "AC-004-b": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "brand-title-sizing-qc-regression",
+      "steps": [
+        "At 1280x800, open the About settings pane.",
+        "Confirm the description paragraph (AboutSettings.tsx:62) renders fully without horizontal clipping or overflow."
+      ]
+    },
+    "AC-004-c": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "bun run test:e2e",
+      "task": "brand-title-sizing-qc-regression",
+      "steps": [
+        "From the repository root, run: bun run test:e2e.",
+        "Confirm the suite (tests/app.spec.ts, tests/transcriptEdit.spec.ts, tests/exportPipeline.spec.ts, tests/settingsRoundTrip.spec.ts, tests/skipSchedule.spec.ts) reports 0 failures."
+      ]
+    },
+    "AC-005-a": {
+      "verifier": "check-file-sizes.ts",
+      "kind": "script",
+      "command": "bun scripts/check-file-sizes.ts",
+      "task": "brand-title-sizing-qc-gates"
+    },
+    "AC-005-b": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "git diff --unified=0 -- src/",
+      "task": "brand-title-sizing-qc-gates",
+      "steps": [
+        "From the repository root, run: git diff --unified=0 -- src/ | Select-String -Pattern '^\\+.*#[0-9A-Fa-f]{3,8}\\b'.",
+        "Confirm the result is empty (no new color literal lines were added).",
+        "Spot-check the diff to confirm only Tailwind width / margin / padding / max-width tokens changed."
+      ]
+    }
+  }
+}

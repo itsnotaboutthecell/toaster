@@ -1,0 +1,104 @@
+{
+  "feature": "advanced-menu-restoration",
+  "acs": {
+    "AC-001-a": {
+      "verifier": "EditorView.tsx",
+      "kind": "manual",
+      "command": "rg -n \"DiscardWords|AllowWords\" src/components/editor",
+      "task": "advanced-menu-restoration-strip-editor",
+      "steps": [
+        "From repo root run: rg -n \"DiscardWords|AllowWords\" src/components/editor",
+        "Confirm the command exits 1 with zero matches (grep / rg returns 1 when no match).",
+        "Confirm no JSX usage of those components remains in src/components/editor/EditorView.tsx."
+      ]
+    },
+    "AC-001-b": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 120",
+      "task": "advanced-menu-restoration-qc",
+      "steps": [
+        "Run pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 120.",
+        "Confirm launch_status=launched_ok.",
+        "Open a project in the editor view; confirm there is no SettingsGroup titled 'Words' / DiscardWords / AllowWords block in the editor.",
+        "Confirm browser console (DevTools) reports no missing-import or undefined-component errors."
+      ]
+    },
+    "AC-002-a": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 120",
+      "task": "advanced-menu-restoration-qc",
+      "steps": [
+        "Launch via pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 120.",
+        "Open Settings; confirm an 'Advanced' entry is visible in the navigation.",
+        "Click Advanced; confirm both DiscardWords and AllowWords components render with their input field, Add button, and existing word chips.",
+        "Add a new word to each list and confirm it appears in the chip row without errors."
+      ]
+    },
+    "AC-002-b": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 180",
+      "task": "advanced-menu-restoration-qc",
+      "steps": [
+        "Launch and add a unique sentinel word (e.g. PMVERIFY42) to the Allow list under Settings -> Advanced.",
+        "Quit the app cleanly.",
+        "Re-launch via pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 60.",
+        "Open Settings -> Advanced; confirm PMVERIFY42 is still present in the Allow chip row.",
+        "Repeat for the Discard list with PMVERIFY43."
+      ]
+    },
+    "AC-002-c": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 120",
+      "task": "advanced-menu-restoration-qc",
+      "steps": [
+        "Launch and open Settings -> Post-processing then Settings -> Advanced.",
+        "Confirm both pages use visually identical SettingsGroup chrome (same heading typography, spacing, divider style)."
+      ]
+    },
+    "AC-003-a": {
+      "verifier": "check-translations.ts",
+      "kind": "script",
+      "command": "bun run scripts/check-translations.ts",
+      "task": "advanced-menu-restoration-qc"
+    },
+    "AC-003-b": {
+      "verifier": "translation.json",
+      "kind": "manual",
+      "command": "Get-Content src/i18n/locales/en/translation.json",
+      "task": "advanced-menu-restoration-i18n",
+      "steps": [
+        "Open src/i18n/locales/en/translation.json.",
+        "Confirm settings.advanced.title is a non-empty human-readable English string (e.g. Advanced).",
+        "Confirm settings.advanced.description is a non-empty one-line English description.",
+        "Confirm AGENTS.md Settings UI contract (label + description) is satisfied for every new key."
+      ]
+    },
+    "AC-004-a": {
+      "verifier": "journal.md",
+      "kind": "manual",
+      "command": "Get-Content features/advanced-menu-restoration/journal.md",
+      "task": "advanced-menu-restoration-audit",
+      "steps": [
+        "Open features/advanced-menu-restoration/journal.md.",
+        "Confirm an Audit section exists with a one-paragraph heuristic.",
+        "Confirm the table covers every .tsx file under src/components/settings/ (excluding experimental/ and debug/).",
+        "Confirm each row has Component / Setting key / Recommended placement / Rationale columns filled in."
+      ]
+    },
+    "AC-004-b": {
+      "verifier": "settings-placement.md",
+      "kind": "manual",
+      "command": "Get-Content docs/settings-placement.md",
+      "task": "advanced-menu-restoration-audit",
+      "steps": [
+        "Confirm docs/settings-placement.md exists and is tracked in git.",
+        "Confirm it states the heuristic in user-readable language.",
+        "Confirm it links to features/advanced-menu-restoration/journal.md as the source-of-truth audit table."
+      ]
+    }
+  }
+}

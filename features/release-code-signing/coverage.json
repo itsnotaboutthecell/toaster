@@ -1,0 +1,134 @@
+{
+  "feature": "release-code-signing",
+  "acs": {
+    "AC-001-a": {
+      "verifier": "BLUEPRINT.md",
+      "kind": "doc-section",
+      "command": "features/release-code-signing/BLUEPRINT.md",
+      "sections": ["Architecture decisions"],
+      "task": "rcs-qc-windows"
+    },
+    "AC-001-b": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "rcs-qc-windows",
+      "steps": [
+        "On a clean Windows 11 VM, download the signed Toaster .exe and .msi from a tagged release.",
+        "Run the .exe; confirm SmartScreen either accepts silently or shows the 'Verified Publisher' dialog (not 'Unknown Publisher').",
+        "Run the .msi installer; confirm the installer launches without warning and Toaster installs."
+      ]
+    },
+    "AC-001-c": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/sign-windows.ps1 --verify-only --file <artifact>",
+      "task": "rcs-qc-windows",
+      "steps": [
+        "After implementation, run: pwsh scripts/sign-windows.ps1 --verify-only --file <published .exe>",
+        "Confirm exit code 0 and that signtool verify /pa /v output reports a valid Authenticode signature with timestamping.",
+        "Repeat against the published .msi."
+      ]
+    },
+    "AC-002-a": {
+      "verifier": "BLUEPRINT.md",
+      "kind": "doc-section",
+      "command": "features/release-code-signing/BLUEPRINT.md",
+      "sections": ["Architecture decisions"],
+      "task": "rcs-qc-macos"
+    },
+    "AC-002-b": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "rcs-qc-macos",
+      "steps": [
+        "On a clean macOS VM (current Sonoma+), download the signed/stapled Toaster .dmg from a tagged release.",
+        "Open the .dmg and drag Toaster.app to /Applications.",
+        "Launch Toaster.app; confirm Gatekeeper accepts and no 'unidentified developer' prompt appears."
+      ]
+    },
+    "AC-002-c": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "bash scripts/sign-macos.sh --verify-only <Toaster.app>",
+      "task": "rcs-qc-macos",
+      "steps": [
+        "After implementation, run: bash scripts/sign-macos.sh --verify-only <Toaster.app>",
+        "Confirm exit code 0 and that codesign --verify --deep --strict reports no errors.",
+        "Run spctl --assess --type execute -v <Toaster.app> and confirm exit 0 with 'accepted' / 'source=Notarized Developer ID'."
+      ]
+    },
+    "AC-003-a": {
+      "verifier": "BLUEPRINT.md",
+      "kind": "doc-section",
+      "command": "features/release-code-signing/BLUEPRINT.md",
+      "sections": ["Architecture decisions"],
+      "task": "rcs-qc-linux"
+    },
+    "AC-003-b": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "bash scripts/sign-linux.sh --verify-only <artifact>",
+      "task": "rcs-qc-linux",
+      "steps": [
+        "After implementation, run: bash scripts/sign-linux.sh --verify-only Toaster.AppImage",
+        "Confirm exit code 0 and that gpg --verify reports 'Good signature' from the maintainer key.",
+        "Repeat against the published .deb."
+      ]
+    },
+    "AC-003-c": {
+      "verifier": "PRD.md",
+      "kind": "doc-section",
+      "command": "features/release-code-signing/PRD.md",
+      "sections": ["Scope"],
+      "task": "rcs-qc-linux"
+    },
+    "AC-004-a": {
+      "verifier": "check-feature-coverage.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/check-feature-coverage.ps1 -Feature release-code-signing",
+      "task": "rcs-qc-ci",
+      "steps": [
+        "Open .github/workflows/release.yml and find the signing job.",
+        "Confirm it has 'if: startsWith(github.ref, ''refs/tags/v'')' or equivalent tag guard.",
+        "Confirm every secret reference uses '${{ secrets.<NAME> }}' syntax and no literal cert/key material is present."
+      ]
+    },
+    "AC-004-b": {
+      "verifier": "check-feature-coverage.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/check-feature-coverage.ps1 -Feature release-code-signing",
+      "task": "rcs-qc-ci",
+      "steps": [
+        "Run: rg -i 'MII[A-Za-z0-9+/]{20,}|-----BEGIN (CERTIFICATE|PRIVATE KEY|PGP PRIVATE)' . --glob '!node_modules' --glob '!target' --glob '!dist'",
+        "Confirm zero matches outside the maintainer-pubkey file (docs/maintainer.gpg is the public key only and contains 'BEGIN PGP PUBLIC KEY' not PRIVATE)."
+      ]
+    },
+    "AC-004-c": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "rcs-qc-ci",
+      "steps": [
+        "Push a non-tagged commit to a feature branch.",
+        "Open the resulting GitHub Actions run.",
+        "Confirm the signing job is shown as 'skipped' (not run)."
+      ]
+    },
+    "AC-005-a": {
+      "verifier": "BLUEPRINT.md",
+      "kind": "doc-section",
+      "command": "features/release-code-signing/BLUEPRINT.md",
+      "sections": ["Component & module touch-list"],
+      "task": "rcs-qc-docs"
+    },
+    "AC-005-b": {
+      "verifier": "BLUEPRINT.md",
+      "kind": "doc-section",
+      "command": "features/release-code-signing/BLUEPRINT.md",
+      "sections": ["Sequencing & conflict-avoidance"],
+      "task": "rcs-qc-docs"
+    }
+  }
+}

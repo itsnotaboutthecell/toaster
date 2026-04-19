@@ -5,7 +5,7 @@
 .DESCRIPTION
     Runs the LLM-as-a-Verifier Best-of-N parity ranker over the fixtures in
     src-tauri/tests/fixtures/parity/. Emits JSON + markdown under
-    evals/verifier-parity/<stamp>/ and exits non-zero on failure.
+    eval/output/verifier-parity/<stamp>/ and exits non-zero on failure.
 
     Default backend is "mock" (deterministic, no network) so this is safe to
     wire into CI alongside eval-multi-backend-parity without adding a hosted

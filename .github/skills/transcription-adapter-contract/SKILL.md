@@ -60,7 +60,7 @@ struct CanonicalWord {
 **Round-trip fixture test:**
 
 ```
-1. Transcribe extras/toaster_example.mp4 with the new backend.
+1. Transcribe eval/fixtures/toaster_example.mp4 with the new backend.
 2. Feed the resulting NormalizedTranscriptionResult into the editor; perform
    the canonical midstream-deletion sequence from the precision eval.
 3. Export. Run:
@@ -76,7 +76,7 @@ struct CanonicalWord {
 **Multi-backend parity eval (invoke on every adapter change):**
 
 ```powershell
-# Full runner — JSON + markdown under evals/multi-backend-parity/<ts>/
+# Full runner — JSON + markdown under eval/output/multi-backend-parity/<ts>/
 pwsh -NoProfile -File scripts/eval-multi-backend-parity.ps1
 
 # One fixture only

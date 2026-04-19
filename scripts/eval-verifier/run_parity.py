@@ -44,7 +44,7 @@ from verifier_core import Trial, score_all_pairs, select_best  # noqa: E402
 
 
 DEFAULT_FIXTURES_DIR = REPO_ROOT / "src-tauri" / "tests" / "fixtures" / "parity"
-DEFAULT_OUTPUT_ROOT = REPO_ROOT / "evals" / "verifier-parity"
+DEFAULT_OUTPUT_ROOT = REPO_ROOT / "eval" / "output" / "verifier-parity"
 
 
 def _discover_fixtures(fixtures_dir: pathlib.Path) -> List[str]:

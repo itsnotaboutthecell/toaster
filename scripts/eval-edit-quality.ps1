@@ -11,7 +11,7 @@
 .PARAMETER OutputJson
     Optional path to save the report as JSON.
 .EXAMPLE
-    .\scripts\eval-edit-quality.ps1 -Original "extras\toaster_example.mp4" -Edited "extras\toaster_example-edited.mp4"
+    .\scripts\eval-edit-quality.ps1 -Original "eval\fixtures\toaster_example.mp4" -Edited "eval\fixtures\toaster_example-edited.mp4"
 #>
 param(
     [Parameter(Mandatory = $true)]

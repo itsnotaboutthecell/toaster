@@ -1,10 +1,10 @@
 """Build the real-asset oracle fixture from the human labeling of
-extras/toaster_example.mp4. Generates:
+eval/fixtures/toaster_example.mp4. Generates:
 
   src-tauri/tests/fixtures/disfluency/toaster_example_candidates.fixture.json
   src-tauri/tests/fixtures/disfluency/toaster_example_extracted.wav
 
-The extracted WAV is produced by ffmpeg from extras/toaster_example.mp4
+The extracted WAV is produced by ffmpeg from eval/fixtures/toaster_example.mp4
 (16 kHz mono, matching the backend's cleanup scorer). Word timings come
 from what Parakeet-TDT produced in the live monitored run on 2026-04-17
 (the transcript is the authoritative one the ASR emitted; timings are
@@ -33,7 +33,7 @@ import sys
 HERE = pathlib.Path(__file__).resolve().parent
 REPO = HERE.parents[1]
 FIXTURE_DIR = REPO / "src-tauri" / "tests" / "fixtures" / "disfluency"
-SRC_VIDEO = REPO / "extras" / "toaster_example.mp4"
+SRC_VIDEO = REPO / "eval" / "fixtures" / "toaster_example.mp4"
 OUT_WAV = FIXTURE_DIR / "toaster_example_extracted.wav"
 OUT_JSON = FIXTURE_DIR / "toaster_example_candidates.fixture.json"
 
@@ -180,7 +180,7 @@ def build_fixture() -> None:
 
     fixture = {
         "fixture": "toaster_example_candidates",
-        "source_media": "extras/toaster_example.mp4",
+        "source_media": "eval/fixtures/toaster_example.mp4",
         "audio_path": OUT_WAV.name,
         "notes": [
             "Human oracle derived from user labeling captured on 2026-04-17.",

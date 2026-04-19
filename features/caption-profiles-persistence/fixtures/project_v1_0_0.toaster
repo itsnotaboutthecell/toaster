@@ -1,0 +1,32 @@
+{
+  "version": "1.0.0",
+  "name": "Slice B v1.0.0 Fixture",
+  "created_at": "2025-10-15T12:00:00Z",
+  "modified_at": "2025-10-15T12:00:00Z",
+  "source_media": null,
+  "words": [
+    {
+      "text": "Hello",
+      "start_us": 0,
+      "end_us": 500000,
+      "deleted": false,
+      "silenced": false,
+      "confidence": 0.95,
+      "speaker_id": 0
+    },
+    {
+      "text": "world",
+      "start_us": 500000,
+      "end_us": 1000000,
+      "deleted": false,
+      "silenced": false,
+      "confidence": 0.9,
+      "speaker_id": 0
+    }
+  ],
+  "settings": {
+    "filler_words": ["um", "uh", "like"],
+    "pause_threshold_us": 1000000,
+    "export_format": "srt"
+  }
+}

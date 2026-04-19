@@ -1,0 +1,23 @@
+{
+  "feature": "example-pm-dryrun",
+  "acs": {
+    "AC-001-a": {
+      "verifier": "check-feature-coverage.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/check-feature-coverage.ps1 -Feature example-pm-dryrun",
+      "task": "example-qc"
+    },
+    "AC-001-b": {
+      "verifier": "check-feature-coverage.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/check-feature-coverage.ps1 -Feature example-pm-dryrun",
+      "task": "example-qc"
+    },
+    "AC-002-a": {
+      "verifier": "feature-board.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/feature-board.ps1",
+      "task": "example-qc"
+    }
+  }
+}

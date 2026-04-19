@@ -141,14 +141,14 @@ if ($SkipExportParity.IsPresent) {
 } elseif (-not (Test-Path $exportScript)) {
     $exportStatus = 'skip'
     $exportNotes = 'eval-edit-quality.ps1 not present'
-} elseif (-not (Test-Path (Join-Path $RepoRoot 'extras\toaster_example.mp4'))) {
+} elseif (-not (Test-Path (Join-Path $RepoRoot 'eval\fixtures\toaster_example.mp4'))) {
     $exportStatus = 'skip'
-    $exportNotes = 'fixture extras/toaster_example.mp4 missing'
+    $exportNotes = 'fixture eval/fixtures/toaster_example.mp4 missing'
 } else {
     try {
         & pwsh -NoProfile -File $exportScript `
-            -Original (Join-Path $RepoRoot 'extras\toaster_example.mp4') `
-            -Edited   (Join-Path $RepoRoot 'extras\toaster_example-edited.mp4') `
+            -Original (Join-Path $RepoRoot 'eval\fixtures\toaster_example.mp4') `
+            -Edited   (Join-Path $RepoRoot 'eval\fixtures\toaster_example-edited.mp4') `
             -OutputJson $exportOut | Out-Null
         if ($LASTEXITCODE -ne 0) {
             $exportStatus = 'error'

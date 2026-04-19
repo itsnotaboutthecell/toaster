@@ -1,0 +1,121 @@
+{
+  "feature": "export-loudness",
+  "acs": {
+    "AC-001-a": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "el-qc-panel",
+      "steps": [
+        "Launch the app via scripts/launch-toaster-monitored.ps1.",
+        "Open Settings and confirm an 'Export' entry appears in the sidebar.",
+        "Click Export and confirm the ExportSettings panel renders with at least the Loudness target Select."
+      ]
+    },
+    "AC-001-b": {
+      "verifier": "BLUEPRINT.md",
+      "kind": "doc-section",
+      "command": "features/export-loudness/BLUEPRINT.md",
+      "sections": ["Sequencing & conflict-avoidance"],
+      "task": "el-qc-panel"
+    },
+    "AC-002-a": {
+      "verifier": "loudness_preflight_roundtrip",
+      "kind": "cargo-test",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml loudness_preflight_roundtrip",
+      "task": "el-qc-preflight"
+    },
+    "AC-002-b": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "el-qc-preflight",
+      "steps": [
+        "Launch the app and open eval/fixtures/toaster_example.mp4 (60 s fixture).",
+        "Open the export dialog and click 'Run preflight'.",
+        "Within 5 s, confirm three numeric readouts appear: integrated LUFS, true-peak dBTP, and LRA."
+      ]
+    },
+    "AC-002-c": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "el-qc-preflight",
+      "steps": [
+        "Open a fixture known to be loud (e.g. integrated LUFS near -6).",
+        "Set Loudness target to Streaming (-14 LUFS).",
+        "Run preflight; confirm a non-blocking warning appears reporting >12 LU off target.",
+        "Confirm the Export button is still enabled."
+      ]
+    },
+    "AC-003-a": {
+      "verifier": "build_loudnorm_filter",
+      "kind": "cargo-test",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml build_loudnorm_filter",
+      "task": "el-qc-filter-authority"
+    },
+    "AC-003-b": {
+      "verifier": "check-feature-coverage.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/check-feature-coverage.ps1 -Feature export-loudness",
+      "task": "el-qc-filter-authority",
+      "steps": [
+        "Run: rg 'loudnorm=' src",
+        "Confirm zero matches (no TS code constructs the loudnorm filter string)."
+      ]
+    },
+    "AC-003-c": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "el-qc-filter-authority",
+      "steps": [
+        "Open eval/fixtures/toaster_example.mp4.",
+        "Set Loudness target to Streaming (-14 LUFS) in Export Settings.",
+        "Export to a temp mp4.",
+        "Re-open the exported file and run preflight; confirm integrated LUFS reads within 1.0 LU of -14."
+      ]
+    },
+    "AC-004-a": {
+      "verifier": "migrate_loudness_setting",
+      "kind": "cargo-test",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml migrate_loudness_setting",
+      "task": "el-qc-migration"
+    },
+    "AC-004-b": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "el-qc-migration",
+      "steps": [
+        "Place a settings.json containing 'normalize_audio_on_export: true' (no loudness_target field) in the app data dir.",
+        "Launch the app and open Settings -> Export.",
+        "Confirm the Loudness target Select shows 'Podcast (-16 LUFS)' as the active value."
+      ]
+    },
+    "AC-005-a": {
+      "verifier": "audio-boundary-eval",
+      "kind": "skill",
+      "command": "Run audio-boundary-eval skill on eval/fixtures/toaster_example.mp4",
+      "task": "el-qc-boundary"
+    },
+    "AC-006-a": {
+      "verifier": "check-feature-coverage.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/check-feature-coverage.ps1 -Feature export-loudness",
+      "task": "el-qc-backend-authority",
+      "steps": [
+        "Run: rg -n 'ebur128|integrated_lufs|truePeak|true_peak|LRA|lra' src",
+        "Confirm matches are limited to type declarations and display formatters (toFixed/Intl.NumberFormat).",
+        "Confirm no arithmetic operator (+, -, *, /) is applied to these fields outside a formatter."
+      ]
+    },
+    "AC-006-b": {
+      "verifier": "BLUEPRINT.md",
+      "kind": "doc-section",
+      "command": "features/export-loudness/BLUEPRINT.md",
+      "sections": ["Single-source-of-truth placement"],
+      "task": "el-qc-backend-authority"
+    }
+  }
+}

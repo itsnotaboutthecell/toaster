@@ -1,0 +1,15 @@
+{
+  "_comment_kinds": "Allowed kind values: skill, agent, cargo-test, script, manual, doc-section. cargo-check is NOT valid — use cargo-test or script.",
+  "_comment_script": "kind:script 'command' must contain exactly ONE scripts/* path token. Semicolon-chained commands fail the parser. Split into multiple ACs if you need multiple scripts.",
+  "_comment_manual": "kind:manual entries MUST include a non-empty 'steps' array.",
+  "_comment_doc_section": "kind:doc-section 'command' must point at a file under features/, and MUST include a 'sections' array listing exact markdown headings to find.",
+  "feature": "{{SLUG}}",
+  "acs": {
+    "AC-001-a": {
+      "verifier": "<skill-name or script-path>",
+      "kind": "<skill|agent|cargo-test|script|manual|doc-section>",
+      "command": "<command to run>",
+      "task": "{{SLUG}}-qc"
+    }
+  }
+}

@@ -1,0 +1,160 @@
+{
+  "feature": "caption-settings-preview",
+  "acs": {
+    "AC-001-a": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "csp-qc-static",
+      "steps": [
+        "Launch the app via scripts/launch-toaster-monitored.ps1.",
+        "Open Settings -> Advanced -> Captions.",
+        "Confirm a preview pane is visible above the caption controls with a static background frame and a caption pill on top.",
+        "Confirm no camera/microphone permission prompt is raised by the OS or the webview."
+      ]
+    },
+    "AC-001-b": {
+      "verifier": "check-feature-coverage.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/check-feature-coverage.ps1 -Feature caption-settings-preview",
+      "task": "csp-qc-scope",
+      "steps": [
+        "Open features/caption-settings-preview/PRD.md and confirm the 'Out of scope' section lists camera-based preview and names the follow-up slug 'caption-settings-camera-preview'.",
+        "Open features/caption-settings-preview/BLUEPRINT.md and confirm the same follow-up slug is named under Architecture decisions R-001."
+      ]
+    },
+    "AC-002-a": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "csp-qc-placement",
+      "steps": [
+        "Launch the app via scripts/launch-toaster-monitored.ps1.",
+        "Open Settings -> Advanced -> Captions.",
+        "Confirm the preview pane is the first element in the caption section, immediately above the first caption control (font size).",
+        "Confirm no other caption control is above the preview pane within the caption section."
+      ]
+    },
+    "AC-002-b": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "csp-qc-placement",
+      "steps": [
+        "Open Settings -> Advanced -> Captions.",
+        "Scroll the caption section until the last caption control (e.g. font family) is fully visible.",
+        "Confirm the preview pane remains visible at the top of the section (sticky) and does not overlap the section heading."
+      ]
+    },
+    "AC-002-c": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "csp-qc-placement",
+      "steps": [
+        "Open Settings -> Advanced -> Captions.",
+        "Resize the app window from wide to narrow (e.g. 1600px down to 720px).",
+        "Confirm the preview pane keeps a 16:9 aspect ratio (no horizontal letterboxing inside the pane) and shrinks/grows in lockstep with the panel width."
+      ]
+    },
+    "AC-003-a": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "csp-qc-text",
+      "steps": [
+        "Open Settings -> Advanced -> Captions.",
+        "Confirm the caption pill in the preview pane shows the literal text 'looking crispy' on first open."
+      ]
+    },
+    "AC-003-b": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "csp-qc-text",
+      "steps": [
+        "Open Settings -> Advanced -> Captions.",
+        "Locate the sample-text dropdown above the preview and confirm it offers exactly three options: short, two-line, long.",
+        "Select 'short' and confirm the pill renders 'looking crispy' on a single visible line.",
+        "Select 'two-line' and confirm the pill renders text wrapping to exactly two visible lines.",
+        "Select 'long' and confirm the pill renders text wrapping to three or more visible lines without overflowing the pane."
+      ]
+    },
+    "AC-003-c": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "csp-qc-text",
+      "steps": [
+        "Temporarily rename eval/fixtures/toaster_example.mp4 (or the bundled first-frame PNG asset, whichever the implementation imports).",
+        "Restart the app via scripts/launch-toaster-monitored.ps1 and open Settings -> Advanced -> Captions.",
+        "Confirm the preview pane renders a flat #1a1a1a background and the caption pill still appears.",
+        "Open the webview devtools console and confirm no errors were logged from the preview pane.",
+        "Restore the renamed asset."
+      ]
+    },
+    "AC-004-a": {
+      "verifier": "check-feature-coverage.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/check-feature-coverage.ps1 -Feature caption-settings-preview",
+      "task": "csp-qc-reuse",
+      "steps": [
+        "Open src/components/settings/CaptionSettings.tsx and confirm it imports the caption pill renderer (CaptionPill or CaptionOverlay) from src/components/player/CaptionOverlay.tsx.",
+        "Confirm the only new file under src/components/ for this feature is the preview-pane wrapper inside CaptionSettings.tsx (or a single sibling file)."
+      ]
+    },
+    "AC-004-b": {
+      "verifier": "check-feature-coverage.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/check-feature-coverage.ps1 -Feature caption-settings-preview",
+      "task": "csp-qc-reuse",
+      "steps": [
+        "Run: rg --files src | rg -i 'Caption.*Render|CaptionPill' to enumerate caption-renderer files.",
+        "Confirm the only matches are inside src/components/player/CaptionOverlay.tsx (the canonical renderer) and that no new file matching src/**/Caption*Render*.{ts,tsx} or src/components/settings/CaptionPill*.{ts,tsx} has been added."
+      ]
+    },
+    "AC-004-c": {
+      "verifier": "check-feature-coverage.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/check-feature-coverage.ps1 -Feature caption-settings-preview",
+      "task": "csp-qc-reuse",
+      "steps": [
+        "Open src/components/settings/CaptionSettings.tsx and the new preview-pane code path; confirm caption settings are read via the existing useSettings hook (line 3 of CaptionSettings.tsx).",
+        "Confirm no new Zustand store, no new React Context, and no derived snapshot of caption settings has been introduced for the preview."
+      ]
+    },
+    "AC-005-a": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "csp-qc-latency",
+      "steps": [
+        "Open Settings -> Advanced -> Captions.",
+        "Drag the font-size slider slowly across its full range while watching the preview.",
+        "Confirm the pill resizes in lockstep with the cursor (no perceptible lag) and that releasing the slider does not cause a delayed 'settle' frame."
+      ]
+    },
+    "AC-005-b": {
+      "verifier": "check-feature-coverage.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/check-feature-coverage.ps1 -Feature caption-settings-preview",
+      "task": "csp-qc-latency",
+      "steps": [
+        "Run: rg -n 'debounce|throttle|setTimeout|requestIdleCallback' src/components/settings/CaptionSettings.tsx src/components/player/CaptionOverlay.tsx",
+        "Confirm there are zero matches in the code paths that connect useSettings to the rendered CaptionPill props."
+      ]
+    },
+    "AC-005-c": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "csp-qc-latency",
+      "steps": [
+        "Open Settings -> Advanced -> Captions.",
+        "Drag the background-opacity slider; confirm the pill background opacity tracks the cursor with no lag.",
+        "Drag the radius slider; confirm the pill corner radius tracks the cursor with no lag.",
+        "Change the font-family dropdown; confirm the pill font changes within the same frame as the dropdown UI updates."
+      ]
+    }
+  }
+}

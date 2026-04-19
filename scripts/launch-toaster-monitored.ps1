@@ -22,7 +22,7 @@ Optional path override for setup-env.ps1 (useful for diagnostics/testing).
 [CmdletBinding()]
 param(
     [ValidateRange(5, 300)]
-    [int]$ObservationSeconds = 120,
+    [int]$ObservationSeconds = 300,
     [ValidateRange(1, 30)]
     [int]$DrainSeconds = 3,
     [string]$SetupScriptPath
@@ -195,6 +195,25 @@ try {
         Write-Host "monitor_summary=reason:setup_script_failed;success_signals:none;error_signals:none;hints:none;exit_code:1;terminated_after_observation:false;observed_seconds:0"
         Write-Host "launch_status=failed_to_launch"
         exit 1
+    }
+
+    if ($global:ToasterEnvPreflightOk -eq $false) {
+        Write-Host "[monitor] setup-env preflight detected Ninja-hostile env vars; aborting before cargo build." -ForegroundColor Red
+        Write-Host "monitor_summary=reason:env_preflight_failed;success_signals:none;error_signals:none;hints:none;exit_code:1;terminated_after_observation:false;observed_seconds:0"
+        Write-Host "launch_status=failed_to_launch"
+        exit 1
+    }
+
+    $smokeScript = Join-Path $PSScriptRoot "check-cmake-ninja-env.ps1"
+    if (Test-Path $smokeScript) {
+        Write-Host "[monitor] Running CMake/Ninja env smoke (auto-wipes stale whisper-rs-sys caches)" -ForegroundColor Cyan
+        & $smokeScript -WipeStaleCaches
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "[monitor] CMake/Ninja smoke failed; refusing to start cargo tauri dev." -ForegroundColor Red
+            Write-Host "monitor_summary=reason:cmake_ninja_smoke_failed;success_signals:none;error_signals:none;hints:none;exit_code:1;terminated_after_observation:false;observed_seconds:0"
+            Write-Host "launch_status=failed_to_launch"
+            exit 1
+        }
     }
 
     $successPatterns = @(

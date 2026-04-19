@@ -29,14 +29,14 @@
     gates actually fail on audible leakage (negative test).
 
 .PARAMETER OutputRoot
-    Root directory for reports. Default: evals/audio-boundary.
+    Root directory for reports. Default: eval/output/audio-boundary.
 #>
 
 [CmdletBinding()]
 param(
     [string]$Fixture,
     [switch]$ForceLeaky,
-    [string]$OutputRoot = (Join-Path $PSScriptRoot '..\evals\audio-boundary')
+    [string]$OutputRoot = (Join-Path $PSScriptRoot '..\eval\output\audio-boundary')
 )
 
 $ErrorActionPreference = 'Stop'

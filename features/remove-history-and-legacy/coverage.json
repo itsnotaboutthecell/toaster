@@ -1,0 +1,134 @@
+{
+  "feature": "remove-history-and-legacy",
+  "acs": {
+    "AC-001-a": {
+      "verifier": "cargo check (src-tauri)",
+      "kind": "cargo-test",
+      "command": "cd src-tauri && cargo test --no-run",
+      "task": "remove-history-and-legacy-qc-deletion"
+    },
+    "AC-001-b": {
+      "verifier": "scripts/eval-verifier.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/eval-verifier.ps1 -Pattern 'HistoryManager|HistoryEntry|HistoryUpdatePayload|transcription_history|history_limit|recording_retention_period' -ExpectZero",
+      "task": "remove-history-and-legacy-qc-deletion"
+    },
+    "AC-001-c": {
+      "verifier": "npm run build",
+      "kind": "manual",
+      "command": "npm run build",
+      "steps": [
+        "From repo root: npm run build",
+        "Confirm exit 0",
+        "Open src/bindings.ts and grep for getHistoryEntries / toggleHistoryEntrySaved / deleteHistoryEntry / retryHistoryEntryTranscription / updateHistoryLimit / updateRecordingRetentionPeriod / getAudioFilePath",
+        "Confirm zero matches"
+      ],
+      "task": "remove-history-and-legacy-qc-deletion"
+    },
+    "AC-002-a": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 120",
+      "steps": [
+        "Run scripts/setup-env.ps1 first",
+        "Launch app via the monitored script",
+        "Open the sidebar",
+        "Confirm there is no 'Advanced' entry",
+        "Capture screenshot to journal.md"
+      ],
+      "task": "remove-history-and-legacy-qc-advanced"
+    },
+    "AC-002-b": {
+      "verifier": "scripts/eval-verifier.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/eval-verifier.ps1 -Pattern 'AdvancedSettings|sidebar\\.advanced|settings\\.advanced' -Path src -ExpectZero",
+      "task": "remove-history-and-legacy-qc-advanced"
+    },
+    "AC-002-c": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 120",
+      "steps": [
+        "Open Models sidebar; confirm Model Unload Timeout control renders and changes persist",
+        "Open Editor sidebar; confirm Discard Words and Allow Words controls render and changes persist",
+        "Confirm Caption Settings is reachable from a non-Advanced panel (temporary host: Models)",
+        "Record findings + screenshots in journal.md"
+      ],
+      "task": "remove-history-and-legacy-qc-advanced"
+    },
+    "AC-003-a": {
+      "verifier": "repo-auditor",
+      "kind": "agent",
+      "command": "Run repo-auditor agent on the post-deletion tree; compare dead-module count to the pre-deletion baseline captured in journal.md",
+      "task": "remove-history-and-legacy-qc-legacy"
+    },
+    "AC-003-b": {
+      "verifier": "scripts/eval-verifier.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/eval-verifier.ps1 -Pattern 'ExperimentalToggle|ExperimentalSimplifyMode|experimental_enabled' -Path 'src;src-tauri/src' -ExpectZero",
+      "task": "remove-history-and-legacy-qc-legacy"
+    },
+    "AC-004-a": {
+      "verifier": "dep-hygiene",
+      "kind": "skill",
+      "command": "Invoke .github/skills/dep-hygiene; run cargo machete in src-tauri; expect zero unused (or remove flagged crates and rerun clean)",
+      "task": "remove-history-and-legacy-qc-deps"
+    },
+    "AC-004-b": {
+      "verifier": "dep-hygiene",
+      "kind": "skill",
+      "command": "Invoke .github/skills/dep-hygiene; run knip + depcheck per skill; expect zero unused (or remove flagged packages and rerun clean)",
+      "task": "remove-history-and-legacy-qc-deps"
+    },
+    "AC-005-a": {
+      "verifier": "scripts/check-translations.ts",
+      "kind": "script",
+      "command": "npx tsx scripts/check-translations.ts",
+      "task": "remove-history-and-legacy-qc-i18n"
+    },
+    "AC-005-b": {
+      "verifier": "scripts/eval-verifier.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/eval-verifier.ps1 -Pattern 'settings\\.advanced|settings\\.history|sidebar\\.advanced|sidebar\\.history|recordingRetention' -Path src -ExpectZero",
+      "task": "remove-history-and-legacy-qc-i18n"
+    },
+    "AC-006-a": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 300",
+      "steps": [
+        "Run scripts/setup-env.ps1 first",
+        "Launch app via the monitored script",
+        "Wait up to 60 seconds for 'Vite ready' in stdout",
+        "Confirm zero Rust panics in stdout",
+        "Record stdout snippet in journal.md"
+      ],
+      "task": "remove-history-and-legacy-qc-live"
+    },
+    "AC-006-b": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 300",
+      "steps": [
+        "With the app running, open a fixture media file from eval/fixtures/",
+        "Click into the transcript and delete the third word",
+        "Press Cmd/Ctrl+Z; observe the word reappear at the same position",
+        "Press Cmd/Ctrl+Y (or Cmd+Shift+Z); observe the word disappear again",
+        "Record timestamp + operator initials + outcome in journal.md"
+      ],
+      "task": "remove-history-and-legacy-qc-live"
+    },
+    "AC-006-c": {
+      "verifier": "scripts/eval-edit-quality.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/eval-edit-quality.ps1",
+      "task": "remove-history-and-legacy-qc-live"
+    },
+    "AC-006-d": {
+      "verifier": "scripts/eval-audio-boundary.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/eval-audio-boundary.ps1",
+      "task": "remove-history-and-legacy-qc-live"
+    }
+  }
+}

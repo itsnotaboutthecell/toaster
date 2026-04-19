@@ -1,0 +1,70 @@
+{
+  "feature": "export-audio-only",
+  "acs": {
+    "AC-001-a": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "eao-qc-picker",
+      "steps": [
+        "Launch the app and open Settings -> Export.",
+        "Confirm a Format Select exists with exactly five options in order: Video (mp4), Audio - mp3, Audio - wav, Audio - m4a, Audio - opus.",
+        "Confirm 'Video (mp4)' is the active selection on a fresh install."
+      ]
+    },
+    "AC-001-b": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "task": "eao-qc-picker",
+      "steps": [
+        "In Settings -> Export, change Format to Audio - opus.",
+        "Close and reopen Settings.",
+        "Confirm the Format Select still shows Audio - opus."
+      ]
+    },
+    "AC-002-a": {
+      "verifier": "export_format_codec_map",
+      "kind": "cargo-test",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml export_format_codec_map",
+      "task": "eao-qc-codec-map"
+    },
+    "AC-002-b": {
+      "verifier": "export_format_args_no_video_stream",
+      "kind": "cargo-test",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml export_format_args_no_video_stream",
+      "task": "eao-qc-codec-map"
+    },
+    "AC-003-a": {
+      "verifier": "audio_only_roundtrip_durations",
+      "kind": "cargo-test",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml audio_only_roundtrip_durations -- --ignored",
+      "task": "eao-qc-roundtrip"
+    },
+    "AC-004-a": {
+      "verifier": "transcript-precision-eval",
+      "kind": "skill",
+      "command": "Run transcript-precision-eval skill on eval/fixtures/toaster_example.mp4 with audio-only export path",
+      "task": "eao-qc-precision"
+    },
+    "AC-005-a": {
+      "verifier": "check-feature-coverage.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/check-feature-coverage.ps1 -Feature export-audio-only",
+      "task": "eao-qc-filter-reuse",
+      "steps": [
+        "Run: rg -n 'fn build_audio_post_filters' src-tauri/src",
+        "Confirm exactly one definition.",
+        "Run: rg -n 'build_audio_post_filters\\(' src-tauri/src",
+        "Confirm exactly one call site (the existing one), not multiplied by a new audio-only fork."
+      ]
+    },
+    "AC-005-b": {
+      "verifier": "BLUEPRINT.md",
+      "kind": "doc-section",
+      "command": "features/export-audio-only/BLUEPRINT.md",
+      "sections": ["Single-source-of-truth placement"],
+      "task": "eao-qc-filter-reuse"
+    }
+  }
+}

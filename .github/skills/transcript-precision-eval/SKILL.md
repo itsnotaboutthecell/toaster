@@ -21,8 +21,8 @@ The PRD requires precise transcript-driven editing with per-word timing preserve
 
 ## Fixture Assets
 
-- `extras/toaster_example.mp4` (original) — already in the repo.
-- `extras/toaster_example-edited.mp4` (edited baseline) — already in the repo.
+- `eval/fixtures/toaster_example.mp4` (original) — already in the repo.
+- `eval/fixtures/toaster_example-edited.mp4` (edited baseline) — already in the repo.
 - `tests/fixtures/toaster_example.words.golden.json` — **to be created**. Produced from a reference transcription run that is manually verified and then frozen.
 
 ## Gate Function
@@ -50,7 +50,7 @@ The PRD requires precise transcript-driven editing with per-word timing preserve
 **Modifying export:**
 
 ```
-1. Run scripts/eval-edit-quality.ps1 -Original extras/toaster_example.mp4 \
+1. Run scripts/eval-edit-quality.ps1 -Original eval/fixtures/toaster_example.mp4 \
      -Edited <path/to/your/export.mp4> -OutputJson eval-before.json
 2. Apply your change.
 3. Re-run, outputting eval-after.json.

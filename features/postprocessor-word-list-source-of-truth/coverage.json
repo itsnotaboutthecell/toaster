@@ -1,0 +1,88 @@
+{
+  "feature": "postprocessor-word-list-source-of-truth",
+  "acs": {
+    "AC-001-a": {
+      "verifier": "cargo test cleanup_prompt_includes_custom_words",
+      "kind": "cargo-test",
+      "command": "cd src-tauri; cargo test cleanup_prompt_includes_custom_words -- --nocapture",
+      "task": "postprocessor-word-list-tests"
+    },
+    "AC-001-b": {
+      "verifier": "cargo test cleanup",
+      "kind": "cargo-test",
+      "command": "cd src-tauri; cargo test cleanup -- --nocapture",
+      "task": "postprocessor-word-list-tests"
+    },
+    "AC-001-c": {
+      "verifier": "code review",
+      "kind": "manual",
+      "command": "rg -n \"settings.custom_words|protected_tokens_from_settings\" src-tauri/src/managers/cleanup",
+      "task": "postprocessor-word-list-protected-tokens",
+      "steps": [
+        "Open the helper protected_tokens_from_settings (in mod.rs or protected_tokens.rs).",
+        "Confirm tokens from settings.custom_words pass through a sanitizer that strips < > \" ' & before being added to the prompt.",
+        "Confirm there is no path where a raw, unsanitized custom_words element is interpolated into the prompt string."
+      ]
+    },
+    "AC-002-a": {
+      "verifier": "cargo test cleanup_prompt_uses_custom_filler_words",
+      "kind": "cargo-test",
+      "command": "cd src-tauri; cargo test cleanup_prompt_uses_custom_filler_words -- --nocapture",
+      "task": "postprocessor-word-list-tests"
+    },
+    "AC-002-b": {
+      "verifier": "rg",
+      "kind": "manual",
+      "command": "rg -n \"\\bum\\b.*\\buh\\b|filler_words\\s*=\\s*\\[\" src-tauri/src/managers/cleanup",
+      "task": "postprocessor-word-list-qc",
+      "steps": [
+        "From repo root run the command above.",
+        "Confirm zero matches (no inline literal filler list remains in the cleanup module)."
+      ]
+    },
+    "AC-002-c": {
+      "verifier": "cargo test cleanup_prompt_empty_filler_list",
+      "kind": "cargo-test",
+      "command": "cd src-tauri; cargo test cleanup_prompt_empty_filler_list -- --nocapture",
+      "task": "postprocessor-word-list-tests"
+    },
+    "AC-003-a": {
+      "verifier": "docs/build.md",
+      "kind": "manual",
+      "command": "Get-Content docs/build.md | Select-String -Pattern \"post-processing|Post-processing\"",
+      "task": "postprocessor-word-list-docs-ui",
+      "steps": [
+        "Open docs/build.md and locate the Post-processing (local LLM) section.",
+        "Confirm it answers (a) which providers / endpoints are supported, (b) what the user installs, (c) explicitly states no model is downloaded by Toaster's build."
+      ]
+    },
+    "AC-003-b": {
+      "verifier": "launch-toaster-monitored.ps1",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 120",
+      "task": "postprocessor-word-list-qc",
+      "steps": [
+        "Launch via pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 120.",
+        "Open Settings -> Post-processing without a configured Provider.",
+        "Confirm an Alert renders with text describing the local-LLM dependency and a link or visible reference to docs/build.md."
+      ]
+    },
+    "AC-003-c": {
+      "verifier": "Cargo.toml diff",
+      "kind": "manual",
+      "command": "git diff src-tauri/Cargo.toml package.json",
+      "task": "postprocessor-word-list-qc",
+      "steps": [
+        "Diff src-tauri/Cargo.toml and package.json on the feature branch.",
+        "Confirm no new dependency that calls hosted endpoints (no openai-sdk, anthropic-sdk, no \"https://api.\" added in source).",
+        "Confirm the post-processor reuses the existing local_openai_provider machinery (mod.rs:482, prompts.rs, llm_dispatch.rs)."
+      ]
+    },
+    "AC-004-a": {
+      "verifier": "check-translations.ts",
+      "kind": "script",
+      "command": "bun run scripts/check-translations.ts",
+      "task": "postprocessor-word-list-qc"
+    }
+  }
+}

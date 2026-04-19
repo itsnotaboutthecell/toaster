@@ -30,7 +30,7 @@ Log file: `~/.copilot/toaster-prompts.log` (`$env:USERPROFILE\.copilot\toaster-p
 4. **New `*.md` at repo root.** Denies `create` for new root-level markdown
    outside the known allowlist (`AGENTS.md`, `CLAUDE.md`, `CRUSH.md`,
    `CONTRIBUTING.md`, `CONTRIBUTING_TRANSLATIONS.md`, `README.md`,
-   `SECURITY.md`, `PRD.md`). Paths under `docs/`, `.github/`, `extras/`,
+   `SECURITY.md`, `PRD.md`). Paths under `docs/`, `.github/`, `eval/`,
    `src-tauri/tests/fixtures/`, or the session workspace are unaffected.
 
 ## Bypass env vars
