@@ -147,7 +147,7 @@ const PostProcessingSettingsPromptsComponent: React.FC = () => {
           />
           <Button
             onClick={handleStartCreate}
-            variant="primary"
+            variant="brand"
             size="md"
             disabled={isCreating}
           >
@@ -194,7 +194,7 @@ const PostProcessingSettingsPromptsComponent: React.FC = () => {
             <div className="flex gap-2 pt-2">
               <Button
                 onClick={handleUpdatePrompt}
-                variant="primary"
+                variant="brand"
                 size="md"
                 disabled={!draftName.trim() || !draftText.trim() || !isDirty}
               >
@@ -261,7 +261,7 @@ const PostProcessingSettingsPromptsComponent: React.FC = () => {
             <div className="flex gap-2 pt-2">
               <Button
                 onClick={handleCreatePrompt}
-                variant="primary"
+                variant="brand"
                 size="md"
                 disabled={!draftName.trim() || !draftText.trim()}
               >
