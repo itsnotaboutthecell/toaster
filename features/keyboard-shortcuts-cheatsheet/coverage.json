@@ -1,0 +1,76 @@
+{
+  "_comment_kinds": "Allowed kind values: skill, agent, cargo-test, script, manual, doc-section.",
+  "feature": "keyboard-shortcuts-cheatsheet",
+  "acs": {
+    "AC-001-a": {
+      "verifier": "manual-registry-audit",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "steps": [
+        "Run: rg -n \"addEventListener\\('keydown'\" src/ — expect exactly one match, inside src/lib/shortcuts/dispatcher.ts.",
+        "Run: rg -n \"from '.*lib/shortcuts'\" src/ — expect imports from src/components/editor/EditorView.tsx, src/components/editor/TranscriptEditor.tsx, src/App.tsx, and src/components/modals/ShortcutsCheatsheet.tsx.",
+        "Open src/lib/shortcuts/registry.ts and confirm a single exported `shortcuts` array is the only place chord strings + description keys appear.",
+        "Run: rg -n \"Ctrl\\+|Cmd\\+|Shift\\+\" src/components src/App.tsx — any literal chord strings outside src/lib/shortcuts/ are a failure."
+      ],
+      "task": "keyboard-shortcuts-cheatsheet-qc"
+    },
+    "AC-001-b": {
+      "verifier": "manual-live-open-close",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "steps": [
+        "Launch Toaster via scripts/launch-toaster-monitored.ps1 and open eval/fixtures/toaster_example.mp4.",
+        "Click into the transcript area to ensure focus is outside any text input.",
+        "Press ? (Shift+/) — cheatsheet modal appears.",
+        "Press Esc — modal dismisses; confirm the editor word selection from before opening the modal is still intact (selection was not cleared).",
+        "Press Ctrl+/ — modal appears again.",
+        "Click outside the modal content — modal dismisses.",
+        "Focus the Find box (Ctrl/Cmd+F), type '?' — modal must NOT open."
+      ],
+      "task": "keyboard-shortcuts-cheatsheet-qc"
+    },
+    "AC-001-c": {
+      "verifier": "manual-live-grouping",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "steps": [
+        "Launch Toaster and open eval/fixtures/toaster_example.mp4.",
+        "Open the cheatsheet (press ?).",
+        "Confirm three group headings render: Editor, Playback, Navigation.",
+        "Cross-check the listed chords against the current src/lib/shortcuts/registry.ts entries — every entry must be visible, none extra.",
+        "Press each listed chord in turn and confirm the documented action fires (e.g. Ctrl+D deletes, Space toggles play, Ctrl+Z undoes)."
+      ],
+      "task": "keyboard-shortcuts-cheatsheet-qc"
+    },
+    "AC-002-a": {
+      "verifier": "manual-platform-chords",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "steps": [
+        "On Windows (or Linux) launch Toaster, open the cheatsheet, confirm chords render with 'Ctrl' (e.g. 'Ctrl+Z' for undo, 'Ctrl+Shift+D' for debug toggle).",
+        "On macOS launch Toaster, open the cheatsheet, confirm the same entries render with 'Cmd' (e.g. 'Cmd+Z', 'Cmd+Shift+D').",
+        "If only one platform is available, run the macOS path via navigator.platform override in the webview dev console (set `Object.defineProperty(navigator,'platform',{value:'MacIntel'})`, close/reopen modal) and confirm chords switch to Cmd on the next render."
+      ],
+      "task": "keyboard-shortcuts-cheatsheet-qc"
+    },
+    "AC-002-b": {
+      "verifier": "check-translations.ts",
+      "kind": "script",
+      "command": "bun scripts/check-translations.ts",
+      "task": "keyboard-shortcuts-cheatsheet-qc"
+    },
+    "AC-003-a": {
+      "verifier": "manual-registry-removal",
+      "kind": "manual",
+      "command": "pwsh scripts/launch-toaster-monitored.ps1",
+      "steps": [
+        "Add a throwaway entry to src/lib/shortcuts/registry.ts (e.g. id: 'throwaway-demo', group: 'navigation', keys: { mac: 'Cmd+Shift+T', other: 'Ctrl+Shift+T' }, action: noop, descriptionKey: 'shortcuts.descriptions.throwawayDemo') and add the matching i18n key to all locales.",
+        "Launch Toaster, open the cheatsheet, confirm the throwaway entry is visible under Navigation and pressing its chord invokes the noop without error.",
+        "Remove the throwaway entry from registry.ts AND the i18n keys in one edit.",
+        "Rebuild/hot-reload, reopen the cheatsheet. Confirm the entry is gone from the visible list and pressing the chord has no effect — no other file was edited to achieve this.",
+        "Run: bun scripts/check-translations.ts — must exit 0."
+      ],
+      "task": "keyboard-shortcuts-cheatsheet-qc"
+    }
+  }
+}

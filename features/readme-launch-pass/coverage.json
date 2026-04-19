@@ -1,0 +1,87 @@
+{
+  "_comment_kinds": "Allowed kind values: skill, agent, cargo-test, script, manual, doc-section.",
+  "_comment_scope": "Every AC is verified by a concrete grep / file-existence check against README.md after the follow-up execution bundle rewrites it. All entries are kind=manual: this is a documentation bundle with no scripts of its own, and the checks are short shell one-liners with a clear pass/fail reading.",
+  "feature": "readme-launch-pass",
+  "acs": {
+    "AC-001-a": {
+      "verifier": "readme-tagline-transcript-first",
+      "kind": "manual",
+      "command": "pwsh -NoProfile -Command \"(Get-Content README.md | Where-Object { $_ -match '\\S' } | Select-Object -First 4) -join [Environment]::NewLine\"",
+      "task": "readme-launch-pass-qc-structure",
+      "steps": [
+        "From the repo root, run the command above.",
+        "Confirm the output is four non-empty lines: the '# Toaster' heading followed by exactly three content lines.",
+        "Confirm that within those three content lines the phrase 'transcript-first' appears alongside either 'video' or 'audio'.",
+        "Any badge row must not push the tagline past line 3 of the content lines; if it does, AC-001-a FAILS."
+      ]
+    },
+    "AC-001-b": {
+      "verifier": "readme-quickstart-links-build-and-launcher",
+      "kind": "manual",
+      "command": "pwsh -NoProfile -Command \"$r=Get-Content README.md -Raw; if ($r -match '\\[[^\\]]+\\]\\(docs/build\\.md\\)' -and $r -match 'scripts[\\\\/]launch-toaster-monitored\\.ps1') { 'OK' } else { 'FAIL' }\"",
+      "task": "readme-launch-pass-qc-structure",
+      "steps": [
+        "From the repo root, run the command above.",
+        "Confirm the output is exactly 'OK'.",
+        "Visually confirm the Quickstart section contains a markdown link whose target is 'docs/build.md'.",
+        "Visually confirm the Quickstart section references 'scripts/launch-toaster-monitored.ps1' (either as a code span or a markdown link)."
+      ]
+    },
+    "AC-001-c": {
+      "verifier": "readme-evals-section-links-eval-dir",
+      "kind": "manual",
+      "command": "pwsh -NoProfile -Command \"$r=Get-Content README.md -Raw; if ($r -match '(?ms)^##\\s+Evals.*?\\[[^\\]]+\\]\\(scripts/eval') { 'OK' } else { 'FAIL' }\"",
+      "task": "readme-launch-pass-qc-structure",
+      "steps": [
+        "From the repo root, run the command above.",
+        "Confirm the output is exactly 'OK' (Evals section contains a link whose target begins with 'scripts/eval').",
+        "Read the Evals section and confirm at least one sentence describes what the eval suite covers (edit quality, audio boundary, caption parity, verifier suite, local-LLM gate, multi-backend parity)."
+      ]
+    },
+    "AC-001-d": {
+      "verifier": "readme-roadmap-links-product-map",
+      "kind": "manual",
+      "command": "pwsh -NoProfile -Command \"$r=Get-Content README.md -Raw; if ($r -match '(?ms)^##\\s+Roadmap.*?\\[[^\\]]+\\]\\(features/product-map-v1/PRD\\.md\\)') { 'OK' } else { 'FAIL' }\"",
+      "task": "readme-launch-pass-qc-structure",
+      "steps": [
+        "From the repo root, run the command above.",
+        "Confirm the output is exactly 'OK'.",
+        "Visually confirm the Roadmap section links to 'features/product-map-v1/PRD.md' and does not inline the Milestone 3 table."
+      ]
+    },
+    "AC-002-a": {
+      "verifier": "readme-handy-only-in-footer",
+      "kind": "manual",
+      "command": "pwsh -NoProfile -Command \"$c = (Select-String -Path README.md -Pattern 'Handy' -AllMatches).Matches.Count; $r=Get-Content README.md -Raw; $footer = if ($r -match '(?ms)##\\s+Acknowledgments.*') { $matches[0] } else { '' }; $fc = ([regex]::Matches($footer,'Handy')).Count; \\\"$c|$fc\\\"\"",
+      "task": "readme-launch-pass-qc-handy-purge",
+      "steps": [
+        "From the repo root, run the command above.",
+        "The output is 'TOTAL|FOOTER' where TOTAL is the total 'Handy' match count in README.md and FOOTER is the count inside the Acknowledgments section.",
+        "PASS requires TOTAL <= 1 AND TOTAL == FOOTER (every Handy mention, if any, sits inside the Acknowledgments footer).",
+        "Any other value (e.g. '3|1' or '2|0') FAILS AC-002-a."
+      ]
+    },
+    "AC-002-b": {
+      "verifier": "readme-all-relative-links-resolve",
+      "kind": "manual",
+      "command": "pwsh -NoProfile -Command \"$r=Get-Content README.md -Raw; $bad=@(); foreach ($m in [regex]::Matches($r,'\\[[^\\]]+\\]\\(([^)#]+?)(?:#[^)]*)?\\)')) { $u=$m.Groups[1].Value; if ($u -match '^(https?:|mailto:)') { continue }; $p=Join-Path (Resolve-Path .).Path $u; if (-not (Test-Path $p)) { $bad += $u } }; if ($bad.Count -eq 0) { 'OK' } else { 'FAIL: ' + ($bad -join ', ') }\"",
+      "task": "readme-launch-pass-qc-links",
+      "steps": [
+        "From the repo root, run the command above.",
+        "Output 'OK' means every relative markdown link target (ignoring http(s):// and mailto:) resolves to a real file or directory.",
+        "Output 'FAIL: <list>' identifies every unresolved target; AC-002-b fails until all are fixed."
+      ]
+    },
+    "AC-003-a": {
+      "verifier": "readme-no-handy-badges",
+      "kind": "manual",
+      "command": "pwsh -NoProfile -Command \"$r=Get-Content README.md -Raw; $bad=@(); foreach ($m in [regex]::Matches($r,'!\\[[^\\]]*\\]\\(([^)]+)\\)')) { if ($m.Groups[1].Value -match '(?i)Handy') { $bad += $m.Groups[1].Value } }; foreach ($m in [regex]::Matches($r,'\\[!\\[[^\\]]*\\]\\([^)]+\\)\\]\\(([^)]+)\\)')) { if ($m.Groups[1].Value -match '(?i)Handy') { $bad += $m.Groups[1].Value } }; if ($bad.Count -eq 0) { 'OK' } else { 'FAIL: ' + ($bad -join ', ') }\"",
+      "task": "readme-launch-pass-qc-handy-purge",
+      "steps": [
+        "From the repo root, run the command above.",
+        "Output 'OK' means no image-link or badge-link URL contains the string 'Handy' (case-insensitive).",
+        "Output 'FAIL: <list>' enumerates every offending badge URL; AC-003-a fails until they are removed or repointed at Toaster-owned URLs."
+      ]
+    }
+  }
+}

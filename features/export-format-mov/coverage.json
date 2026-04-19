@@ -1,0 +1,60 @@
+{
+  "_comment_kinds": "Allowed kind values: skill, agent, cargo-test, script, manual, doc-section.",
+  "_comment_script": "kind:script 'command' must contain exactly ONE scripts/* path token.",
+  "feature": "export-format-mov",
+  "acs": {
+    "AC-001-a": {
+      "verifier": "export_format_mov_variant",
+      "kind": "cargo-test",
+      "command": ". .\\scripts\\setup-env.ps1 *>&1 | Out-Null; cd src-tauri; cargo test -p toaster --lib export_format_mov_variant",
+      "task": "mov-backend-enum"
+    },
+    "AC-001-b": {
+      "verifier": "ffprobe on exported mov fixture",
+      "kind": "manual",
+      "command": "See steps.",
+      "steps": [
+        "Run pwsh scripts/launch-toaster-monitored.ps1 to start the monitored app.",
+        "Open eval/fixtures/toaster_example.mp4 in Toaster and let transcription complete.",
+        "In Advanced Settings > Export, select 'Video (mov)'.",
+        "From the editor, Export Edited Media; save as toaster_example-edited.mov.",
+        "In PowerShell: ffprobe -v error -show_format toaster_example-edited.mov and confirm exit code 0.",
+        "Confirm the output's [FORMAT] section contains format_name=mov,mp4,m4a,3gp,3g2,mj2 and a non-zero duration.",
+        "Repeat with Advanced Settings > Export set to 'Video (mp4)'; confirm the same ffprobe exit 0 and format_name contains mp4.",
+        "Confirm both files play in the system video player without errors."
+      ],
+      "task": "mov-qc"
+    },
+    "AC-001-c": {
+      "verifier": "Advanced Settings > Export dropdown live check",
+      "kind": "manual",
+      "command": "See steps.",
+      "steps": [
+        "Run pwsh scripts/launch-toaster-monitored.ps1.",
+        "Open Advanced Settings > Export.",
+        "Click the Format dropdown and confirm it lists exactly: Video (mp4), Video (mov), Audio - mp3, Audio - wav, Audio - m4a, Audio - opus — in that order.",
+        "Select 'Video (mov)', close settings, reopen, and confirm 'Video (mov)' is still the selected value (settings persistence)."
+      ],
+      "task": "mov-frontend-option"
+    },
+    "AC-002-a": {
+      "verifier": "scripts/check-translations.ts",
+      "kind": "script",
+      "command": "bun scripts/check-translations.ts",
+      "task": "mov-i18n-20-locales"
+    },
+    "AC-002-b": {
+      "verifier": "export_format_mov_settings_roundtrip",
+      "kind": "cargo-test",
+      "command": ". .\\scripts\\setup-env.ps1 *>&1 | Out-Null; cd src-tauri; cargo test -p toaster --lib export_format_mov_settings_roundtrip",
+      "task": "mov-backend-enum"
+    },
+    "AC-003-a": {
+      "verifier": "export_format_mov_codec_parity",
+      "kind": "cargo-test",
+      "command": ". .\\scripts\\setup-env.ps1 *>&1 | Out-Null; cd src-tauri; cargo test -p toaster --test export_format_mov_codec_parity",
+      "task": "mov-ffmpeg-args"
+    }
+  }
+}
+

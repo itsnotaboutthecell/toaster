@@ -1,0 +1,55 @@
+{
+  "_comment_kinds": "Allowed kind values: skill, agent, cargo-test, script, manual, doc-section.",
+  "_comment_script": "Each command has exactly one scripts/* path token. The stub scripts/eval/eval-poster-frame.ps1 exits 2 until the feature implements it.",
+  "feature": "poster-frame-export",
+  "acs": {
+    "AC-001-a": {
+      "verifier": "project_poster_frame_roundtrip",
+      "kind": "cargo-test",
+      "command": "cargo test -p toaster --lib managers::project::tests::poster_frame",
+      "task": "poster-frame-export-project-schema"
+    },
+    "AC-001-b": {
+      "verifier": "scripts/check-translations.ts",
+      "kind": "script",
+      "command": "bun scripts/check-translations.ts",
+      "task": "poster-frame-export-menu-entry"
+    },
+    "AC-002-a": {
+      "verifier": "scripts/eval/eval-poster-frame.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/eval/eval-poster-frame.ps1 -Mode attachment -Format mp4",
+      "task": "poster-frame-export-eval"
+    },
+    "AC-002-b": {
+      "verifier": "scripts/eval/eval-poster-frame.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/eval/eval-poster-frame.ps1 -Mode attachment -Format mov",
+      "task": "poster-frame-export-eval"
+    },
+    "AC-002-c": {
+      "verifier": "scripts/eval/eval-poster-frame.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/eval/eval-poster-frame.ps1 -Mode argv-identity -Format mp4",
+      "task": "poster-frame-export-eval"
+    },
+    "AC-002-d": {
+      "verifier": "scripts/eval/eval-poster-frame.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/eval/eval-poster-frame.ps1 -Mode clamp -Format mp4",
+      "task": "poster-frame-export-eval"
+    },
+    "AC-003-a": {
+      "verifier": "scripts/eval/eval-poster-frame.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/eval/eval-poster-frame.ps1 -Mode audio-only -Format mp3",
+      "task": "poster-frame-export-eval"
+    },
+    "AC-003-b": {
+      "verifier": "scripts/eval/eval-poster-frame.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/eval/eval-poster-frame.ps1 -Mode cleanup -Format mp4",
+      "task": "poster-frame-export-eval"
+    }
+  }
+}

@@ -1,0 +1,98 @@
+{
+  "_comment_kinds": "Allowed kind values: skill, agent, cargo-test, script, manual, doc-section.",
+  "_comment_script": "kind:script 'command' contains exactly ONE scripts/* path token.",
+  "_comment_manual": "kind:manual entries include a non-empty 'steps' array.",
+  "feature": "ass-sidecar-export",
+  "acs": {
+    "AC-001-a": {
+      "verifier": "cargo test settings::ass_sidecar",
+      "kind": "cargo-test",
+      "command": "cargo test -p toaster --lib settings::ass_sidecar",
+      "task": "ass-sidecar-export-setting"
+    },
+    "AC-002-a": {
+      "verifier": "manual live app check of toolbar toggle",
+      "kind": "manual",
+      "command": "manual",
+      "steps": [
+        "Run the Toaster dev app with `bun run tauri dev`.",
+        "Load any video fixture (e.g. eval/fixtures/toaster_example.mp4) into the editor.",
+        "Confirm the new 'Also save .ass subtitle sidecar' button appears adjacent to the 'Burn captions into video' toggle in the editor toolbar.",
+        "Click the new toggle so it shows the accent (on) styling.",
+        "Quit and relaunch the app. Re-load the same fixture.",
+        "Confirm the toggle is still on (state persisted via AppSettings.export_ass_sidecar_enabled)."
+      ],
+      "task": "ass-sidecar-export-frontend"
+    },
+    "AC-002-b": {
+      "verifier": "scripts/check-translations.ts",
+      "kind": "script",
+      "command": "bun run scripts/check-translations.ts",
+      "task": "ass-sidecar-export-i18n"
+    },
+    "AC-003-a": {
+      "verifier": "scripts/feature/check-ass-generator-singleton.ps1",
+      "kind": "script",
+      "command": "pwsh scripts/feature/check-ass-generator-singleton.ps1",
+      "task": "ass-sidecar-export-refactor"
+    },
+    "AC-003-b": {
+      "verifier": "manual byte-identity check",
+      "kind": "manual",
+      "command": "manual",
+      "steps": [
+        "With burn and sidecar both enabled, export eval/fixtures/toaster_example.mp4 to a temp directory.",
+        "Before the FFmpeg spawn, Toaster writes <output>.burn_captions.ass (burn temp) and <output>.ass (sidecar).",
+        "Run `fc /B <output>.burn_captions.ass <output>.ass` (Windows) or `cmp` (POSIX) and confirm zero byte differences.",
+        "Record the fixture id, both file SHA-256 hashes, and the toaster build SHA in the feature journal."
+      ],
+      "task": "ass-sidecar-export-fixture"
+    },
+    "AC-004-a": {
+      "verifier": "manual both-off check",
+      "kind": "manual",
+      "command": "manual",
+      "steps": [
+        "With burn OFF and sidecar OFF, export eval/fixtures/toaster_example.mp4 to an empty temp directory.",
+        "List the directory; confirm only the output media file exists.",
+        "Confirm no *.ass and no *.burn_captions.ass files remain."
+      ],
+      "task": "ass-sidecar-export-fixture"
+    },
+    "AC-004-b": {
+      "verifier": "manual both-on check",
+      "kind": "manual",
+      "command": "manual",
+      "steps": [
+        "With burn ON and sidecar ON, export eval/fixtures/toaster_example.mp4 to a temp directory.",
+        "Play the output video and confirm captions are burned in.",
+        "Open <basename>.ass in a text editor and confirm it contains [Script Info], [V4+ Styles], and [Events] with Dialogue: lines.",
+        "Confirm byte-identity with the burn temp per AC-003-b."
+      ],
+      "task": "ass-sidecar-export-fixture"
+    },
+    "AC-004-c": {
+      "verifier": "manual sidecar-only check",
+      "kind": "manual",
+      "command": "manual",
+      "steps": [
+        "With burn OFF and sidecar ON, export eval/fixtures/toaster_example.mp4 to a temp directory.",
+        "Play the output video and confirm NO burned captions.",
+        "Confirm <basename>.ass exists and parses as valid ASS in Aegisub (or at minimum opens in a text editor).",
+        "Inspect the logged FFmpeg command line from Toaster and confirm no subtitles= filter is present."
+      ],
+      "task": "ass-sidecar-export-fixture"
+    },
+    "AC-004-d": {
+      "verifier": "manual audio-only gate check",
+      "kind": "manual",
+      "command": "manual",
+      "steps": [
+        "Set export_format to an audio-only preset (e.g. mp3 or m4a) via the Settings panel or settings.json.",
+        "With sidecar ON, export eval/fixtures/toaster_example.mp4 to a temp directory.",
+        "Confirm the output audio file is produced and NO <basename>.ass file is written (audio-only gate)."
+      ],
+      "task": "ass-sidecar-export-fixture"
+    }
+  }
+}

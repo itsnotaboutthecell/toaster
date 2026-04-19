@@ -1,0 +1,49 @@
+{
+  "_comment_kinds": "Allowed kind values: skill, agent, cargo-test, script, manual, doc-section.",
+  "_comment_script": "kind:script 'command' must contain exactly ONE scripts/* path token.",
+  "feature": "chapter-markers",
+  "acs": {
+    "AC-001-a": {
+      "verifier": "chapters_build_happy_path",
+      "kind": "cargo-test",
+      "command": "cargo test -p toaster-app --lib managers::export::chapters::tests::build_happy_path -- --exact",
+      "task": "chapter-markers-core"
+    },
+    "AC-001-b": {
+      "verifier": "scripts/eval/eval-chapter-markers.ps1",
+      "kind": "script",
+      "command": "pwsh -NoProfile -File scripts/eval/eval-chapter-markers.ps1 -Mode container",
+      "task": "chapter-markers-eval"
+    },
+    "AC-001-c": {
+      "verifier": "chapters_webvtt_grammar",
+      "kind": "cargo-test",
+      "command": "cargo test -p toaster-app --lib managers::export::chapters::tests::webvtt_grammar -- --exact",
+      "task": "chapter-markers-core"
+    },
+    "AC-002-a": {
+      "verifier": "chapters_title_derivation",
+      "kind": "cargo-test",
+      "command": "cargo test -p toaster-app --lib managers::export::chapters::tests::title_derivation -- --exact",
+      "task": "chapter-markers-core"
+    },
+    "AC-002-b": {
+      "verifier": "chapters_short_merge",
+      "kind": "cargo-test",
+      "command": "cargo test -p toaster-app --lib managers::export::chapters::tests::short_paragraph_merge -- --exact",
+      "task": "chapter-markers-core"
+    },
+    "AC-003-a": {
+      "verifier": "scripts/eval/eval-chapter-markers-stretch.ps1",
+      "kind": "script",
+      "command": "pwsh -NoProfile -File scripts/eval/eval-chapter-markers-stretch.ps1",
+      "task": "chapter-markers-eval"
+    },
+    "AC-004-a": {
+      "verifier": "scripts/eval/eval-chapter-markers.ps1",
+      "kind": "script",
+      "command": "pwsh -NoProfile -File scripts/eval/eval-chapter-markers.ps1 -Mode empty",
+      "task": "chapter-markers-eval"
+    }
+  }
+}

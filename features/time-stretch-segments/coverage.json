@@ -1,0 +1,62 @@
+{
+  "_comment_kinds": "Allowed kind values: skill, agent, cargo-test, script, manual, doc-section.",
+  "_comment_script": "kind:script 'command' contains exactly ONE scripts/* path token.",
+  "_comment_manual": "kind:manual entries include a non-empty 'steps' array.",
+  "feature": "time-stretch-segments",
+  "acs": {
+    "AC-001-a": {
+      "verifier": "cargo test segment_stretches_serde_default",
+      "kind": "cargo-test",
+      "command": "cd src-tauri; cargo test -p toaster --lib project::tests::segment_stretches_serde_default",
+      "task": "tss-data-model"
+    },
+    "AC-001-b": {
+      "verifier": "cargo test set_segment_stretch_clamps",
+      "kind": "cargo-test",
+      "command": "cd src-tauri; cargo test -p toaster --lib project::tests::set_segment_stretch_clamps",
+      "task": "tss-data-model"
+    },
+    "AC-001-c": {
+      "verifier": "audio-boundary-eval",
+      "kind": "skill",
+      "command": "invoke skill audio-boundary-eval",
+      "task": "tss-export-parity"
+    },
+    "AC-002-a": {
+      "verifier": "audio-boundary-eval",
+      "kind": "skill",
+      "command": "invoke skill audio-boundary-eval",
+      "task": "tss-preview-parity"
+    },
+    "AC-002-b": {
+      "verifier": "transcript-precision-eval",
+      "kind": "skill",
+      "command": "invoke skill transcript-precision-eval",
+      "task": "tss-caption-alignment"
+    },
+    "AC-003-a": {
+      "verifier": "manual live app context-menu check",
+      "kind": "manual",
+      "command": "manual",
+      "steps": [
+        "Launch the Toaster dev app with `pwsh scripts/launch-toaster-monitored.ps1`.",
+        "Load eval/fixtures/toaster_example.mp4 into the editor.",
+        "Right-click any keep-segment in the timeline to open the segment context menu.",
+        "Confirm a numeric input and slider labelled 'Stretch' are present, both bound to the same value, both clamped to [0.5, 2.0].",
+        "Drag the slider to 1.5; confirm the numeric input updates to 1.50 and the preview audio re-renders with audibly faster playback over that segment.",
+        "Type 1.0 into the numeric input and blur; confirm the slider snaps back to 1.0.",
+        "Type 3.0 into the numeric input and blur; confirm the value is clamped to 2.0 (not rejected outright is acceptable per R-001-b).",
+        "Click the 'Reset' button; confirm the value returns to 1.0 and the preview re-renders at natural speed.",
+        "Confirm the `<video>` element's source was NOT swapped at any point (AGENTS.md non-negotiable)."
+      ],
+      "task": "tss-context-menu-ui"
+    },
+    "AC-004-a": {
+      "verifier": "cargo test load_v1_1_fixture_stretch_is_one",
+      "kind": "cargo-test",
+      "command": "cd src-tauri; cargo test -p toaster --lib project::tests::load_v1_1_fixture_stretch_is_one",
+      "task": "tss-backward-compat"
+    }
+  }
+}
+
