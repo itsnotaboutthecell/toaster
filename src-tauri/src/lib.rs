@@ -301,6 +301,7 @@ pub fn run(cli_args: CliArgs) {
             commands::filler::trim_pauses,
             commands::filler::tighten_gaps,
             commands::filler::cleanup_all,
+            commands::cleanup::cleanup_transcription,
             commands::disfluency::cleanup_smart_duplicates,
             commands::project::save_project,
             commands::project::load_project,

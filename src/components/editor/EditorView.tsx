@@ -32,6 +32,40 @@ const unwrapResult = <T,>(result: Result<T, string>): T => {
   throw new Error(result.error);
 };
 
+/**
+ * Apply the LLM post-processor to a freshly-transcribed Word[] if the
+ * `post_process_enabled` setting is on. Runs the `cleanup_transcription`
+ * Tauri command with the joined transcript; on success, positionally
+ * remaps the cleaned tokens back onto the original words while preserving
+ * ASR-authoritative timestamps. If the token count diverges (which
+ * shouldn't happen given the cleanup contract's no_reorder / no_paraphrase
+ * invariants but is defensively guarded), the original words are returned
+ * unchanged. Any backend error is logged and swallowed — cleanup never
+ * blocks a successful transcription.
+ */
+async function maybeRunPostProcess(
+  words: Array<{ text: string; start_us: number; end_us: number; deleted: boolean; silenced: boolean; confidence: number; speaker_id: number }>,
+  enabled: boolean,
+): Promise<typeof words> {
+  if (!enabled || words.length === 0) return words;
+  const transcription = words.map((w) => w.text).join(" ");
+  try {
+    const cleaned = (await invoke("cleanup_transcription", { transcription })) as string | null;
+    if (!cleaned) return words;
+    const cleanedTokens = cleaned.trim().split(/\s+/).filter(Boolean);
+    if (cleanedTokens.length !== words.length) {
+      console.warn(
+        `[post-process] cleaned-text token count (${cleanedTokens.length}) does not match word count (${words.length}); leaving transcript unchanged.`,
+      );
+      return words;
+    }
+    return words.map((w, i) => ({ ...w, text: cleanedTokens[i] }));
+  } catch (err) {
+    console.warn("[post-process] cleanup_transcription failed:", err);
+    return words;
+  }
+}
+
 const EditorView: React.FC = () => {
   const { t } = useTranslation();
   const { words, setWords, deleteWord, silenceWord, splitWord, undo, redo, deleteRange, selectWord, setSelectionRange, clearHighlights, refreshFromBackend } = useEditorStore();
@@ -168,7 +202,8 @@ const EditorView: React.FC = () => {
     setModelMissing(false);
     try {
       const result = unwrapResult(await commands.transcribeMediaFile(mediaInfo.path));
-      await setWords(result);
+      const postProcessed = await maybeRunPostProcess(result, settings?.post_process_enabled ?? false);
+      await setWords(postProcessed);
     } catch (err) {
       const errStr = String(err);
       if (errStr.includes("Model is not loaded")) {
@@ -192,7 +227,7 @@ const EditorView: React.FC = () => {
     } finally {
       setIsTranscribing(false);
     }
-  }, [mediaInfo, setWords]);
+  }, [mediaInfo, setWords, settings?.post_process_enabled]);
 
   const handleImportMedia = useCallback(async () => {
     try {
@@ -227,7 +262,8 @@ const EditorView: React.FC = () => {
             setIsTranscribing(true);
             setModelMissing(false);
             const result = unwrapResult(await commands.transcribeMediaFile(storeInfo.path));
-            await setWords(result);
+            const postProcessed = await maybeRunPostProcess(result, settings?.post_process_enabled ?? false);
+            await setWords(postProcessed);
             setIsTranscribing(false);
           }
         } catch (err) {

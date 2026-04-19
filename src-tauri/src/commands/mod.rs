@@ -1,6 +1,7 @@
 pub mod app_settings;
 pub mod audio;
 pub mod captions;
+pub mod cleanup;
 pub mod disfluency;
 pub mod editor;
 pub mod export;
