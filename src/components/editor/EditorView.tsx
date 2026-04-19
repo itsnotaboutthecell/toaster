@@ -24,6 +24,7 @@ import MediaPlayer from "@/components/player/MediaPlayer";
 import Waveform from "@/components/player/Waveform";
 import EditorToolbar from "@/components/editor/EditorToolbar";
 import ExportFormatPicker from "@/components/editor/ExportFormatPicker";
+import { PostProcessingSettingsPrompts } from "@/components/settings/post-processing/PostProcessingSettingsPrompts";
 
 const unwrapResult = <T,>(result: Result<T, string>): T => {
   if (result.status === "ok") {
@@ -79,6 +80,7 @@ const EditorView: React.FC = () => {
   const settings = useSettingsStore((s) => s.settings);
   const updateSetting = useSettingsStore((s) => s.updateSetting);
   const normalizeAudio = settings?.normalize_audio_on_export ?? false;
+  const expertModeEnabled = settings?.ui_expert_mode_enabled ?? false;
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isExportingMedia, setIsExportingMedia] = useState(false);
   const [burnCaptions, setBurnCaptions] = useState(false);
@@ -608,6 +610,15 @@ const EditorView: React.FC = () => {
           ) : (
             <TranscriptEditor onWordClick={handleWordClick} />
           )}
+        </SettingsGroup>
+      )}
+
+      {/* AI cleanup prompt drawer — only visible when Expert mode is on
+          and a transcript is loaded. Lives here so prompt iteration
+          happens alongside the transcript the prompt will reshape. */}
+      {expertModeEnabled && words.length > 0 && (
+        <SettingsGroup title={t("editor.sections.aiCleanupPrompt")}>
+          <PostProcessingSettingsPrompts />
         </SettingsGroup>
       )}
 

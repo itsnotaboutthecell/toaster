@@ -615,7 +615,8 @@
       "transcription": "Transcription",
       "exportTools": "Export & Tools",
       "edit": "Edit",
-      "words": "Words"
+      "words": "Words",
+      "aiCleanupPrompt": "AI cleanup prompt"
     },
     "deleteWord": "Delete Word",
     "restoreWord": "Restore Word",

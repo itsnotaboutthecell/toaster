@@ -613,6 +613,7 @@
       "project": "Project",
       "media": "Media",
       "transcription": "Transcription",
+      "aiCleanupPrompt": "AI cleanup prompt",
       "exportTools": "Export & Tools",
       "edit": "Edit",
       "words": "Words"
