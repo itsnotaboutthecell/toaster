@@ -157,7 +157,7 @@
         "allLanguages": "Todos os Idiomas"
       },
       "filter": {
-        "all": "All",
+        "all": "All Models",
         "transcription": "Transcription",
         "postProcessing": "Post-processing"
       },
@@ -221,7 +221,8 @@
         "createPrompt": "Criar Prompt",
         "cancel": "Cancelar",
         "selectToEdit": "Selecione um prompt acima para visualizar e editar seus detalhes.",
-        "createFirst": "Clique em 'Criar Novo Prompt' acima para criar seu primeiro prompt de pós-processamento."
+        "createFirst": "Clique em 'Criar Novo Prompt' acima para criar seu primeiro prompt de pós-processamento.",
+        "resetToDefault": "Reset to default"
       },
       "localLlmAlert": {
         "link": "Learn more",
@@ -496,7 +497,7 @@
           "description": "Opt-in features that may change or be removed. Gated by the master toggle below."
         },
         "expertMode": {
-          "title": "Expert mode",
+          "title": "Transcript processor",
           "description": "Reveals the AI-cleanup connection settings and the Editor's prompt drawer. This is a UI visibility gate only — whether cleanup actually runs is controlled by the separate 'Run AI cleanup at transcription' toggle."
         },
         "llmConnection": {
@@ -509,7 +510,7 @@
         "description": "Master switch for every experiment. When off, individual experiment flags read as disabled even if they were previously turned on. Turning this back on restores your prior selections."
       },
       "expertMode": {
-        "title": "Expert mode",
+        "title": "Transcript processor",
         "description": "Show advanced LLM post-processing controls. When on, a connection-config group appears below and a prompt drawer appears in the Editor. Leave off for the simple editing experience."
       }
     }

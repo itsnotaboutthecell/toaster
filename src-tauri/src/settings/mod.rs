@@ -26,8 +26,8 @@ mod sanitize;
 mod types;
 
 pub use defaults::{
-    default_desktop_profile, default_mobile_profile, ensure_caption_defaults,
-    get_default_settings,
+    default_desktop_profile, default_mobile_profile, default_post_process_prompt_text,
+    ensure_caption_defaults, get_default_settings,
 };
 pub use io::{get_settings, write_settings};
 pub use sanitize::{

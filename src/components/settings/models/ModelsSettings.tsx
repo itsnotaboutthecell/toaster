@@ -49,6 +49,14 @@ export const ModelsSettings: React.FC<ModelsSettingsProps> = ({
   const [languageFilter, setLanguageFilter] = useState("all");
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
+  // Post-processing ("Transcript processor") is still gated behind the
+  // experimental + expert-mode double-opt-in until we're confident in
+  // the results. Outside that gate the tab + cards are fully hidden.
+  const postProcessingVisible = useSettingsStore((s) => {
+    const exp = s.settings?.experimental_enabled ?? false;
+    const expert = s.settings?.ui_expert_mode_enabled ?? false;
+    return exp && expert;
+  });
   const {
     models,
     currentModel,
@@ -82,6 +90,15 @@ export const ModelsSettings: React.FC<ModelsSettingsProps> = ({
       setCategoryFilter(lockedCategory);
     }
   }, [lockedCategory]);
+
+  // If post-processing visibility flips off while the user was on that
+  // tab, fall back to "all" so the Models page doesn't render an empty
+  // list for a hidden category.
+  useEffect(() => {
+    if (!postProcessingVisible && categoryFilter === "PostProcessor") {
+      setCategoryFilter("all");
+    }
+  }, [postProcessingVisible, categoryFilter]);
 
   // click outside handler for category dropdown
   useEffect(() => {
@@ -211,6 +228,14 @@ export const ModelsSettings: React.FC<ModelsSettingsProps> = ({
   // Filter models based on category + language filters
   const filteredModels = useMemo(() => {
     return models.filter((model: ModelInfo) => {
+      // Hide post-process models entirely when the tab itself is hidden,
+      // so "All Models" doesn't leak cards the user can't manage.
+      if (
+        !postProcessingVisible &&
+        (model.category ?? "Transcription") === "PostProcessor"
+      ) {
+        return false;
+      }
       if (categoryFilter !== "all") {
         if ((model.category ?? "Transcription") !== categoryFilter) return false;
       }
@@ -219,7 +244,7 @@ export const ModelsSettings: React.FC<ModelsSettingsProps> = ({
       }
       return true;
     });
-  }, [models, categoryFilter, languageFilter]);
+  }, [models, categoryFilter, languageFilter, postProcessingVisible]);
 
   // Split filtered models into downloaded (including custom) and available sections
   const { downloadedModels, availableModels } = useMemo(() => {
@@ -266,10 +291,14 @@ export const ModelsSettings: React.FC<ModelsSettingsProps> = ({
       value: "Transcription",
       labelKey: "settings.models.filter.transcription",
     },
-    {
-      value: "PostProcessor",
-      labelKey: "settings.models.filter.postProcessing",
-    },
+    ...(postProcessingVisible
+      ? [
+          {
+            value: "PostProcessor" as CategoryFilter,
+            labelKey: "settings.models.filter.postProcessing",
+          },
+        ]
+      : []),
   ];
 
   if (loading) {

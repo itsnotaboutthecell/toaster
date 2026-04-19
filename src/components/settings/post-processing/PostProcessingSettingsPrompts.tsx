@@ -110,6 +110,15 @@ const PostProcessingSettingsPromptsComponent: React.FC = () => {
     setDraftText("");
   };
 
+  const handleResetToDefault = async () => {
+    try {
+      const defaultText = await commands.getDefaultPostProcessPromptText();
+      setDraftText(defaultText);
+    } catch (error) {
+      console.error("Failed to load default prompt text:", error);
+    }
+  };
+
   const hasPrompts = prompts.length > 0;
   const isDirty =
     !!selectedPrompt &&
@@ -199,6 +208,13 @@ const PostProcessingSettingsPromptsComponent: React.FC = () => {
                 disabled={!draftName.trim() || !draftText.trim() || !isDirty}
               >
                 {t("settings.postProcessing.prompts.updatePrompt")}
+              </Button>
+              <Button
+                onClick={handleResetToDefault}
+                variant="secondary"
+                size="md"
+              >
+                {t("settings.postProcessing.prompts.resetToDefault")}
               </Button>
               <Button
                 onClick={() => handleDeletePrompt(selectedPromptId)}

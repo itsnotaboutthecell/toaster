@@ -320,6 +320,9 @@ async changeWhisperGpuDevice(device: number) : Promise<Result<null, string>> {
 async getAvailableAccelerators() : Promise<AvailableAccelerators> {
     return await TAURI_INVOKE("get_available_accelerators");
 },
+async getDefaultPostProcessPromptText() : Promise<string> {
+    return await TAURI_INVOKE("get_default_post_process_prompt_text");
+},
 async triggerUpdateCheck() : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("trigger_update_check") };

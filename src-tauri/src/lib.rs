@@ -234,6 +234,7 @@ pub fn run(cli_args: CliArgs) {
             commands::app_settings::change_ort_accelerator_setting,
             commands::app_settings::change_whisper_gpu_device,
             commands::app_settings::get_available_accelerators,
+            commands::app_settings::get_default_post_process_prompt_text,
             trigger_update_check,
             show_main_window_command,
             commands::cancel_operation,

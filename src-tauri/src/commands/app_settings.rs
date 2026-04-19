@@ -624,3 +624,12 @@ pub async fn get_available_accelerators() -> crate::managers::transcription::Ava
         .await
         .expect("get_available_accelerators panicked")
 }
+
+/// Returns the canonical default post-process prompt text. Used by the
+/// settings UI "Reset to default" affordance so frontends don't have
+/// to duplicate the template string from `settings::defaults`.
+#[tauri::command]
+#[specta::specta]
+pub fn get_default_post_process_prompt_text() -> String {
+    settings::default_post_process_prompt_text()
+}

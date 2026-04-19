@@ -157,7 +157,7 @@
         "allLanguages": "All Languages"
       },
       "filter": {
-        "all": "All",
+        "all": "All Models",
         "transcription": "Transcription",
         "postProcessing": "Post-processing"
       },
@@ -215,13 +215,14 @@
         "promptLabelPlaceholder": "Enter prompt name",
         "promptInstructions": "Prompt Instructions",
         "promptInstructionsPlaceholder": "Write the instructions to run after transcription. Example: Improve grammar and clarity for the following text: ${output}",
-        "promptTip": "Tip: Use <code>${output}</code> to insert the transcribed text in your prompt.",
+        "promptTip": "Tip: Use <code>${output}</code> to insert the transcribed text and <code>${filler_words}</code> to insert your configured Discard Words list.",
         "updatePrompt": "Update Prompt",
         "deletePrompt": "Delete Prompt",
         "createPrompt": "Create Prompt",
         "cancel": "Cancel",
         "selectToEdit": "Select a prompt above to view and edit its details.",
-        "createFirst": "Click 'Create New Prompt' above to create your first post-processing prompt."
+        "createFirst": "Click 'Create New Prompt' above to create your first post-processing prompt.",
+        "resetToDefault": "Reset to default"
       },
       "localLlmAlert": {
         "link": "Learn more",
@@ -496,8 +497,8 @@
           "description": "Opt-in features that may change or be removed. Gated by the master toggle below."
         },
         "expertMode": {
-          "title": "Expert mode",
-          "description": "Reveals the AI-cleanup connection settings and the Editor's prompt drawer. This is a UI visibility gate only — whether cleanup actually runs is controlled by the separate 'Run AI cleanup at transcription' toggle."
+          "title": "Transcript processor",
+          "description": "Reveals the Transcript processor prompt drawer in the Editor and the LLM connection controls below. Leave off for the simple editing experience — whether cleanup actually runs is controlled by the separate \"Run AI cleanup at transcription\" toggle."
         },
         "llmConnection": {
           "title": "AI cleanup (LLM connection)",
@@ -509,8 +510,8 @@
         "description": "Master switch for every experiment. When off, individual experiment flags read as disabled even if they were previously turned on. Turning this back on restores your prior selections."
       },
       "expertMode": {
-        "title": "Expert mode",
-        "description": "Show advanced LLM post-processing controls. When on, a connection-config group appears below and a prompt drawer appears in the Editor. Leave off for the simple editing experience."
+        "title": "Transcript processor",
+        "description": "Reveals the Transcript processor prompt drawer in the Editor and the LLM connection controls below. Leave off for the simple editing experience — whether cleanup actually runs is controlled by the separate \"Run AI cleanup at transcription\" toggle."
       }
     }
   },
