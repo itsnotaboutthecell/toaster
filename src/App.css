@@ -1,15 +1,18 @@
 @import "tailwindcss";
 
 @theme {
-  /* Toaster Design tokens */
+  /* Toaster Design tokens — single source of truth.
+   * Consumers MUST reference these vars (directly or via Tailwind utilities
+   * like `bg-logo-primary`); hex-color literals outside this block are a
+   * drift bug. See docs/design-tokens.md. */
   --color-text: #0f0f0f;
   --color-background: #fbfbfb;
-  --color-background-ui: #D9D8D8;
-  --color-logo-primary: #D9D8D8;
+  --color-background-ui: #D9D8D8;   /* neutral chrome (primary button bg, inline surfaces) */
+  --color-logo-primary: #E8A838;    /* Toaster brand accent (brand button, slider, toggle-on) */
   --color-logo-stroke: #3D2B1F;
   --color-text-stroke: #f6f6f6;
   --color-mid-gray: #808080;
-  --color-accent: #E8A838;
+  --color-accent: #E8A838;          /* alias of --color-logo-primary; retained for legacy callers */
 }
 
 :root {
@@ -55,10 +58,10 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    /* Colors - Dark Theme */
+    /* Colors - Dark Theme — brand yellow is constant across themes;
+     * only neutral chrome flips. */
     --color-text: #fbfbfb;
     --color-background: #1E1E1E;
-    --color-logo-primary: #D9D8D8;
     --color-logo-stroke: #E8A838;
   }
 }
@@ -115,7 +118,7 @@ input[type="range"]::-webkit-slider-thumb {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #E8A838;
+  background: var(--color-logo-primary);
   cursor: pointer;
   border: 2px solid white;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
