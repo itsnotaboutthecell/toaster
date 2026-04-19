@@ -1,0 +1,135 @@
+{
+  "feature": "edit-export-format-override",
+  "acs": {
+    "AC-001-a": {
+      "verifier": "manual",
+      "kind": "manual",
+      "command": "pnpm tauri dev",
+      "steps": [
+        "Launch the app and open an editor project with a video file (e.g. eval/fixtures/toaster_example.mp4).",
+        "Confirm that an 'Export format' picker is rendered adjacent to the 'Export Edited Media' button.",
+        "Confirm the picker options come from the backend (via `commands.listAllowedExportFormats`) by inspecting the Network/Tauri invoke log or the component's React DevTools state — no hard-coded TS list.",
+        "Confirm the picker default selection equals the current `settings.export_format` (default Mp4)."
+      ],
+      "task": "edit-export-format-override-frontend-picker"
+    },
+    "AC-001-b": {
+      "verifier": "cargo test export_edited_media_uses_format_override",
+      "kind": "cargo-test",
+      "command": "cargo test -p toaster-lib --test waveform export_edited_media_uses_format_override",
+      "task": "edit-export-format-override-backend-override-plumbing"
+    },
+    "AC-001-c": {
+      "verifier": "cargo test export_edited_media_falls_back_to_settings",
+      "kind": "cargo-test",
+      "command": "cargo test -p toaster-lib --test waveform export_edited_media_falls_back_to_settings",
+      "task": "edit-export-format-override-backend-override-plumbing"
+    },
+    "AC-002-a": {
+      "verifier": "manual",
+      "kind": "manual",
+      "command": "pnpm tauri dev",
+      "steps": [
+        "Open Settings -> Advanced -> Export.",
+        "Confirm the format dropdown is present, bound to `settings.export_format`, and changes are persisted across an app restart.",
+        "Inspect `src/components/settings/advanced/ExportGroup.tsx` diff: no structural change to the component."
+      ],
+      "task": "edit-export-format-override-regression-settings-surface"
+    },
+    "AC-002-b": {
+      "verifier": "manual",
+      "kind": "manual",
+      "command": "pnpm tauri dev",
+      "steps": [
+        "Set `settings.export_format` to Mp3 via Advanced settings.",
+        "Open an editor project without touching the new picker.",
+        "Click 'Export Edited Media'; confirm the resulting file is .mp3."
+      ],
+      "task": "edit-export-format-override-regression-settings-surface"
+    },
+    "AC-003-a": {
+      "verifier": "doc-section",
+      "kind": "doc-section",
+      "command": "features/edit-export-format-override/BLUEPRINT.md",
+      "sections": [
+        "Single-source-of-truth placement"
+      ],
+      "task": "edit-export-format-override-review"
+    },
+    "AC-003-b": {
+      "verifier": "manual",
+      "kind": "manual",
+      "command": "pnpm tauri specta",
+      "steps": [
+        "Run the specta regen command for the project (exact invocation per CONTRIBUTING.md).",
+        "Confirm `git diff src/bindings.ts` shows the new `format_override` parameter on `exportEditedMedia` and that no other hand edits are present.",
+        "Run `pnpm tsc --noEmit` and confirm zero errors."
+      ],
+      "task": "edit-export-format-override-specta-regen"
+    },
+    "AC-004-a": {
+      "verifier": "cargo test allowed_formats_for_video_source",
+      "kind": "cargo-test",
+      "command": "cargo test -p toaster-lib allowed_formats_for_video_source",
+      "task": "edit-export-format-override-allowed-formats-helper"
+    },
+    "AC-004-b": {
+      "verifier": "cargo test allowed_formats_for_audio_source",
+      "kind": "cargo-test",
+      "command": "cargo test -p toaster-lib allowed_formats_for_audio_source",
+      "task": "edit-export-format-override-allowed-formats-helper"
+    },
+    "AC-004-c": {
+      "verifier": "cargo test export_format_args_no_video_stream",
+      "kind": "cargo-test",
+      "command": "cargo test -p toaster-lib export_format_args_no_video_stream",
+      "task": "edit-export-format-override-allowed-formats-helper"
+    },
+    "AC-005-a": {
+      "verifier": "manual",
+      "kind": "manual",
+      "command": "pnpm tauri dev",
+      "steps": [
+        "Open an editor project with a .mov source and `settings.export_format` = Mp4.",
+        "Do not change the new picker.",
+        "Click Export; confirm the save-dialog suggests a filename ending in `.mp4`."
+      ],
+      "task": "edit-export-format-override-frontend-picker"
+    },
+    "AC-005-b": {
+      "verifier": "manual",
+      "kind": "manual",
+      "command": "pnpm tauri dev",
+      "steps": [
+        "Open an editor project with a .mov source and `settings.export_format` = Mp4.",
+        "Change the new picker to Mp3.",
+        "Click Export; confirm the save-dialog suggests a filename ending in `.mp3`.",
+        "Confirm the produced file is a valid MP3."
+      ],
+      "task": "edit-export-format-override-frontend-picker"
+    },
+    "AC-006-a": {
+      "verifier": "check-translations",
+      "kind": "script",
+      "command": "pnpm tsx scripts/check-translations.ts",
+      "task": "edit-export-format-override-i18n"
+    },
+    "AC-007-a": {
+      "verifier": "cargo test precision_eval",
+      "kind": "cargo-test",
+      "command": "cargo test -p toaster-lib precision_eval",
+      "task": "edit-export-format-override-qc"
+    },
+    "AC-007-b": {
+      "verifier": "manual",
+      "kind": "manual",
+      "command": "pwsh -NoProfile -Command \"Get-ChildItem -Recurse src,src-tauri/src -Include *.ts,*.tsx,*.rs | ForEach-Object { $c=(Get-Content $_.FullName | Measure-Object -Line).Lines; if ($c -gt 800) { Write-Host \\\"$($_.FullName): $c\\\"; exit 1 } }; exit 0\"",
+      "steps": [
+        "Run the line-count check against every .ts/.tsx/.rs file under src/ and src-tauri/src/.",
+        "Confirm the command exits 0.",
+        "Specifically inspect the touched files (src/components/editor/EditorView.tsx, src/components/editor/ExportFormatPicker.tsx, src-tauri/src/commands/waveform/export_format.rs, src-tauri/src/commands/waveform/commands.rs) and confirm each is under 800 lines."
+      ],
+      "task": "edit-export-format-override-qc"
+    }
+  }
+}

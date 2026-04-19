@@ -1,0 +1,47 @@
+-- Task graph for edit-export-format-override.
+-- Ingest into the session SQL store with the `sql` tool.
+
+INSERT INTO todos (id, title, description, status) VALUES
+  ('edit-export-format-override-allowed-formats-helper',
+   'Backend: allowed_formats_for_source helper + Tauri command',
+   'Add `allowed_formats_for_source(ext: &str) -> Vec<AudioExportFormat>` in src-tauri/src/commands/waveform/export_format.rs. Expose a `#[tauri::command] #[specta::specta] list_allowed_export_formats(source_extension: String)` that wraps it. Register in src-tauri/src/lib.rs:294 invoke_handler. Verifiers: AC-004-a, AC-004-b, AC-004-c per coverage.json.',
+   'pending'),
+  ('edit-export-format-override-backend-override-plumbing',
+   'Backend: add format_override param to export_edited_media',
+   'Extend src-tauri/src/commands/waveform/commands.rs:386 signature with `format_override: Option<AudioExportFormat>`. At line 455 replace `let export_format = settings.export_format;` with `let export_format = format_override.unwrap_or(settings.export_format);`. Add unit tests `export_edited_media_uses_format_override` and `export_edited_media_falls_back_to_settings`. Verifiers: AC-001-b, AC-001-c per coverage.json.',
+   'pending'),
+  ('edit-export-format-override-specta-regen',
+   'Regenerate src/bindings.ts via specta',
+   'Do NOT hand-edit. Run the specta regeneration command (per CONTRIBUTING.md) so `exportEditedMedia` and `listAllowedExportFormats` are reflected. Verify `pnpm tsc --noEmit` is clean. Verifier: AC-003-b per coverage.json.',
+   'pending'),
+  ('edit-export-format-override-frontend-picker',
+   'Frontend: ExportFormatPicker component + EditorView wiring',
+   'Create src/components/editor/ExportFormatPicker.tsx (<150 lines) mirroring the pattern at src/components/settings/advanced/ExportGroup.tsx:44-110. Render adjacent to the Export button in src/components/editor/EditorView.tsx:431. On mount, call `commands.listAllowedExportFormats(mediaInfo.extension)`. Default selection = `settings.export_format`. Wire chosen override into the `commands.exportEditedMedia` call at EditorView.tsx:330 as `format_override`. Update the save-dialog `extensions[0]` derivation at EditorView.tsx:315 to use `(override ?? settings.export_format)` extension (sourced from backend, not a hand-maintained TS map). Verifiers: AC-001-a, AC-005-a, AC-005-b per coverage.json.',
+   'pending'),
+  ('edit-export-format-override-i18n',
+   'i18n: add 7 new keys under editor.exportFormat across all 20 locales',
+   'Add keys editor.exportFormat.label, editor.exportFormat.tooltip, editor.exportFormat.formatMp4, editor.exportFormat.formatMp3, editor.exportFormat.formatWav, editor.exportFormat.formatM4a, editor.exportFormat.formatOpus to every src/i18n/locales/<lang>/translation.json (20 files). English values are canonical; other locales may ship with English fallback and be flagged for translator follow-up, but the keys MUST exist. Verifier: AC-006-a per coverage.json.',
+   'pending'),
+  ('edit-export-format-override-regression-settings-surface',
+   'Regression: Settings -> Advanced -> Export untouched',
+   'Confirm src/components/settings/advanced/ExportGroup.tsx has no structural edits and still binds to settings.export_format. Confirm end-to-end that setting Advanced->Mp3 with no picker interaction produces .mp3 output. Verifiers: AC-002-a, AC-002-b per coverage.json.',
+   'pending'),
+  ('edit-export-format-override-review',
+   'Review: no dual-path duplication in frontend',
+   'Code-review pass: grep the diff for any TS/TSX code that maps AudioExportFormat to codec, FFmpeg argv, or video-stream policy. The only allowed mapping on the frontend is AudioExportFormat -> localized i18n label. Verifier: AC-003-a per coverage.json (doc-section anchored at BLUEPRINT.md "Single-source-of-truth placement").',
+   'pending'),
+  ('edit-export-format-override-qc',
+   'QC: run coverage gate + precision eval + 800-line cap',
+   'Run `pwsh scripts/feature/check-feature-coverage.ps1 -Feature edit-export-format-override` and confirm [OK]. Run `cargo test -p toaster-lib precision_eval` and confirm green. Run the line-count check from AC-007-b and confirm exit 0. Verifiers: AC-007-a, AC-007-b per coverage.json.',
+   'pending');
+
+INSERT INTO todo_deps (todo_id, depends_on) VALUES
+  ('edit-export-format-override-backend-override-plumbing', 'edit-export-format-override-allowed-formats-helper'),
+  ('edit-export-format-override-specta-regen', 'edit-export-format-override-backend-override-plumbing'),
+  ('edit-export-format-override-specta-regen', 'edit-export-format-override-allowed-formats-helper'),
+  ('edit-export-format-override-frontend-picker', 'edit-export-format-override-specta-regen'),
+  ('edit-export-format-override-frontend-picker', 'edit-export-format-override-i18n'),
+  ('edit-export-format-override-regression-settings-surface', 'edit-export-format-override-frontend-picker'),
+  ('edit-export-format-override-review', 'edit-export-format-override-frontend-picker'),
+  ('edit-export-format-override-qc', 'edit-export-format-override-regression-settings-surface'),
+  ('edit-export-format-override-qc', 'edit-export-format-override-review');
