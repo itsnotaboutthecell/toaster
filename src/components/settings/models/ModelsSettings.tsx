@@ -12,6 +12,11 @@ import { LanguageFilterDropdown } from "./LanguageFilterDropdown";
 
 type CategoryFilter = ModelCategory | "all";
 
+// check if model supports a language based on its supported_languages list
+const modelSupportsLanguage = (model: ModelInfo, langCode: string): boolean => {
+  return model.supported_languages.includes(langCode);
+};
+
 interface ModelsSettingsProps {
   /**
    * When set, the segmented category filter is not rendered and the
@@ -25,17 +30,6 @@ interface ModelsSettingsProps {
    */
   initialFilter?: CategoryFilter;
 }
-
-// check if model supports a language based on its supported_languages list
-const modelSupportsLanguage = (model: ModelInfo, langCode: string): boolean => {
-  return model.supported_languages.includes(langCode);
-};
-
-const categoryBadgeKey = (category: ModelCategory | null | undefined): string | null => {
-  if (category === "Transcription") return "settings.models.badge.transcription";
-  if (category === "PostProcessor") return "settings.models.badge.postProcessing";
-  return null;
-};
 
 export const ModelsSettings: React.FC<ModelsSettingsProps> = ({
   lockedCategory,
@@ -214,11 +208,6 @@ export const ModelsSettings: React.FC<ModelsSettingsProps> = ({
     }
   };
 
-  const getCategoryBadge = (model: ModelInfo): string | undefined => {
-    const key = categoryBadgeKey(model.category ?? null);
-    return key ? t(key) : undefined;
-  };
-
   // Filter models based on category + language filters
   const filteredModels = useMemo(() => {
     return models.filter((model: ModelInfo) => {
@@ -391,7 +380,6 @@ export const ModelsSettings: React.FC<ModelsSettingsProps> = ({
                 downloadProgress={getDownloadProgress(model.id)}
                 downloadSpeed={getDownloadSpeed(model.id)}
                 showRecommended={false}
-                categoryLabel={getCategoryBadge(model)}
               />
             ))}
           </div>
@@ -414,7 +402,6 @@ export const ModelsSettings: React.FC<ModelsSettingsProps> = ({
                   downloadProgress={getDownloadProgress(model.id)}
                   downloadSpeed={getDownloadSpeed(model.id)}
                   showRecommended={false}
-                  categoryLabel={getCategoryBadge(model)}
                 />
               ))}
             </div>

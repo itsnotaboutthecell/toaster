@@ -6,9 +6,11 @@ import {
   Globe,
   Languages,
   Loader2,
+  Mic,
   Trash2,
+  Wand2,
 } from "lucide-react";
-import type { ModelInfo } from "@/bindings";
+import type { ModelCategory, ModelInfo } from "@/bindings";
 import { formatModelSize } from "../../lib/utils/format";
 import {
   getTranslatedModelDescription,
@@ -30,6 +32,22 @@ const getLanguageDisplayText = (
     return t("modelSelector.capabilities.languageOnly", { language: langName });
   }
   return t("modelSelector.capabilities.multiLanguage");
+};
+
+// Category tag (icon + i18n key) for the bottom tag row. Kept close to
+// the JSX that renders it so the label style stays co-located with the
+// other tags. Returns null when the model has no category (custom user
+// models, legacy rows).
+const getCategoryTag = (
+  category: ModelCategory | null | undefined,
+): { Icon: typeof Mic; labelKey: string } | null => {
+  if (category === "Transcription") {
+    return { Icon: Mic, labelKey: "settings.models.badge.transcription" };
+  }
+  if (category === "PostProcessor") {
+    return { Icon: Wand2, labelKey: "settings.models.badge.postProcessing" };
+  }
+  return null;
 };
 
 export type ModelCardStatus =
@@ -54,7 +72,6 @@ interface ModelCardProps {
   downloadProgress?: number;
   downloadSpeed?: number; // MB/s
   showRecommended?: boolean;
-  categoryLabel?: string;
 }
 
 const ModelCard: React.FC<ModelCardProps> = ({
@@ -70,7 +87,6 @@ const ModelCard: React.FC<ModelCardProps> = ({
   downloadProgress,
   downloadSpeed,
   showRecommended = true,
-  categoryLabel,
 }) => {
   const { t } = useTranslation();
   const isFeatured = variant === "featured";
@@ -80,6 +96,7 @@ const ModelCard: React.FC<ModelCardProps> = ({
   // Get translated model name and description
   const displayName = getTranslatedModelName(model, t);
   const displayDescription = getTranslatedModelDescription(model, t);
+  const categoryTag = getCategoryTag(model.category ?? null);
 
   const baseClasses =
     "flex flex-col rounded-xl px-4 py-3 gap-2 text-left transition-all duration-200";
@@ -143,9 +160,6 @@ const ModelCard: React.FC<ModelCardProps> = ({
             {showRecommended && model.is_recommended && (
               <Badge variant="primary">{t("onboarding.recommended")}</Badge>
             )}
-            {categoryLabel && (
-              <Badge variant="secondary">{categoryLabel}</Badge>
-            )}
             {status === "active" && (
               <Badge variant="primary">
                 <Check className="w-3 h-3 mr-1" />
@@ -201,6 +215,15 @@ const ModelCard: React.FC<ModelCardProps> = ({
 
       {/* Bottom row: tags + action buttons (full width) */}
       <div className="flex items-center gap-3 w-full -mb-0.5 mt-0.5 h-5">
+        {categoryTag && (
+          <div
+            className="flex items-center gap-1 text-xs text-text/50"
+            title={t(categoryTag.labelKey)}
+          >
+            <categoryTag.Icon className="w-3.5 h-3.5" />
+            <span>{t(categoryTag.labelKey)}</span>
+          </div>
+        )}
         {model.supported_languages.length > 0 && (
           <div
             className="flex items-center gap-1 text-xs text-text/50"
