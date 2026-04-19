@@ -25,6 +25,26 @@ const SRC = join(ROOT, "src");
 const ALLOWED_PATHS = new Set<string>([
   // Button.tsx owns the variant class map; it must reference these.
   "src/components/ui/Button.tsx",
+  // Dropdown internal option-row + toggle buttons — option rows inside
+  // a popover are list items, not standalone actions, and styling them
+  // as `<Button variant="…">` would double-wrap padding + focus.
+  "src/components/ui/Dropdown.tsx",
+  // Language-chip grid: selection pills, same rationale as Dropdown
+  // option rows.
+  "src/components/settings/LanguageSelector.tsx",
+  // Inline copy-affordance; its inline width + min-height escape the
+  // Button primitive. Revisit if Button gains a compact icon variant.
+  "src/components/ui/TextDisplay.tsx",
+  // Update-checker banner CTA; lives on a modal overlay with bespoke
+  // spacing. Tracked as design debt.
+  "src/components/update-checker/UpdateChecker.tsx",
+  // Editor-page toolbar + dashboard buttons — grandfathered design debt
+  // from the pre-design-system era. New settings/editor buttons MUST
+  // use `<Button variant="…">` per docs/design-system.md §2. When these
+  // files are next touched, migrate them and remove from this list.
+  "src/components/editor/EditorToolbar.tsx",
+  "src/components/editor/EditorView.tsx",
+  "src/components/editor/FillerDashboard.tsx",
 ]);
 const BRAND_CLASSES = [
   "bg-logo-primary",

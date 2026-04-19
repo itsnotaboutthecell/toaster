@@ -20,16 +20,20 @@ frontend-specific ones.
 
 ## Settings UI contract
 
-Applies to `src/components/settings/**`:
+Applies to `src/components/settings/**`. Full rules, anatomy diagrams,
+and CI gates live in [`../docs/design-system.md`](../docs/design-system.md);
+the nested [`components/settings/AGENTS.md`](components/settings/AGENTS.md)
+is the path-scoped shortcut for agents editing those files.
 
-- Every user-exposed setting renders a **human-readable label and one-line description**. Never surface raw flag or enum names (no `caption_bg_opacity_b3` — write "Background transparency" with a plain-language description).
-- Numeric controls: sliders must support **smooth drag AND double-click-to-type keyboard entry**. Do not ship spinner up/down arrows as the primary editing affordance.
-- Use existing color tokens (see [`../docs/design-tokens.md`](../docs/design-tokens.md)). The brand yellow is `bg-logo-primary` / `text-logo-primary` / `border-logo-primary`; neutral chrome is `bg-background-ui`. Do not invent new greys/reds.
-- Never place red text on dark backgrounds or light-grey text on white — both have recurred as readability bugs.
+- Every top-level settings page opens with a **hero** (`<h1 text-xl>` + `<p text-sm text-text/60>`); one `<h1>` per page, SettingsGroup titles are `<h2>`.
+- Every user-exposed setting renders a **human-readable label and one-line description** (never raw flag names).
+- Numeric preview-affecting controls must **update during drag** (`SliderWithInput` `onChange`, not `onCommit`) — gate: live QC of a caption slider.
+- Every `caption_*` / `export_*` / `loudness_*` / `normalize_audio_*` `Settings` key written via `updateSetting("…", …)` MUST have an entry in `settingUpdaters` (`src/stores/settingsStore.ts`) — gate: `bun run check:settings-updater-coverage`.
+- Use existing color tokens; the brand yellow is `bg-logo-primary`, neutral chrome is `bg-background-ui`. Never red-on-dark, never light-grey-on-white.
 
 ## Design tokens — single source of truth
 
-All brand/theme colors live in `src/App.css` inside the `@theme` block — it's the only place hex literals may be declared. See [`../docs/design-tokens.md`](../docs/design-tokens.md) for the full token table and primitive contract.
+All brand/theme colors live in `src/App.css` inside the `@theme` block — it's the only place hex literals may be declared. See [`../docs/design-system.md`](../docs/design-system.md) for the full token table, primitive contract, page anatomy, live-update and live-preview fan-out contracts, and CI gates.
 
 - NEVER write hex color literals (`#RRGGBB`) in `.ts` / `.tsx` / component `.css` files. Reference tokens via Tailwind utilities (`bg-logo-primary`) or `var(--color-*)` in inline styles.
 - NEVER use `bg-background-ui` / `peer-checked:bg-background-ui` / `bg-accent` to express the brand color — use `logo-primary`. `accent` is a legacy alias; new code uses `logo-primary`.

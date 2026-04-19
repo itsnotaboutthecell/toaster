@@ -63,6 +63,15 @@ jobs:
       - name: Check file-size guardrail (monolith cap)
         run: bun run check:file-sizes
 
+      - name: Check design-token drift (no hex literals outside @theme)
+        run: bun run check:design-tokens
+
+      - name: Check button-variant drift (no raw <button> styling)
+        run: bun run check:button-variants
+
+      - name: Check settings-updater coverage (live-preview fan-out)
+        run: bun run check:settings-updater-coverage
+
       - name: Run ESLint
         run: bun run lint
 

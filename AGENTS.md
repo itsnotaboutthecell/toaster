@@ -75,6 +75,7 @@ Full tree: [`docs/repo-layout.md`](docs/repo-layout.md).
 |-------|-----------------|
 | Full rules list | `bun scripts/registry/reader.ts rules` |
 | Commands (fast/full/live) | [`docs/commands.md`](docs/commands.md) or `bun scripts/registry/reader.ts commands --tier <fast\|full\|live>` |
+| Design system (tokens, anatomy, CI gates) | [`docs/design-system.md`](docs/design-system.md) + `.github/skills/design-system/` |
 | Testing matrix | `bun scripts/registry/reader.ts testing` |
 | Boundaries (always/ask/never) | `bun scripts/registry/reader.ts boundaries` |
 | Session hygiene R1–R5 | `bun scripts/registry/reader.ts hygiene` |

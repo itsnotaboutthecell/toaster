@@ -22,6 +22,8 @@
     "check:file-sizes": "bun scripts/check-file-sizes.ts",
     "check:registry": "bun scripts/registry/check.ts",
     "check:design-tokens": "bun scripts/gate/check-brand-token-drift.ts --strict",
+    "check:button-variants": "bun scripts/gate/check-button-variant-drift.ts --strict",
+    "check:settings-updater-coverage": "bun scripts/gate/check-settings-updater-coverage.ts --strict",
     "registry:build": "bun scripts/registry/build.ts",
     "registry": "bun scripts/registry/reader.ts",
     "postinstall": "bun scripts/check-nix-deps.ts"
