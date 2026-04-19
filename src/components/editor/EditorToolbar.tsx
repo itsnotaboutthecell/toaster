@@ -1,52 +1,61 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import {
-  Download,
-  Terminal,
-} from "lucide-react";
 import { SettingsGroup } from "@/components/ui/SettingsGroup";
+import { SettingContainer } from "@/components/ui/SettingContainer";
+import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
 import ExportFormatPicker from "@/components/editor/ExportFormatPicker";
 import { ExportGroup } from "@/components/settings/advanced/ExportGroup";
 import type {
   AllowedExportFormat,
   AudioExportFormat,
-  ExportFormat,
   Word,
 } from "@/bindings";
 
 interface EditorToolbarProps {
   words: Word[];
-  onExport: (format: ExportFormat) => void;
-  onFFmpegScript: () => void;
   formatOverride: AudioExportFormat | null;
   onFormatOverrideChange: (next: AudioExportFormat | null) => void;
   allowedFormats: AllowedExportFormat[];
   defaultExportFormat: AudioExportFormat;
   exportPickerDisabled?: boolean;
+  burnCaptions: boolean;
+  onBurnCaptionsChange: (next: boolean) => void;
+  normalizeAudio: boolean;
+  onNormalizeAudioToggle: () => void;
 }
 
+/**
+ * Export settings panel. Shown alongside the editor when words are
+ * loaded. Export triggers (SRT / VTT / Script / FFmpeg / edited media)
+ * live in the header `<ExportMenu>` — this component owns only the
+ * knobs that affect the next export: format override, burn captions,
+ * normalize audio, loudness target + preflight.
+ */
 const EditorToolbar: React.FC<EditorToolbarProps> = React.memo(({
   words,
-  onExport,
-  onFFmpegScript,
   formatOverride,
   onFormatOverrideChange,
   allowedFormats,
   defaultExportFormat,
   exportPickerDisabled,
+  burnCaptions,
+  onBurnCaptionsChange,
+  normalizeAudio,
+  onNormalizeAudioToggle,
 }) => {
   const { t } = useTranslation();
 
   if (words.length === 0) return null;
 
   return (
-    <SettingsGroup title={t("editor.sections.exportTools")}>
-      <div className="px-4 py-3 space-y-3">
-        {/* Edited-media export format */}
-        <div>
-          <p className="text-[10px] uppercase tracking-wider text-mid-gray/60 mb-1.5">
-            {t("editor.exportFormat.label")}
-          </p>
+    <SettingsGroup title={t("editor.sections.exportSettings")}>
+      <div className="space-y-1">
+        <SettingContainer
+          title={t("editor.exportFormat.label")}
+          description={t("editor.exportFormat.description")}
+          grouped
+          layout="horizontal"
+        >
           <ExportFormatPicker
             value={formatOverride}
             onChange={onFormatOverrideChange}
@@ -54,60 +63,25 @@ const EditorToolbar: React.FC<EditorToolbarProps> = React.memo(({
             defaultFormat={defaultExportFormat}
             disabled={exportPickerDisabled}
           />
-        </div>
+        </SettingContainer>
 
-        {/* Export formats */}
-        <div>
-          <p className="text-[10px] uppercase tracking-wider text-mid-gray/60 mb-1.5">
-            {t("editor.exportFormats")}
-          </p>
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              onClick={() => onExport("Srt")}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-background border border-mid-gray/20 rounded-lg text-xs hover:bg-mid-gray/10 transition-colors"
-            >
-              <Download size={14} />
-              SRT
-            </button>
-            <button
-              onClick={() => onExport("Vtt")}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-background border border-mid-gray/20 rounded-lg text-xs hover:bg-mid-gray/10 transition-colors"
-            >
-              <Download size={14} />
-              VTT
-            </button>
-            <button
-              onClick={() => onExport("Script")}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-background border border-mid-gray/20 rounded-lg text-xs hover:bg-mid-gray/10 transition-colors"
-            >
-              <Download size={14} />
-              {t("editor.script")}
-            </button>
-          </div>
-        </div>
+        <ToggleSwitch
+          checked={burnCaptions}
+          onChange={onBurnCaptionsChange}
+          label={t("editor.addCaptions")}
+          description={t("editor.addCaptionsDescription")}
+          grouped
+        />
 
-        {/* Tools */}
-        <div>
-          <p className="text-[10px] uppercase tracking-wider text-mid-gray/60 mb-1.5">
-            {t("editor.tools")}
-          </p>
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              onClick={onFFmpegScript}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-background border border-mid-gray/20 rounded-lg text-xs hover:bg-mid-gray/10 transition-colors"
-              title={t("editor.ffmpegScript")}
-            >
-              <Terminal size={14} />
-              {t("editor.ffmpegShortLabel")}
-            </button>
-          </div>
-        </div>
+        <ToggleSwitch
+          checked={normalizeAudio}
+          onChange={onNormalizeAudioToggle}
+          label={t("editor.normalizeAudio")}
+          description={t("editor.normalizeAudioDescription")}
+          grouped
+        />
 
-        {/* Export audio/video settings (loudness, preflight) —
-            relocated from Advanced per round-3 QC. */}
-        <div className="pt-2 border-t border-mid-gray/10">
-          <ExportGroup />
-        </div>
+        <ExportGroup />
       </div>
     </SettingsGroup>
   );

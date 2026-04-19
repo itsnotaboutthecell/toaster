@@ -11,8 +11,6 @@ import {
   FolderOpen,
   X,
   AudioLines,
-  Captions,
-  Volume2,
 } from "lucide-react";
 import { SettingsGroup } from "@/components/ui/SettingsGroup";
 import { Button } from "@/components/ui/Button";
@@ -24,7 +22,7 @@ import TranscriptEditor from "@/components/editor/TranscriptEditor";
 import MediaPlayer from "@/components/player/MediaPlayer";
 import Waveform from "@/components/player/Waveform";
 import EditorToolbar from "@/components/editor/EditorToolbar";
-import { PostProcessingSettingsPrompts } from "@/components/settings/post-processing/PostProcessingSettingsPrompts";
+import ExportMenu from "@/components/editor/ExportMenu";
 
 const unwrapResult = <T,>(result: Result<T, string>): T => {
   if (result.status === "ok") {
@@ -80,7 +78,6 @@ const EditorView: React.FC = () => {
   const settings = useSettingsStore((s) => s.settings);
   const updateSetting = useSettingsStore((s) => s.updateSetting);
   const normalizeAudio = settings?.normalize_audio_on_export ?? false;
-  const expertModeEnabled = settings?.ui_expert_mode_enabled ?? false;
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isExportingMedia, setIsExportingMedia] = useState(false);
   const [burnCaptions, setBurnCaptions] = useState(false);
@@ -526,32 +523,35 @@ const EditorView: React.FC = () => {
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button
-                    onClick={handleExportEditedMedia}
+                  <ExportMenu
+                    mediaType={mediaInfo?.media_type ?? null}
                     disabled={words.length === 0 || isExportingMedia}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-background border border-mid-gray/20 rounded-lg text-xs hover:bg-mid-gray/10 transition-colors disabled:opacity-50"
-                    title={t("editor.export")}
-                  >
-                    <FileVideo size={14} />
-                    {isExportingMedia ? t("editor.exporting") : t("editor.export")}
-                  </button>
+                    isExportingMedia={isExportingMedia}
+                    onExportEditedMedia={handleExportEditedMedia}
+                    onExportTranscript={handleExport}
+                    onExportFFmpegScript={handleFFmpegScript}
+                  />
                   <div className="w-px h-5 bg-mid-gray/30" />
-                  <button
+                  <Button
+                    variant="secondary"
+                    size="sm"
                     onClick={handleSaveProject}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-background border border-mid-gray/20 rounded-lg text-xs hover:bg-mid-gray/10 transition-colors"
                     title={t("editor.saveProject")}
+                    className="inline-flex items-center gap-1.5"
                   >
                     <Save size={14} />
                     {t("editor.save")}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
                     onClick={handleClose}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-background border border-mid-gray/20 rounded-lg text-xs hover:bg-mid-gray/10 transition-colors"
                     title={t("editor.close")}
+                    className="inline-flex items-center gap-1.5"
                   >
                     <X size={14} />
                     {t("editor.close")}
-                  </button>
+                  </Button>
                 </div>
               </div>
 
@@ -604,68 +604,40 @@ const EditorView: React.FC = () => {
       )}
 
       {mediaUrl && words.length > 0 && (
-        <TranscriptEditor onWordClick={handleWordClick} />
-      )}
-
-      {/* AI cleanup prompt drawer — only visible when Expert mode is on
-          and a transcript is loaded. Lives here so prompt iteration
-          happens alongside the transcript the prompt will reshape. */}
-      {expertModeEnabled && words.length > 0 && (
-        <SettingsGroup title={t("editor.sections.aiCleanupPrompt")}>
-          <PostProcessingSettingsPrompts />
-        </SettingsGroup>
-      )}
-
-      {/* Edit section — only visible when words are loaded */}
-      {words.length > 0 && (
-        <SettingsGroup title={t("editor.sections.edit")}>
-          <div className="px-4 py-3">
-            <div className="flex items-center gap-2 flex-wrap">
-              <button
-                onClick={handleCleanup}
-                disabled={isCleaningUp}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-background border border-mid-gray/20 rounded-lg text-xs hover:bg-mid-gray/10 transition-colors disabled:opacity-50"
-              >
-                <AudioLines size={14} />
-                {t("editor.cleanup")}
-              </button>
-              <button
-                onClick={() => setBurnCaptions(!burnCaptions)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border transition-colors ${
-                  burnCaptions
-                    ? "bg-logo-primary text-black border-logo-primary"
-                    : "bg-background border-mid-gray/20 hover:bg-mid-gray/10"
-                }`}
-              >
-                <Captions size={14} />
-                {t("editor.addCaptions")}
-              </button>
-              <button
-                onClick={handleNormalizeToggle}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border transition-colors ${
-                  normalizeAudio
-                    ? "bg-logo-primary text-black border-logo-primary"
-                    : "bg-background border-mid-gray/20 hover:bg-mid-gray/10"
-                }`}
-              >
-                <Volume2 size={14} />
-                {t("editor.normalizeAudio")}
-              </button>
-            </div>
+        <>
+          {/* Inline transcript action row — Cleanup is a transcript
+              modification, not an export action, so it lives with
+              the transcript, not in an export toolbar. */}
+          <div className="flex justify-end">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleCleanup}
+              disabled={isCleaningUp}
+              className="inline-flex items-center gap-1.5"
+            >
+              <AudioLines size={14} />
+              {t("editor.cleanup")}
+            </Button>
           </div>
-        </SettingsGroup>
+          <TranscriptEditor onWordClick={handleWordClick} />
+        </>
       )}
 
-      {/* Export & Tools section */}
-              <EditorToolbar
+      {/* Export settings — format override, burn captions, normalize,
+          loudness/preflight. Export triggers themselves live in the
+          header <ExportMenu>. */}
+      <EditorToolbar
         words={words}
-        onExport={handleExport}
-        onFFmpegScript={handleFFmpegScript}
         formatOverride={formatOverride}
         onFormatOverrideChange={setFormatOverride}
         allowedFormats={allowedFormats}
         defaultExportFormat={defaultExportFormat}
         exportPickerDisabled={isExportingMedia || words.length === 0}
+        burnCaptions={burnCaptions}
+        onBurnCaptionsChange={setBurnCaptions}
+        normalizeAudio={normalizeAudio}
+        onNormalizeAudioToggle={handleNormalizeToggle}
       />
     </div>
   );

@@ -612,10 +612,8 @@
     },
     "sections": {
       "media": "Media",
-      "exportTools": "Export & Tools",
-      "edit": "Edit",
       "words": "Words",
-      "aiCleanupPrompt": "AI cleanup prompt"
+      "exportSettings": "Export & Tools"
     },
     "deleteWord": "Delete Word",
     "restoreWord": "Restore Word",
@@ -684,7 +682,19 @@
       "formatM4a": "M4A",
       "formatOpus": "Opus",
       "formatMp4": "MP4 (video)",
-      "formatMp3": "MP3"
+      "formatMp3": "MP3",
+      "description": "Pick the output format for this export. Uses your Advanced setting when not overridden."
+    },
+    "addCaptionsDescription": "Burn captions directly into the exported video.",
+    "normalizeAudioDescription": "Normalize loudness to the target LUFS on export.",
+    "exportMenu": {
+      "trigger": "Export",
+      "editedVideo": "Edited Video",
+      "editedAudio": "Edited Audio",
+      "transcriptSrt": "Transcript (SRT)",
+      "transcriptVtt": "Transcript (VTT)",
+      "transcriptScript": "Transcript (Script)",
+      "ffmpegScript": "FFmpeg script"
     }
   },
   "experiments": {

@@ -6,6 +6,7 @@ import { ToggleSwitch } from "../../ui/ToggleSwitch";
 import { Alert } from "../../ui/Alert";
 import { useSettings } from "../../../hooks/useSettings";
 import { experiments } from "@/lib/experiments";
+import { PostProcessingSettingsPrompts } from "../post-processing/PostProcessingSettingsPrompts";
 
 /**
  * Experimental group body for the Advanced page.
@@ -59,6 +60,7 @@ export const ExperimentalGroup: React.FC = () => {
             description={t("settings.advanced.expertMode.description")}
             grouped
           />
+          {expertModeEnabled && <PostProcessingSettingsPrompts />}
           {experiments.map((experiment) => {
             const checked =
               (getSetting(experiment.settingsKey) as boolean) ?? false;
