@@ -38,13 +38,6 @@ const ALLOWED_PATHS = new Set<string>([
   // Update-checker banner CTA; lives on a modal overlay with bespoke
   // spacing. Tracked as design debt.
   "src/components/update-checker/UpdateChecker.tsx",
-  // Editor-page toolbar + dashboard buttons — grandfathered design debt
-  // from the pre-design-system era. New settings/editor buttons MUST
-  // use `<Button variant="…">` per docs/design-system.md §2. When these
-  // files are next touched, migrate them and remove from this list.
-  "src/components/editor/EditorToolbar.tsx",
-  "src/components/editor/EditorView.tsx",
-  "src/components/editor/FillerDashboard.tsx",
 ]);
 const BRAND_CLASSES = [
   "bg-logo-primary",
