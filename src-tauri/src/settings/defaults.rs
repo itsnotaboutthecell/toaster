@@ -6,12 +6,10 @@
 //! smaller helpers.
 
 use super::types::{
-    AppSettings, CaptionFontFamily, CaptionProfile, CaptionProfileSet, LLMPrompt, LogLevel,
-    ModelUnloadTimeout, OrtAcceleratorSetting, PostProcessProvider, SecretMap, ShortcutBinding,
+    AppSettings, CaptionFontFamily, CaptionProfile, CaptionProfileSet, LogLevel,
+    ModelUnloadTimeout, OrtAcceleratorSetting, ShortcutBinding,
     WhisperAcceleratorSetting,
 };
-use super::{CUSTOM_LOCAL_PROVIDER_ID, LM_STUDIO_PROVIDER_ID, LOCAL_GGUF_PROVIDER_ID, OLLAMA_PROVIDER_ID};
-use log::debug;
 use std::collections::HashMap;
 
 pub(super) fn default_model() -> String {
@@ -133,285 +131,14 @@ pub(super) fn default_word_correction_threshold() -> f64 {
     0.18
 }
 
-pub(super) fn default_post_process_enabled() -> bool {
-    false
-}
-
-pub(super) fn default_ui_expert_mode_enabled() -> bool {
-    false
-}
-
-pub(super) fn default_post_process_provider_requires_api_key() -> bool {
-    true
-}
-
 pub(super) fn default_app_language() -> String {
     tauri_plugin_os::locale()
         .map(|l| l.replace('_', "-"))
         .unwrap_or_else(|| "en".to_string())
 }
 
-pub(super) fn default_post_process_provider_id() -> String {
-    // Default to the in-process local-GGUF provider; users can swap to
-    // Ollama / LM Studio / llama.cpp via the selector. See PRD R-008 and
-    // docs/post-processing.md.
-    LOCAL_GGUF_PROVIDER_ID.to_string()
-}
-
-pub(super) fn default_post_process_providers() -> Vec<PostProcessProvider> {
-    vec![
-        PostProcessProvider {
-            id: LOCAL_GGUF_PROVIDER_ID.to_string(),
-            label: "Local (in-process)".to_string(),
-            // base_url is unused for the in-process path but we keep the
-            // field non-empty so stored settings round-trip cleanly.
-            base_url: "local://in-process".to_string(),
-            allow_base_url_edit: false,
-            models_endpoint: None,
-            supports_structured_output: true,
-            local_only: true,
-            requires_api_key: false,
-        },
-        PostProcessProvider {
-            id: OLLAMA_PROVIDER_ID.to_string(),
-            label: "Ollama (HTTP)".to_string(),
-            base_url: "http://127.0.0.1:11434/v1".to_string(),
-            allow_base_url_edit: false,
-            models_endpoint: Some("/models".to_string()),
-            supports_structured_output: true,
-            local_only: true,
-            requires_api_key: false,
-        },
-        PostProcessProvider {
-            id: LM_STUDIO_PROVIDER_ID.to_string(),
-            label: "LM Studio (HTTP)".to_string(),
-            base_url: "http://127.0.0.1:1234/v1".to_string(),
-            allow_base_url_edit: false,
-            models_endpoint: Some("/models".to_string()),
-            supports_structured_output: true,
-            local_only: true,
-            requires_api_key: false,
-        },
-        PostProcessProvider {
-            id: CUSTOM_LOCAL_PROVIDER_ID.to_string(),
-            label: "OpenAI-Compatible (HTTP)".to_string(),
-            base_url: "http://127.0.0.1:11434/v1".to_string(),
-            allow_base_url_edit: true,
-            models_endpoint: Some("/models".to_string()),
-            supports_structured_output: true,
-            local_only: true,
-            requires_api_key: false,
-        },
-    ]
-}
-
-pub(super) fn default_post_process_api_keys() -> SecretMap {
-    let mut map = HashMap::new();
-    for provider in default_post_process_providers() {
-        map.insert(provider.id, String::new());
-    }
-    SecretMap(map)
-}
-
-pub(super) fn default_post_process_models() -> HashMap<String, String> {
-    let mut map = HashMap::new();
-    for provider in default_post_process_providers() {
-        map.insert(provider.id.clone(), String::new());
-    }
-    map
-}
-
-pub fn default_post_process_prompt_text() -> String {
-    "Clean this transcript:\n1. Fix spelling, capitalization, and punctuation errors\n2. Convert number words to digits (twenty-five → 25, ten percent → 10%, five dollars → $5)\n3. Replace spoken punctuation with symbols (period → ., comma → ,, question mark → ?)\n4. Remove filler words from the configured Discard Words list: ${filler_words}\n5. Keep the language in the original version (if it was french, keep it in french for example)\n6. Preserve numbers/currency/symbol tokens exactly when they already exist in the transcript\n\nPreserve exact meaning and word order. Do not paraphrase or reorder content.\n\nReturn only the cleaned transcript.\n\nTranscript:\n${output}".to_string()
-}
-
-pub(super) fn default_post_process_prompts() -> Vec<LLMPrompt> {
-    vec![LLMPrompt {
-        id: "default_improve_transcriptions".to_string(),
-        name: "Improve Transcriptions".to_string(),
-        prompt: default_post_process_prompt_text(),
-    }]
-}
-
 pub(super) fn default_whisper_gpu_device() -> i32 {
     -1 // auto
-}
-
-/// Migrate / seed post-process provider settings. Returns `true` if any
-/// field was mutated, signaling the caller to persist the new state.
-pub fn ensure_post_process_defaults(settings: &mut AppSettings) -> bool {
-    let mut changed = false;
-
-    // Migration: Toaster is local-only for post-processing. Strip any cloud
-    // providers inherited from Handy's defaults (openai, anthropic, groq,
-    // cerebras, openrouter, zai, bedrock_mantle), plus the deprecated
-    // apple_intelligence stub provider (Toaster is desktop-only). The seed
-    // loop below will re-add only the ones in default_post_process_providers().
-    const LEGACY_CLOUD_PROVIDER_IDS: &[&str] = &[
-        "openai",
-        "anthropic",
-        "groq",
-        "cerebras",
-        "openrouter",
-        "zai",
-        "bedrock_mantle",
-        "apple_intelligence",
-    ];
-    let before_len = settings.post_process_providers.len();
-    settings
-        .post_process_providers
-        .retain(|p| !LEGACY_CLOUD_PROVIDER_IDS.contains(&p.id.as_str()));
-    if settings.post_process_providers.len() != before_len {
-        for id in LEGACY_CLOUD_PROVIDER_IDS {
-            settings.post_process_api_keys.remove(*id);
-            settings.post_process_models.remove(*id);
-        }
-        debug!("Migrated: removed cloud LLM providers from settings (Toaster is local-only)");
-        changed = true;
-    }
-
-    for provider in default_post_process_providers() {
-        // Use match to do a single lookup - either sync existing or add new
-        match settings
-            .post_process_providers
-            .iter_mut()
-            .find(|p| p.id == provider.id)
-        {
-            Some(existing) => {
-                // Sync supports_structured_output field for existing providers (migration)
-                if existing.supports_structured_output != provider.supports_structured_output {
-                    debug!(
-                        "Updating supports_structured_output for provider '{}' from {} to {}",
-                        provider.id,
-                        existing.supports_structured_output,
-                        provider.supports_structured_output
-                    );
-                    existing.supports_structured_output = provider.supports_structured_output;
-                    changed = true;
-                }
-
-                if existing.allow_base_url_edit != provider.allow_base_url_edit {
-                    existing.allow_base_url_edit = provider.allow_base_url_edit;
-                    changed = true;
-                }
-
-                if existing.models_endpoint != provider.models_endpoint {
-                    existing.models_endpoint = provider.models_endpoint.clone();
-                    changed = true;
-                }
-
-                if existing.local_only != provider.local_only {
-                    existing.local_only = provider.local_only;
-                    changed = true;
-                }
-
-                if existing.requires_api_key != provider.requires_api_key {
-                    existing.requires_api_key = provider.requires_api_key;
-                    changed = true;
-                }
-
-                // Local-only boundary enforcement (C2): if a local provider's
-                // base_url was tampered with (malicious/malformed settings
-                // import, manual JSON edit), reset it to the built-in default
-                // loopback URL so runtime calls cannot exfil transcripts.
-                if provider.local_only
-                    && !super::sanitize::base_url_is_loopback(&existing.base_url)
-                {
-                    debug!(
-                        "Local-only boundary: provider '{}' had non-loopback base_url '{}'; resetting to default '{}'",
-                        provider.id, existing.base_url, provider.base_url
-                    );
-                    existing.base_url = provider.base_url.clone();
-                    changed = true;
-                }
-            }
-            None => {
-                // Provider doesn't exist, add it
-                settings.post_process_providers.push(provider.clone());
-                changed = true;
-            }
-        }
-
-        if !settings.post_process_api_keys.contains_key(&provider.id) {
-            settings
-                .post_process_api_keys
-                .insert(provider.id.clone(), String::new());
-            changed = true;
-        }
-
-        if !settings.post_process_models.contains_key(&provider.id) {
-            settings
-                .post_process_models
-                .insert(provider.id.clone(), String::new());
-            changed = true;
-        }
-    }
-
-    if !settings
-        .post_process_providers
-        .iter()
-        .any(|provider| provider.id == settings.post_process_provider_id)
-    {
-        settings.post_process_provider_id = default_post_process_provider_id();
-        changed = true;
-    }
-
-    if migrate_local_llm_model_id(settings) {
-        changed = true;
-    }
-
-    changed
-}
-
-/// Legacy → unified id remapping for `local_llm_model_id`.
-///
-/// Populated per the unified-model-catalog migration (PRD R-009). Currently
-/// empty because the `umc-catalog-migration` pass preserved every GGUF id
-/// 1:1 from the legacy `managers/llm/catalog.rs` into the unified
-/// `managers/model/catalog/post_processor.rs`. The table is a
-/// future-proofing hook: future catalog rename/repackage passes register
-/// their old→new mapping here and this helper migrates existing user
-/// selections transparently on first load.
-const LEGACY_LOCAL_LLM_ID_MAP: &[(&str, &str)] = &[];
-
-/// Migrate `local_llm_model_id` against the unified post-processor catalog.
-///
-/// Returns `true` when any mutation occurred (caller persists). Idempotent:
-/// re-running on already-valid settings short-circuits at the first guard.
-/// Invariants:
-/// - `None` selection is left unchanged.
-/// - Already-valid id is left unchanged.
-/// - Legacy id present in `LEGACY_LOCAL_LLM_ID_MAP` is remapped in place.
-/// - Unknown non-legacy id is left as-is; a warn log surfaces the drift
-///   so the user can pick a valid model from the unified catalog.
-pub(super) fn migrate_local_llm_model_id(settings: &mut AppSettings) -> bool {
-    let Some(current_id) = settings.local_llm_model_id.as_deref() else {
-        return false;
-    };
-
-    if crate::managers::model::catalog::find_post_processor(current_id).is_some() {
-        return false;
-    }
-
-    if let Some((_, mapped)) = LEGACY_LOCAL_LLM_ID_MAP
-        .iter()
-        .find(|(legacy, _)| *legacy == current_id)
-    {
-        log::info!(
-            "migrating local_llm_model_id '{}' -> '{}' (unified-model-catalog)",
-            current_id,
-            mapped
-        );
-        settings.local_llm_model_id = Some((*mapped).to_string());
-        return true;
-    }
-
-    log::warn!(
-        "local_llm_model_id '{}' is not present in the unified post-processor catalog; \
-         leaving as-is so the user can pick a valid replacement",
-        current_id
-    );
-    false
 }
 
 /// Seed `caption_profiles` from the legacy flat `caption_*` fields on
@@ -468,26 +195,6 @@ pub fn get_default_settings() -> AppSettings {
             current_binding: default_shortcut.to_string(),
         },
     );
-    #[cfg(target_os = "windows")]
-    let default_post_process_shortcut = "ctrl+shift+space";
-    #[cfg(target_os = "macos")]
-    let default_post_process_shortcut = "option+shift+space";
-    #[cfg(target_os = "linux")]
-    let default_post_process_shortcut = "ctrl+shift+space";
-    #[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
-    let default_post_process_shortcut = "alt+shift+space";
-
-    bindings.insert(
-        "transcribe_with_post_process".to_string(),
-        ShortcutBinding {
-            id: "transcribe_with_post_process".to_string(),
-            name: "Transcribe with Post-Processing".to_string(),
-            description: "Converts your speech into text and applies AI post-processing."
-                .to_string(),
-            default_binding: default_post_process_shortcut.to_string(),
-            current_binding: default_post_process_shortcut.to_string(),
-        },
-    );
     bindings.insert(
         "cancel".to_string(),
         ShortcutBinding {
@@ -513,14 +220,6 @@ pub fn get_default_settings() -> AppSettings {
         custom_words: Vec::new(),
         model_unload_timeout: ModelUnloadTimeout::default(),
         word_correction_threshold: default_word_correction_threshold(),
-        post_process_enabled: default_post_process_enabled(),
-        ui_expert_mode_enabled: default_ui_expert_mode_enabled(),
-        post_process_provider_id: default_post_process_provider_id(),
-        post_process_providers: default_post_process_providers(),
-        post_process_api_keys: default_post_process_api_keys(),
-        post_process_models: default_post_process_models(),
-        post_process_prompts: default_post_process_prompts(),
-        post_process_selected_prompt_id: None,
         app_language: default_app_language(),
         experimental_enabled: false,
         lazy_stream_close: false,
@@ -564,7 +263,6 @@ pub fn get_default_settings() -> AppSettings {
         caption_profiles: default_caption_profiles(),
         caption_profiles_was_migrated: true,
         settings_version: default_settings_version(),
-        local_llm_model_id: None,
     }
 }
 

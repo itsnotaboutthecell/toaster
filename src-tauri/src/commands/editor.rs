@@ -1,9 +1,7 @@
 use std::sync::Mutex;
 use tauri::State;
 
-use crate::managers::editor::{
-    EditorState, LocalLlmApplyResult, LocalLlmWordProposal, TimingContractSnapshot, Word,
-};
+use crate::managers::editor::{EditorState, TimingContractSnapshot, Word};
 
 /// Managed state wrapper for the transcript editor engine.
 pub struct EditorStore(pub Mutex<EditorState>);
@@ -13,12 +11,6 @@ pub struct EditorStore(pub Mutex<EditorState>);
 pub struct EditorProjection {
     pub words: Vec<Word>,
     pub timing_contract: TimingContractSnapshot,
-}
-
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, specta::Type)]
-pub struct LocalLlmApplyResponse {
-    pub projection: EditorProjection,
-    pub apply_result: LocalLlmApplyResult,
 }
 
 fn build_projection(state: &EditorState) -> EditorProjection {
@@ -34,21 +26,6 @@ pub fn editor_set_words(store: State<EditorStore>, words: Vec<Word>) -> Vec<Word
     let mut state = crate::lock_recovery::recover_lock(store.0.lock());
     state.set_words(words);
     state.get_words().to_vec()
-}
-
-#[tauri::command]
-#[specta::specta]
-pub fn editor_apply_local_llm_proposals(
-    store: State<EditorStore>,
-    proposals: Vec<LocalLlmWordProposal>,
-) -> LocalLlmApplyResponse {
-    let mut state = crate::lock_recovery::recover_lock(store.0.lock());
-    let apply_result = state.apply_local_llm_word_proposals(&proposals);
-    let projection = build_projection(&state);
-    LocalLlmApplyResponse {
-        projection,
-        apply_result,
-    }
 }
 
 #[tauri::command]

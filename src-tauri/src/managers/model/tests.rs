@@ -50,7 +50,6 @@ fn test_discover_custom_whisper_models() {
             is_custom: false,
             category: ModelCategory::Transcription,
             transcription_metadata: None,
-            llm_metadata: None,
         },
     );
 
@@ -180,20 +179,11 @@ fn test_verify_sha256_fails_and_deletes_partial_when_file_missing() {
 
 
 #[test]
-fn model_category_has_post_processor_variant() {
-    // Exhaustive match guards that the enum stays at exactly three variants.
-    // Adding or removing a variant forces this test to be updated and
-    // surfaces the contract change.
-    let variants = [
-        ModelCategory::Transcription,
-        ModelCategory::PostProcessor,
-        ModelCategory::System,
-    ];
+fn model_category_variants() {
+    let variants = [ModelCategory::Transcription];
     for v in variants {
         let classified = match v {
             ModelCategory::Transcription => "transcription",
-            ModelCategory::PostProcessor => "post-processor",
-            ModelCategory::System => "system",
         };
         assert!(!classified.is_empty());
     }
@@ -203,7 +193,7 @@ fn model_category_has_post_processor_variant() {
 
 #[test]
 fn per_category_metadata_populated() {
-    let mut info = ModelInfo {
+    let info = ModelInfo {
         id: "m".into(),
         name: "m".into(),
         description: String::new(),
@@ -232,28 +222,12 @@ fn per_category_metadata_populated() {
             supports_language_selection: true,
             supported_languages: vec!["en".to_string()],
         }),
-        llm_metadata: None,
     };
     assert!(info.transcription_metadata.is_some());
-    assert!(info.llm_metadata.is_none());
-
-    info.category = ModelCategory::PostProcessor;
-    info.transcription_metadata = None;
-    info.llm_metadata = Some(LlmMetadata {
-        quantization: "Q4_K_M".into(),
-        context_length: 8192,
-        recommended_ram_gb: 8,
-        prompt_template_id: Some("cleanup-v1".into()),
-    });
-    assert!(info.llm_metadata.is_some());
-    assert_eq!(info.llm_metadata.as_ref().unwrap().context_length, 8192);
 }
 
 #[test]
 fn legacy_model_info_json_roundtrips() {
-    // Legacy JSON lacks the two new optional blocks; it must deserialize
-    // with None for both and re-serialize with null (or omit when using
-    // skip_serializing_if, which we don't — so we accept null).
     let legacy = r#"{
         "id":"tiny",
         "name":"Tiny",
@@ -277,11 +251,8 @@ fn legacy_model_info_json_roundtrips() {
     }"#;
     let parsed: ModelInfo = serde_json::from_str(legacy).expect("legacy JSON must deserialize");
     assert!(parsed.transcription_metadata.is_none());
-    assert!(parsed.llm_metadata.is_none());
     assert_eq!(parsed.category, ModelCategory::Transcription);
-    // Roundtrip: re-serialize, re-deserialize, values preserved.
     let out = serde_json::to_string(&parsed).unwrap();
     let roundtrip: ModelInfo = serde_json::from_str(&out).unwrap();
     assert_eq!(roundtrip.id, "tiny");
-    assert!(roundtrip.llm_metadata.is_none());
 }

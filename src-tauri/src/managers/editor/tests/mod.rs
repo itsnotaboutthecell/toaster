@@ -10,6 +10,5 @@ mod common;
 
 mod basic;
 mod dual_track_regression;
-mod local_llm;
 mod precision_eval;
 mod seams;

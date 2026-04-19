@@ -18,32 +18,6 @@ pub struct Word {
     pub speaker_id: i32,
 }
 
-/// Backend-authoritative word-level LLM rewrite proposal.
-/// The range is half-open: `[start_word_index, end_word_index)`.
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, specta::Type)]
-pub struct LocalLlmWordProposal {
-    pub start_word_index: usize,
-    pub end_word_index: usize,
-    pub replacement_words: Vec<String>,
-}
-
-/// Rejection details for a proposal that failed validation.
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, specta::Type)]
-pub struct LocalLlmProposalRejection {
-    pub proposal_index: usize,
-    pub start_word_index: usize,
-    pub end_word_index: usize,
-    pub reason: String,
-}
-
-/// Outcome for applying a batch of local LLM proposals.
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, specta::Type)]
-pub struct LocalLlmApplyResult {
-    pub applied_proposals: usize,
-    pub applied_word_indices: Vec<usize>,
-    pub rejected_proposals: Vec<LocalLlmProposalRejection>,
-}
-
 /// A keep-segment represented in microseconds.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, specta::Type)]
 pub struct TimingSegment {

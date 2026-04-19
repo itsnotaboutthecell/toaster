@@ -9,7 +9,6 @@ use serde::de::{self, Visitor};
 use serde::{Deserialize, Deserializer, Serialize};
 use specta::Type;
 use std::collections::HashMap;
-use std::fmt;
 
 #[derive(Serialize, Debug, Clone, Copy, PartialEq, Eq, Type)]
 #[serde(rename_all = "lowercase")]
@@ -87,30 +86,6 @@ pub struct ShortcutBinding {
     pub current_binding: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Type)]
-pub struct LLMPrompt {
-    pub id: String,
-    pub name: String,
-    pub prompt: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, Type)]
-pub struct PostProcessProvider {
-    pub id: String,
-    pub label: String,
-    pub base_url: String,
-    #[serde(default)]
-    pub allow_base_url_edit: bool,
-    #[serde(default)]
-    pub models_endpoint: Option<String>,
-    #[serde(default)]
-    pub supports_structured_output: bool,
-    #[serde(default)]
-    pub local_only: bool,
-    #[serde(default = "default_post_process_provider_requires_api_key")]
-    pub requires_api_key: bool,
-}
-
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Type)]
 #[serde(rename_all = "snake_case")]
 #[derive(Default)]
@@ -173,34 +148,6 @@ pub enum OrtAcceleratorSetting {
     Rocm,
 }
 
-#[derive(Clone, Serialize, Deserialize, Type)]
-#[serde(transparent)]
-pub struct SecretMap(pub(super) HashMap<String, String>);
-
-impl fmt::Debug for SecretMap {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let redacted: HashMap<&String, &str> = self
-            .0
-            .iter()
-            .map(|(k, v)| (k, if v.is_empty() { "" } else { "[REDACTED]" }))
-            .collect();
-        redacted.fmt(f)
-    }
-}
-
-impl std::ops::Deref for SecretMap {
-    type Target = HashMap<String, String>;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl std::ops::DerefMut for SecretMap {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
 /* still handy for composing the initial JSON in the store ------------- */
 #[derive(Serialize, Deserialize, Debug, Clone, Type)]
 pub struct AppSettings {
@@ -230,27 +177,6 @@ pub struct AppSettings {
     pub model_unload_timeout: ModelUnloadTimeout,
     #[serde(default = "default_word_correction_threshold")]
     pub word_correction_threshold: f64,
-    #[serde(default = "default_post_process_enabled")]
-    pub post_process_enabled: bool,
-    /// UI-only gate: when `true`, the Advanced > LLM Connection group and
-    /// the Editor's AI-cleanup drawer become visible. Does NOT control
-    /// whether post-processing actually runs — that is `post_process_enabled`.
-    /// Splitting UX visibility from execution lets expert users A/B raw
-    /// vs cleaned output without tearing down their configuration.
-    #[serde(default = "default_ui_expert_mode_enabled")]
-    pub ui_expert_mode_enabled: bool,
-    #[serde(default = "default_post_process_provider_id")]
-    pub post_process_provider_id: String,
-    #[serde(default = "default_post_process_providers")]
-    pub post_process_providers: Vec<PostProcessProvider>,
-    #[serde(default = "default_post_process_api_keys")]
-    pub post_process_api_keys: SecretMap,
-    #[serde(default = "default_post_process_models")]
-    pub post_process_models: HashMap<String, String>,
-    #[serde(default = "default_post_process_prompts")]
-    pub post_process_prompts: Vec<LLMPrompt>,
-    #[serde(default)]
-    pub post_process_selected_prompt_id: Option<String>,
     #[serde(default = "default_app_language")]
     pub app_language: String,
     /// Master gate for the Experimental settings group. When `false`,
@@ -327,14 +253,6 @@ pub struct AppSettings {
     pub caption_profiles_was_migrated: bool,
     #[serde(default = "default_settings_version")]
     pub settings_version: u32,
-    /// ID of the catalog entry (see
-    /// `managers::model::catalog::post_processor`) the user
-    /// selected for the in-process local-GGUF cleanup path. `None` means
-    /// no local model has been chosen yet; the dispatcher falls back to
-    /// the HTTP provider when this is unset, regardless of the provider
-    /// selector value. See PRD R-008.
-    #[serde(default)]
-    pub local_llm_model_id: Option<String>,
 }
 
 /// Per-orientation caption profile. Carries the 9 user-configurable
@@ -410,25 +328,4 @@ pub enum CaptionFontFamily {
     SystemUi,
 }
 
-impl AppSettings {
-    pub fn active_post_process_provider(&self) -> Option<&PostProcessProvider> {
-        self.post_process_providers
-            .iter()
-            .find(|provider| provider.id == self.post_process_provider_id)
-    }
-
-    pub fn post_process_provider(&self, provider_id: &str) -> Option<&PostProcessProvider> {
-        self.post_process_providers
-            .iter()
-            .find(|provider| provider.id == provider_id)
-    }
-
-    pub fn post_process_provider_mut(
-        &mut self,
-        provider_id: &str,
-    ) -> Option<&mut PostProcessProvider> {
-        self.post_process_providers
-            .iter_mut()
-            .find(|provider| provider.id == provider_id)
-    }
-}
+impl AppSettings {}

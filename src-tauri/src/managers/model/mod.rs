@@ -31,8 +31,6 @@ pub enum EngineType {
 pub enum ModelCategory {
     #[default]
     Transcription,
-    PostProcessor,
-    System,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type, Default)]
@@ -43,14 +41,6 @@ pub struct TranscriptionMetadata {
     pub supports_translation: bool,
     pub supports_language_selection: bool,
     pub supported_languages: Vec<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, Type, Default)]
-pub struct LlmMetadata {
-    pub quantization: String,
-    pub context_length: u32,
-    pub recommended_ram_gb: u32,
-    pub prompt_template_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type, Default)]
@@ -67,23 +57,19 @@ pub struct ModelInfo {
     pub partial_size: u64,
     pub is_directory: bool,
     pub engine_type: EngineType,
-    pub accuracy_score: f32,        // 0.0 to 1.0, higher is more accurate
-    pub speed_score: f32,           // 0.0 to 1.0, higher is faster
-    pub supports_translation: bool, // Whether the model supports translating to English
-    pub is_recommended: bool,       // Whether this is the recommended model for new users
-    pub supported_languages: Vec<String>, // Languages this model can transcribe
-    pub supports_language_selection: bool, // Whether the user can explicitly pick a language
-    pub is_custom: bool,            // Whether this is a user-provided custom model
+    pub accuracy_score: f32,
+    pub speed_score: f32,
+    pub supports_translation: bool,
+    pub is_recommended: bool,
+    pub supported_languages: Vec<String>,
+    pub supports_language_selection: bool,
+    pub is_custom: bool,
     #[serde(default)]
     pub category: ModelCategory,
-    /// Optional transcription-specific metadata block (PostProcessor entries leave None).
+    /// Optional transcription-specific metadata block.
     /// Legacy JSON without this field deserializes as None.
     #[serde(default)]
     pub transcription_metadata: Option<TranscriptionMetadata>,
-    /// Optional LLM/post-processor metadata block (Transcription entries leave None).
-    /// Legacy JSON without this field deserializes as None.
-    #[serde(default)]
-    pub llm_metadata: Option<LlmMetadata>,
 }
 
 impl ModelInfo {
@@ -168,10 +154,6 @@ impl<'a> Drop for DownloadCleanup<'a> {
 pub struct ModelManager {
     app_handle: AppHandle,
     models_dir: PathBuf,
-    /// On-disk root for post-processor (GGUF LLM) assets. Kept deliberately
-    /// separate from `models_dir` per PRD R-003 so a user can "nuke one
-    /// without touching the other". Category-routed by `resolve_dir`.
-    llm_dir: PathBuf,
     available_models: Mutex<HashMap<String, ModelInfo>>,
     cancel_flags: Arc<Mutex<HashMap<String, Arc<AtomicBool>>>>,
     extracting_models: Arc<Mutex<HashSet<String>>>,
@@ -183,13 +165,9 @@ impl ModelManager {
         let app_data = crate::portable::app_data_dir(app_handle)
             .map_err(|e| anyhow::anyhow!("Failed to get app data dir: {}", e))?;
         let models_dir = app_data.join("models");
-        let llm_dir = app_data.join("llm");
 
         if !models_dir.exists() {
             fs::create_dir_all(&models_dir)?;
-        }
-        if !llm_dir.exists() {
-            fs::create_dir_all(&llm_dir)?;
         }
 
         let mut available_models = catalog::build_static_catalog();
@@ -202,7 +180,6 @@ impl ModelManager {
         let manager = Self {
             app_handle: app_handle.clone(),
             models_dir,
-            llm_dir,
             available_models: Mutex::new(available_models),
             cancel_flags: Arc::new(Mutex::new(HashMap::new())),
             extracting_models: Arc::new(Mutex::new(HashSet::new())),
@@ -234,20 +211,9 @@ impl ModelManager {
     }
 
     /// On-disk root for a category. Transcription models live under
-    /// `<app-data>/models/`, post-processor (GGUF LLM) models under
-    /// `<app-data>/llm/` (kept separate per PRD R-003). System category is
-    /// routed to `models/` for v1 — no system entries exist yet.
-    pub fn resolve_dir(&self, category: &ModelCategory) -> &PathBuf {
-        match category {
-            ModelCategory::Transcription | ModelCategory::System => &self.models_dir,
-            ModelCategory::PostProcessor => &self.llm_dir,
-        }
-    }
-
-    /// Raw dir getters — used by LlmManager so it can probe files without
-    /// cloning ModelInfo values.
-    pub fn llm_dir(&self) -> &PathBuf {
-        &self.llm_dir
+    /// `<app-data>/models/`.
+    pub fn resolve_dir(&self, _category: &ModelCategory) -> &PathBuf {
+        &self.models_dir
     }
 
     fn migrate_bundled_models(&self) -> Result<()> {
@@ -325,10 +291,7 @@ impl ModelManager {
         let mut models = crate::lock_recovery::recover_lock(self.available_models.lock());
 
         for model in models.values_mut() {
-            let dir: &PathBuf = match model.category {
-                ModelCategory::Transcription | ModelCategory::System => &self.models_dir,
-                ModelCategory::PostProcessor => &self.llm_dir,
-            };
+            let dir: &PathBuf = &self.models_dir;
             if model.is_directory {
                 // For directory-based models, check if the directory exists
                 let model_path = dir.join(&model.filename);

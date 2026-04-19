@@ -53,7 +53,6 @@ pub(super) fn entries() -> Vec<ModelInfo> {
             is_custom: false,
             category: ModelCategory::Transcription,
             transcription_metadata: None,
-            llm_metadata: None,
         },
     );
 
@@ -84,7 +83,6 @@ pub(super) fn entries() -> Vec<ModelInfo> {
             is_custom: false,
             category: ModelCategory::Transcription,
             transcription_metadata: None,
-            llm_metadata: None,
         },
     );
 
@@ -114,7 +112,6 @@ pub(super) fn entries() -> Vec<ModelInfo> {
             is_custom: false,
             category: ModelCategory::Transcription,
             transcription_metadata: None,
-            llm_metadata: None,
         },
     );
 
@@ -144,7 +141,6 @@ pub(super) fn entries() -> Vec<ModelInfo> {
             is_custom: false,
             category: ModelCategory::Transcription,
             transcription_metadata: None,
-            llm_metadata: None,
         },
     );
 
@@ -174,7 +170,6 @@ pub(super) fn entries() -> Vec<ModelInfo> {
             is_custom: false,
             category: ModelCategory::Transcription,
             transcription_metadata: None,
-            llm_metadata: None,
         },
     );
 
@@ -205,7 +200,6 @@ pub(super) fn entries() -> Vec<ModelInfo> {
             is_custom: false,
             category: ModelCategory::Transcription,
             transcription_metadata: None,
-            llm_metadata: None,
         },
     );
 
@@ -245,7 +239,6 @@ pub(super) fn entries() -> Vec<ModelInfo> {
             is_custom: false,
             category: ModelCategory::Transcription,
             transcription_metadata: None,
-            llm_metadata: None,
         },
     );
 
@@ -275,7 +268,6 @@ pub(super) fn entries() -> Vec<ModelInfo> {
             is_custom: false,
             category: ModelCategory::Transcription,
             transcription_metadata: None,
-            llm_metadata: None,
         },
     );
 
@@ -305,7 +297,6 @@ pub(super) fn entries() -> Vec<ModelInfo> {
             is_custom: false,
             category: ModelCategory::Transcription,
             transcription_metadata: None,
-            llm_metadata: None,
         },
     );
 
@@ -337,7 +328,6 @@ pub(super) fn entries() -> Vec<ModelInfo> {
             is_custom: false,
             category: ModelCategory::Transcription,
             transcription_metadata: None,
-            llm_metadata: None,
         },
     );
 
@@ -369,7 +359,6 @@ pub(super) fn entries() -> Vec<ModelInfo> {
             is_custom: false,
             category: ModelCategory::Transcription,
             transcription_metadata: None,
-            llm_metadata: None,
         },
     );
 
@@ -406,7 +395,6 @@ pub(super) fn entries() -> Vec<ModelInfo> {
             is_custom: false,
             category: ModelCategory::Transcription,
             transcription_metadata: None,
-            llm_metadata: None,
         },
     );
 
@@ -439,7 +427,6 @@ pub(super) fn entries() -> Vec<ModelInfo> {
             is_custom: false,
             category: ModelCategory::Transcription,
             transcription_metadata: None,
-            llm_metadata: None,
         },
     );
 
@@ -476,7 +463,6 @@ pub(super) fn entries() -> Vec<ModelInfo> {
             is_custom: false,
             category: ModelCategory::Transcription,
             transcription_metadata: None,
-            llm_metadata: None,
         },
     );
 
@@ -516,7 +502,6 @@ pub(super) fn entries() -> Vec<ModelInfo> {
             is_custom: false,
             category: ModelCategory::Transcription,
             transcription_metadata: None,
-            llm_metadata: None,
         },
     );
 
@@ -554,7 +539,6 @@ pub(super) fn entries() -> Vec<ModelInfo> {
             is_custom: false,
             category: ModelCategory::Transcription,
             transcription_metadata: None,
-            llm_metadata: None,
         },
     );
 

@@ -1,7 +1,6 @@
 pub mod audio_toolkit;
 pub mod cli;
 pub mod commands;
-mod llm_client;
 pub mod lock_recovery;
 pub mod managers;
 pub mod portable;
@@ -16,7 +15,6 @@ use tauri_specta::{collect_commands, collect_events, Builder};
 use commands::editor::EditorStore;
 use env_filter::Builder as EnvFilterBuilder;
 use managers::editor::EditorState;
-use managers::llm::LlmManager;
 use managers::media::{MediaState, MediaStore};
 use managers::model::ModelManager;
 use managers::transcription::TranscriptionManager;
@@ -133,11 +131,7 @@ fn initialize_core_logic(app_handle: &AppHandle) {
             .expect("Failed to initialize transcription manager"),
     );
 
-    // Local LLM manager (in-process GGUF path). On-disk assets live under
-    // <app-data>/llm/, separate from Whisper's <app-data>/models/ (PRD R-003).
-    // Downloads/deletes flow through the shared ModelManager (unified-model-catalog R-004).
-    let llm_manager =
-        Arc::new(LlmManager::new(model_manager.clone()).expect("Failed to initialize LLM manager"));
+    // Local LLM manager removed in R9 (post-processor purge).
 
     // Apply accelerator preferences before any model loads
     managers::transcription::apply_accelerator_settings(app_handle);
@@ -145,7 +139,6 @@ fn initialize_core_logic(app_handle: &AppHandle) {
     // Add managers to Tauri's managed state
     app_handle.manage(model_manager.clone());
     app_handle.manage(transcription_manager.clone());
-    app_handle.manage(llm_manager.clone());
     app_handle.manage(EditorStore(Mutex::new(EditorState::new())));
     app_handle.manage(MediaStore(Mutex::new(MediaState::new())));
     app_handle.manage(crate::commands::project::CurrentProjectStore::default());
@@ -198,17 +191,6 @@ pub fn run(cli_args: CliArgs) {
             commands::app_settings::change_selected_language_setting,
             commands::app_settings::change_debug_mode_setting,
             commands::app_settings::change_word_correction_threshold_setting,
-            commands::app_settings::change_post_process_enabled_setting,
-            commands::app_settings::change_ui_expert_mode_enabled_setting,
-            commands::app_settings::change_post_process_base_url_setting,
-            commands::app_settings::change_post_process_api_key_setting,
-            commands::app_settings::change_post_process_model_setting,
-            commands::app_settings::set_post_process_provider,
-            commands::app_settings::fetch_post_process_models,
-            commands::app_settings::add_post_process_prompt,
-            commands::app_settings::update_post_process_prompt,
-            commands::app_settings::delete_post_process_prompt,
-            commands::app_settings::set_post_process_selected_prompt,
             commands::app_settings::update_custom_words,
             commands::app_settings::change_custom_filler_words_setting,
             commands::app_settings::change_caption_font_size_setting,
@@ -232,7 +214,6 @@ pub fn run(cli_args: CliArgs) {
             commands::app_settings::change_ort_accelerator_setting,
             commands::app_settings::change_whisper_gpu_device,
             commands::app_settings::get_available_accelerators,
-            commands::app_settings::get_default_post_process_prompt_text,
             trigger_update_check,
             show_main_window_command,
             commands::cancel_operation,
@@ -265,7 +246,6 @@ pub fn run(cli_args: CliArgs) {
             commands::audio::get_selected_output_device,
             commands::audio::normalize_playback_audio_contract,
             commands::editor::editor_set_words,
-            commands::editor::editor_apply_local_llm_proposals,
             commands::editor::editor_get_words,
             commands::editor::editor_delete_word,
             commands::editor::editor_restore_word,
@@ -303,7 +283,6 @@ pub fn run(cli_args: CliArgs) {
             commands::filler::trim_pauses,
             commands::filler::tighten_gaps,
             commands::filler::cleanup_all,
-            commands::cleanup::cleanup_transcription,
             commands::disfluency::cleanup_smart_duplicates,
             commands::project::save_project,
             commands::project::load_project,
@@ -313,11 +292,6 @@ pub fn run(cli_args: CliArgs) {
             commands::transcription::set_model_unload_timeout,
             commands::transcription::get_model_load_status,
             commands::transcription::unload_model_manually,
-            commands::llm_models::list_llm_models,
-            commands::llm_models::download_llm_model,
-            commands::llm_models::cancel_llm_download,
-            commands::llm_models::delete_llm_model,
-            commands::llm_models::set_selected_llm_model,
         ])
         .events(collect_events![]);
 

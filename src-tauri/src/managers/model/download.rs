@@ -518,7 +518,7 @@ mod fetch_and_verify_tests {
     }
 
     #[tokio::test]
-    async fn post_processor_download_hash_verified() {
+    async fn download_hash_verified() {
         let body: Vec<u8> = (0..4096u32).map(|i| (i & 0xff) as u8).collect();
         let mut hasher = Sha256::new();
         hasher.update(&body);
@@ -556,7 +556,7 @@ mod fetch_and_verify_tests {
     }
 
     #[tokio::test]
-    async fn post_processor_download_hash_mismatch_rejected() {
+    async fn download_hash_mismatch_rejected() {
         let body = b"some-bytes-for-mismatch-test".to_vec();
         let bad_sha = "0".repeat(64);
 

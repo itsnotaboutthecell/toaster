@@ -4,10 +4,7 @@
 // operations and full undo/redo support (up to 64 snapshots).
 
 mod types;
-pub use types::{
-    LocalLlmApplyResult, LocalLlmProposalRejection, LocalLlmWordProposal, TimingContractSnapshot,
-    TimingSegment, Word,
-};
+pub use types::{TimingContractSnapshot, TimingSegment, Word};
 
 const MAX_UNDO: usize = 64;
 const DEFAULT_QUANTIZATION_FPS_NUM: u32 = 30;
@@ -178,96 +175,6 @@ impl EditorState {
         self.words[index].silenced = !self.words[index].silenced;
         self.bump_revision();
         true
-    }
-
-    /// Apply accepted local LLM proposals as word-level text edits.
-    ///
-    /// Invalid proposals are rejected with explicit reasons and do not mutate
-    /// state. Successful proposals only update `Word.text`, preserving all
-    /// timing/deletion/silence metadata so keep-segments and mapping remain
-    /// canonical in backend state.
-    pub fn apply_local_llm_word_proposals(
-        &mut self,
-        proposals: &[LocalLlmWordProposal],
-    ) -> LocalLlmApplyResult {
-        let mut rejected = Vec::new();
-        let mut accepted: Vec<&LocalLlmWordProposal> = Vec::new();
-        let mut reserved_indices = vec![false; self.words.len()];
-
-        for (proposal_index, proposal) in proposals.iter().enumerate() {
-            let start = proposal.start_word_index;
-            let end = proposal.end_word_index;
-            let range_len = end.saturating_sub(start);
-
-            let reject_reason = if start >= end {
-                Some("invalid proposal range: start must be < end".to_string())
-            } else if end > self.words.len() {
-                Some(format!(
-                    "proposal range {start}..{end} is out of bounds for {} words",
-                    self.words.len()
-                ))
-            } else if proposal.replacement_words.len() != range_len {
-                Some(format!(
-                    "proposal replacement word count mismatch: expected {range_len}, got {}",
-                    proposal.replacement_words.len()
-                ))
-            } else if proposal
-                .replacement_words
-                .iter()
-                .any(|word| word.trim().is_empty())
-            {
-                Some("proposal contains empty replacement words".to_string())
-            } else if (start..end).any(|idx| reserved_indices[idx]) {
-                Some("proposal overlaps with another accepted proposal".to_string())
-            } else {
-                None
-            };
-
-            if let Some(reason) = reject_reason {
-                rejected.push(LocalLlmProposalRejection {
-                    proposal_index,
-                    start_word_index: start,
-                    end_word_index: end,
-                    reason,
-                });
-                continue;
-            }
-
-            for slot in reserved_indices[start..end].iter_mut() {
-                *slot = true;
-            }
-            accepted.push(proposal);
-        }
-
-        let mut changed_indices: Vec<usize> = Vec::new();
-        let mut snapshot_pushed = false;
-        for proposal in &accepted {
-            let start = proposal.start_word_index;
-            for (offset, replacement) in proposal.replacement_words.iter().enumerate() {
-                let idx = start + offset;
-                if self.words[idx].text == *replacement {
-                    continue;
-                }
-                if !snapshot_pushed {
-                    self.push_undo_snapshot();
-                    snapshot_pushed = true;
-                }
-                self.words[idx].text = replacement.clone();
-                changed_indices.push(idx);
-            }
-        }
-
-        if snapshot_pushed {
-            changed_indices.sort_unstable();
-            changed_indices.dedup();
-            self.bump_revision();
-        }
-
-        LocalLlmApplyResult {
-            applied_proposals: accepted.len(),
-            applied_word_indices: changed_indices,
-            rejected_proposals: rejected,
-        }
     }
 
     // ── undo / redo ──────────────────────────────────────────────────
