@@ -252,6 +252,7 @@
     },
     "debug": {
       "title": "Debugowanie",
+      "description": "Advanced logging, word-correction thresholds, and internal paths. Useful for troubleshooting transcription, export, or backend behavior.",
       "logDirectory": {
         "title": "Katalog logów",
         "description": "Miejsce przechowywania plików logów"

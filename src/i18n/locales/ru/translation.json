@@ -252,6 +252,7 @@
     },
     "debug": {
       "title": "Отлаживать",
+      "description": "Advanced logging, word-correction thresholds, and internal paths. Useful for troubleshooting transcription, export, or backend behavior.",
       "logDirectory": {
         "title": "Каталог журналов",
         "description": "Место хранения файлов журналов"

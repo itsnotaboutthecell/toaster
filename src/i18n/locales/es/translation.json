@@ -252,6 +252,7 @@
     },
     "debug": {
       "title": "Depuración",
+      "description": "Advanced logging, word-correction thresholds, and internal paths. Useful for troubleshooting transcription, export, or backend behavior.",
       "logDirectory": {
         "title": "Directorio de Registros",
         "description": "Ubicación donde se almacenan los archivos de registro"

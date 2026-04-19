@@ -252,6 +252,7 @@
     },
     "debug": {
       "title": "调试",
+      "description": "Advanced logging, word-correction thresholds, and internal paths. Useful for troubleshooting transcription, export, or backend behavior.",
       "logDirectory": {
         "title": "日志目录",
         "description": "日志文件的存储位置"

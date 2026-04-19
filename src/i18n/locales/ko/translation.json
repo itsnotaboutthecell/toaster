@@ -252,6 +252,7 @@
     },
     "debug": {
       "title": "디버그",
+      "description": "Advanced logging, word-correction thresholds, and internal paths. Useful for troubleshooting transcription, export, or backend behavior.",
       "logDirectory": {
         "title": "로그 디렉토리",
         "description": "로그 파일이 저장되는 위치"

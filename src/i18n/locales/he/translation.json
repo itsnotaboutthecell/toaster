@@ -252,6 +252,7 @@
     },
     "debug": {
       "title": "ניפוי שגיאות",
+      "description": "Advanced logging, word-correction thresholds, and internal paths. Useful for troubleshooting transcription, export, or backend behavior.",
       "logDirectory": {
         "title": "תיקיית לוגים",
         "description": "המיקום שבו נשמרים קבצי הלוג"

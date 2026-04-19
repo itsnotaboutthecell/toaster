@@ -252,6 +252,7 @@
     },
     "debug": {
       "title": "Felsökning",
+      "description": "Advanced logging, word-correction thresholds, and internal paths. Useful for troubleshooting transcription, export, or backend behavior.",
       "logDirectory": {
         "title": "Loggmapp",
         "description": "Plats där loggfiler lagras"

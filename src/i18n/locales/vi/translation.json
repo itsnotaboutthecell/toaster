@@ -252,6 +252,7 @@
     },
     "debug": {
       "title": "Gỡ lỗi",
+      "description": "Advanced logging, word-correction thresholds, and internal paths. Useful for troubleshooting transcription, export, or backend behavior.",
       "logDirectory": {
         "title": "Thư mục nhật ký",
         "description": "Vị trí lưu trữ các tệp nhật ký"
