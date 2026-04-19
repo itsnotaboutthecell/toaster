@@ -31,9 +31,15 @@ pub const SILERO_FRAME_MS: u32 = 30;
 /// framing cadence — we standardize on 30 ms.
 pub const SILERO_FRAME_SAMPLES_16K: usize = 480;
 
+/// Default per-frame speech probability threshold used by R-002 /
+/// R-003 / R-004 consumers. Matches the BLUEPRINT `SPEECH_PROB_THRESHOLD`
+/// constant and the Silero community default of `0.5`.
+#[allow(dead_code)] // wired by Phase 2 consumers (prefilter, boundary, filler).
+pub const DEFAULT_SILERO_THRESHOLD: f32 = 0.5;
+
 /// Silero hidden-state dimensionality (v4). 2 layers × 1 batch × 64 hidden.
 const STATE_HIDDEN: usize = 64;
-const STATE_LEN: usize = 2 * 1 * STATE_HIDDEN;
+const STATE_LEN: usize = 2 * STATE_HIDDEN;
 
 /// Supported sample rates per Silero VAD spec.
 const SUPPORTED_SAMPLE_RATES: &[usize] = &[8_000, 16_000];

@@ -217,6 +217,133 @@ fn sample_to_us(sample: i64, sr: i64) -> i64 {
     (sample * 1_000_000) / sr
 }
 
+// ---------------------------------------------------------------------
+// R-003 — VAD-biased boundary refinement
+// ---------------------------------------------------------------------
+//
+// See `features/reintroduce-silero-vad/PRD.md` §R-003 and BLUEPRINT §AD-5.
+// The VAD-biased snap picks the locally quietest-from-speech-perspective
+// candidate within ±`vad_radius_us`, then applies the existing
+// zero-crossing phase alignment. `vad_curve` is expected at 30 ms cadence
+// and in [0, 1]; any out-of-range or sub-radius curve silently degrades to
+// [`snap_to_energy_valley`] so callers never error on missing data
+// (graceful fallback per AD-8).
+//
+// Preview and export consume this through the same function — the
+// dual-path SSoT invariant holds because there is only one
+// implementation.
+
+/// VAD probability frame cadence (ms). Matches the Silero 30 ms frame
+/// cadence used by [`crate::audio_toolkit::vad::prefilter`] so a single
+/// curve serves both callers.
+pub const VAD_FRAME_MS: i64 = 30;
+
+/// Snap a timestamp to the candidate with the lowest `P(speech)` within
+/// ±`vad_radius_us`, then zero-crossing-align to eliminate step
+/// discontinuity. Falls back to [`snap_to_energy_valley`] when the
+/// curve is empty or does not cover the search window — ensures the
+/// disabled path is byte-identical to the energy-only path
+/// (AC-003-d guard).
+#[allow(dead_code)] // wired by splice manager once settings flag is read.
+pub fn snap_to_vad_valley(
+    target_us: i64,
+    samples: &[f32],
+    sample_rate_hz: u32,
+    vad_curve: &[f32],
+    vad_radius_us: i64,
+    zc_radius_us: i64,
+) -> i64 {
+    if vad_curve.is_empty() || samples.is_empty() || sample_rate_hz == 0 {
+        return snap_to_energy_valley(
+            target_us,
+            samples,
+            sample_rate_hz,
+            vad_radius_us,
+            zc_radius_us,
+        );
+    }
+
+    let frame_us = VAD_FRAME_MS * 1_000;
+    let target_idx = (target_us / frame_us).max(0) as usize;
+    let radius_frames = (vad_radius_us.abs() / frame_us).max(1) as usize;
+    let curve_end = vad_curve.len();
+    let lo = target_idx.saturating_sub(radius_frames);
+    let hi = (target_idx + radius_frames).min(curve_end.saturating_sub(1));
+    if hi <= lo {
+        return snap_to_energy_valley(
+            target_us,
+            samples,
+            sample_rate_hz,
+            vad_radius_us,
+            zc_radius_us,
+        );
+    }
+
+    let mut best_idx = target_idx.min(curve_end.saturating_sub(1));
+    let mut best_prob = vad_curve.get(best_idx).copied().unwrap_or(1.0);
+    let mut best_dist = 0i64;
+    for (i, &p) in vad_curve.iter().enumerate().take(hi + 1).skip(lo) {
+        let dist = (i as i64 - target_idx as i64).abs();
+        if p < best_prob - 1e-6 || ((p - best_prob).abs() <= 1e-6 && dist < best_dist) {
+            best_prob = p;
+            best_idx = i;
+            best_dist = dist;
+        }
+    }
+
+    let valley_us = best_idx as i64 * frame_us;
+    snap_to_zero_crossing(valley_us, samples, sample_rate_hz, zc_radius_us)
+}
+
+/// Segment-batch variant of [`snap_to_vad_valley`].
+///
+/// Matches the invariants of [`snap_segments_energy_biased`] — ordering
+/// preserved, inverted segments dropped, `last_end` clamped — but
+/// biased by a precomputed VAD curve when one is supplied. If `vad_curve`
+/// is empty the function is byte-identical to
+/// [`snap_segments_energy_biased`] (AC-003-d).
+#[allow(dead_code)] // wired by splice preview/export once settings flag is read.
+pub fn snap_segments_vad_biased(
+    segments: &[(i64, i64)],
+    samples: &[f32],
+    sample_rate_hz: u32,
+    vad_curve: &[f32],
+    vad_radius_us: i64,
+    zc_radius_us: i64,
+) -> Vec<(i64, i64)> {
+    let mut out: Vec<(i64, i64)> = Vec::with_capacity(segments.len());
+    let mut last_end: i64 = i64::MIN;
+    for &(s, e) in segments {
+        let snapped_s = snap_to_vad_valley(
+            s,
+            samples,
+            sample_rate_hz,
+            vad_curve,
+            vad_radius_us,
+            zc_radius_us,
+        );
+        let snapped_e = snap_to_vad_valley(
+            e,
+            samples,
+            sample_rate_hz,
+            vad_curve,
+            vad_radius_us,
+            zc_radius_us,
+        );
+        let safe_s = snapped_s.max(last_end);
+        let (fs, fe) = if snapped_e > safe_s {
+            (safe_s, snapped_e)
+        } else {
+            (s.max(last_end), e)
+        };
+        if fe > fs {
+            out.push((fs, fe));
+            last_end = fe;
+        }
+    }
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -349,4 +476,43 @@ mod tests {
         assert!(s0 < e0 && s1 < e1);
         assert!(s1 >= e0, "energy-biased segments overlap: {e0} > {s1}");
     }
+
+    // ---------------------------- R-003 --------------------------------
+
+    #[test]
+    fn vad_biased_empty_curve_matches_energy_path_exactly() {
+        // AC-003-d: with VAD disabled (here simulated by passing an empty
+        // curve) the output is byte-identical to the energy-only path.
+        let sr = 16_000u32;
+        let buf = sine(80.0, sr, 16_000, 0.7);
+        let segments = vec![(100_000, 400_000), (450_000, 900_000)];
+        let baseline =
+            snap_segments_energy_biased(&segments, &buf, sr, 20_000, 5_000);
+        let vad_empty = snap_segments_vad_biased(
+            &segments, &buf, sr, &[], 20_000, 5_000,
+        );
+        assert_eq!(baseline, vad_empty);
+    }
+
+    #[test]
+    fn vad_biased_prefers_low_probability_frame() {
+        // 16 frames × 30ms = 480ms of sine wave so zero-crossings exist
+        // everywhere. VAD curve is 1.0 except at frame index 7 (~210ms)
+        // where a pronounced dip (0.1) should attract the snap.
+        let sr = 16_000u32;
+        let buf = sine(120.0, sr, 8_000, 0.6);
+        let mut curve = vec![1.0f32; 16];
+        curve[7] = 0.1;
+        // Target near frame 9 (270ms) with ±120ms radius should reach
+        // frame 7 (210ms) and prefer it.
+        let snapped = snap_to_vad_valley(
+            270_000, &buf, sr, &curve, 120_000, 5_000,
+        );
+        // Expect snap close to frame 7 (210ms) ± one frame.
+        assert!(
+            (snapped - 210_000).abs() <= 30_000,
+            "vad-biased snap did not attract to low-prob frame: snapped={snapped}"
+        );
+    }
 }
+

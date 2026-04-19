@@ -204,6 +204,8 @@ pub fn run(cli_args: CliArgs) {
             commands::app_settings::change_caption_max_width_percent_setting,
             commands::app_settings::change_lazy_stream_close_setting,
             commands::app_settings::change_normalize_audio_setting,
+            commands::app_settings::change_vad_prefilter_enabled_setting,
+            commands::app_settings::change_vad_refine_boundaries_setting,
             commands::app_settings::change_loudness_target_setting,
             commands::app_settings::change_export_volume_db_setting,
             commands::app_settings::change_export_fade_in_ms_setting,

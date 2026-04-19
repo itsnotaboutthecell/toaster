@@ -141,6 +141,22 @@ async changeNormalizeAudioSetting(enabled: boolean) : Promise<Result<null, strin
     else return { status: "error", error: e as string };
 }
 },
+async changeVadPrefilterEnabledSetting(enabled: boolean) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("change_vad_prefilter_enabled_setting", { enabled }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e as string };
+}
+},
+async changeVadRefineBoundariesSetting(enabled: boolean) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("change_vad_refine_boundaries_setting", { enabled }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e as string };
+}
+},
 /**
  * Update the export `loudness_target` setting (R-003 / AC-001-a).
  * 
@@ -936,7 +952,7 @@ export type AppSettings = { bindings?: Partial<{ [key in string]: ShortcutBindin
  * stored values are preserved across master toggle flips so a
  * user's prior opt-in comes back when they re-enable the master.
  */
-experimental_enabled?: boolean; lazy_stream_close?: boolean; custom_filler_words?: string[] | null; whisper_accelerator?: WhisperAcceleratorSetting; ort_accelerator?: OrtAcceleratorSetting; whisper_gpu_device?: number; normalize_audio_on_export?: boolean; 
+experimental_enabled?: boolean; lazy_stream_close?: boolean; custom_filler_words?: string[] | null; whisper_accelerator?: WhisperAcceleratorSetting; ort_accelerator?: OrtAcceleratorSetting; whisper_gpu_device?: number; normalize_audio_on_export?: boolean; vad_prefilter_enabled?: boolean; vad_refine_boundaries?: boolean; 
 /**
  * Loudness normalization target for export. Single source of truth
  * for the `loudnorm` filter — see

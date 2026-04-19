@@ -58,10 +58,17 @@ A dependency only exists because at least one live file imports it.
 ## High-value removal targets (2026-04 audit)
 
 Rust crates with Handy-era-only consumers: `rdev`, `enigo`, `handy-keys`,
-`rodio`, `cpal`, `vad-rs`, `tauri-plugin-global-shortcut`,
+`rodio`, `cpal`, `tauri-plugin-global-shortcut`,
 `tauri-plugin-autostart`, `tauri-plugin-single-instance`,
 `tauri-nspanel`, `gtk-layer-shell`, `gtk`,
 `winreg`.
+
+Note: `vad-rs` was previously on this list but is **not** used; the
+reintroduced VAD path (R-002 / R-003 / R-004) speaks ORT directly via the
+existing `ort = 2.0.0-rc.12` pulled in by `transcribe-rs`. If a future
+audit re-surfaces `vad-rs` as a candidate, verify first that
+`src-tauri/src/audio_toolkit/vad/` has not been re-wired to it — the
+BLUEPRINT mandates one ONNX runtime, not two.
 
 npm: `@tauri-apps/plugin-autostart` (dictation-only consumer),
 `@tauri-apps/plugin-global-shortcut` (review for editor use).

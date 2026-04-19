@@ -31,6 +31,108 @@ pub const DEFAULT_FILLERS: &[&str] = &[
 /// Minimum gap between words (in microseconds) to be considered a pause.
 pub const DEFAULT_PAUSE_THRESHOLD_US: i64 = 1_500_000; // 1.5 seconds
 
+// ---------------------------------------------------------------------
+// R-004 — acoustic classification of long filler/pause gaps
+// ---------------------------------------------------------------------
+//
+// See `features/reintroduce-silero-vad/PRD.md` §R-004 and BLUEPRINT §AD-6.
+// Pure metadata: no existing caller's behaviour changes (AC-004-c grep
+// gate). When a VAD probability curve is available, the editor may
+// consume `classify_gaps` output to annotate pause candidates in the
+// UI and drive smarter auto-silence decisions. Without a curve the
+// function returns `Unknown` for every gap — the default path stays
+// untouched.
+
+/// Acoustic classification assigned to a detected pause gap.
+///
+/// The enum is additive metadata only. No default filler/pause behaviour
+/// is driven by it — the editor may surface it as a label in the UI or
+/// feed it into heuristics for `auto_silence_pauses`, but legacy
+/// consumers that ignore the classification see no behaviour change.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(dead_code)] // consumed by Phase 2 editor metadata surface.
+pub enum GapClassification {
+    /// Mean P(speech) stayed below 0.2 across the gap — genuine silence.
+    TrueSilence,
+    /// Mean P(speech) between 0.2 and the speech threshold — background
+    /// music, breath noise, or clapping that the ASR correctly
+    /// classified as non-speech.
+    NonSpeechAcoustic,
+    /// Mean P(speech) ≥ the speech threshold — the ASR likely dropped
+    /// real speech (a stutter, a very quiet "um", or a model miss).
+    MissedSpeech,
+    /// No VAD curve provided, or the curve does not cover the gap.
+    /// Legacy/default path.
+    Unknown,
+}
+
+/// Threshold used by [`classify_gap`] below which a gap is treated as
+/// [`GapClassification::TrueSilence`] (rather than
+/// [`GapClassification::NonSpeechAcoustic`]).
+#[allow(dead_code)]
+pub const GAP_SILENCE_THRESHOLD: f32 = 0.2;
+
+/// Threshold used by [`classify_gap`] above which a gap is treated as
+/// [`GapClassification::MissedSpeech`]. Matches the Silero default
+/// speech threshold so classifications are consistent with the
+/// prefilter pass.
+#[allow(dead_code)]
+pub const GAP_SPEECH_THRESHOLD: f32 = 0.5;
+
+/// Classify a single gap using a pre-computed VAD probability curve
+/// sampled at 30 ms cadence (see
+/// [`crate::managers::splice::boundaries::VAD_FRAME_MS`]). Returns
+/// [`GapClassification::Unknown`] when `vad_curve` is empty or does not
+/// cover the gap interval — callers never error on missing data (AD-8).
+#[allow(dead_code)] // consumed by editor metadata path once wired.
+pub fn classify_gap(gap_start_us: i64, gap_end_us: i64, vad_curve: &[f32]) -> GapClassification {
+    if vad_curve.is_empty() || gap_end_us <= gap_start_us {
+        return GapClassification::Unknown;
+    }
+    let frame_us: i64 = 30_000; // 30 ms, matches VAD cadence.
+    let lo = (gap_start_us / frame_us).max(0) as usize;
+    let hi_inclusive =
+        ((gap_end_us - 1) / frame_us).max(0) as usize;
+    let hi = hi_inclusive.min(vad_curve.len().saturating_sub(1));
+    if hi < lo {
+        return GapClassification::Unknown;
+    }
+    let slice = &vad_curve[lo..=hi];
+    if slice.is_empty() {
+        return GapClassification::Unknown;
+    }
+    let mean: f32 = slice.iter().copied().sum::<f32>() / slice.len() as f32;
+    if mean < GAP_SILENCE_THRESHOLD {
+        GapClassification::TrueSilence
+    } else if mean < GAP_SPEECH_THRESHOLD {
+        GapClassification::NonSpeechAcoustic
+    } else {
+        GapClassification::MissedSpeech
+    }
+}
+
+/// Classify every pause returned by [`detect_pauses`] using the supplied
+/// VAD curve. Returns `(gap_after_word_index, gap_duration_us,
+/// classification)` triples in the same order. Empty curve ⇒ every
+/// classification is [`GapClassification::Unknown`], so the function is
+/// safe to call unconditionally from Phase 2 editor code.
+#[allow(dead_code)] // consumed by editor metadata path once wired.
+pub fn classify_pauses(
+    pauses: &[(usize, i64)],
+    words: &[Word],
+    vad_curve: &[f32],
+) -> Vec<(usize, i64, GapClassification)> {
+    pauses
+        .iter()
+        .map(|&(i, dur)| {
+            let start = words.get(i).map(|w| w.end_us).unwrap_or(0);
+            let end = words.get(i + 1).map(|w| w.start_us).unwrap_or(start + dur);
+            (i, dur, classify_gap(start, end, vad_curve))
+        })
+        .collect()
+}
+
+
 /// Configuration for filler/pause detection.
 pub struct FillerConfig {
     /// Words to treat as fillers (matched case-insensitively, punctuation stripped).

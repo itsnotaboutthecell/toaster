@@ -315,6 +315,14 @@
         "paddingVerticalDescription": "Extra space between the caption text and the top / bottom edges of the background pill.",
         "maxWidth": "Maximum width",
         "maxWidthDescription": "How wide the caption is allowed to grow before it wraps onto a second line, as a percentage of the video frame."
+      },
+      "vadPrefilter": {
+        "label": "Speech Pre-filter (VAD)",
+        "description": "Slice audio into speech regions before transcription, skipping long silences. Reduces runtime and cuts down on false-positive words in silent / music regions. When the Silero VAD model is not installed, the full-file path runs as normal."
+      },
+      "vadRefineBoundaries": {
+        "label": "Refine Splice Boundaries (VAD)",
+        "description": "Use the per-frame speech probability curve as an extra bias when snapping splice boundaries. Leaves boundaries unchanged where the pre-feature zero-crossing and energy-valley snap already lands on silence. Defaults off; enable for tricky overlapping phoneme seams."
       }
     },
     "captions": {

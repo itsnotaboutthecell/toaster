@@ -97,6 +97,10 @@ const settingUpdaters: {
   app_language: (value) => commands.changeAppLanguageSetting(value as string),
   lazy_stream_close: (value) =>
     commands.changeLazyStreamCloseSetting(value as boolean),
+  vad_prefilter_enabled: (value) =>
+    commands.changeVadPrefilterEnabledSetting(value as boolean),
+  vad_refine_boundaries: (value) =>
+    commands.changeVadRefineBoundariesSetting(value as boolean),
   whisper_accelerator: (value) =>
     commands.changeWhisperAcceleratorSetting(
       value as WhisperAcceleratorSetting,

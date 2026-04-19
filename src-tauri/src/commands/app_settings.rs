@@ -221,6 +221,42 @@ pub fn change_normalize_audio_setting(app: AppHandle, enabled: bool) -> Result<(
     Ok(())
 }
 
+/// R-006 — master toggle for the Silero VAD pre-filter ASR path.
+/// See features/reintroduce-silero-vad/PRD.md R-006 / AC-006-a.
+/// When true, the transcription manager slices audio into detected
+/// speech windows before calling the ASR; when false, the legacy
+/// whole-file path runs. The setting is read once per transcription
+/// job — flipping it mid-job has no effect on the in-flight job.
+#[tauri::command]
+#[specta::specta]
+pub fn change_vad_prefilter_enabled_setting(
+    app: AppHandle,
+    enabled: bool,
+) -> Result<(), String> {
+    let mut settings = settings::get_settings(&app);
+    settings.vad_prefilter_enabled = enabled;
+    settings::write_settings(&app, settings);
+    Ok(())
+}
+
+/// R-006 — opt-in toggle for VAD-biased splice-boundary refinement.
+/// See features/reintroduce-silero-vad/PRD.md R-006 / AC-006-b.
+/// When false (default) preview + export keep the existing
+/// zero-crossing + energy-valley snap byte-identical to pre-feature
+/// behaviour (AC-003-d). When true the P(speech) curve is consulted
+/// as an additional bias at snap time.
+#[tauri::command]
+#[specta::specta]
+pub fn change_vad_refine_boundaries_setting(
+    app: AppHandle,
+    enabled: bool,
+) -> Result<(), String> {
+    let mut settings = settings::get_settings(&app);
+    settings.vad_refine_boundaries = enabled;
+    settings::write_settings(&app, settings);
+    Ok(())
+}
+
 /// Update the export `loudness_target` setting (R-003 / AC-001-a).
 ///
 /// Frontend sends the enum string ("off" / "podcast_-16" /

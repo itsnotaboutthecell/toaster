@@ -34,7 +34,23 @@ Ambiguous (audit before touching):
 
 ### Previously Deleted (for reference)
 
-The following have been fully removed: `actions.rs`, `shortcut/`, `overlay.rs`, `tray.rs`, `tray_i18n.rs`, `clipboard.rs`, `input.rs`, `audio_feedback.rs`, `apple_intelligence.rs`, `audio_toolkit/audio/recorder.rs`, `audio_toolkit/vad/*`, `PushToTalk.tsx`, `AudioFeedback.tsx`, `AccessibilityPermissions.tsx`, `HandyKeysShortcutInput.tsx`, `GeneralSettings.tsx` and all its sub-components, `KeyboardImplementationSelector.tsx`.
+The following have been fully removed: `actions.rs`, `shortcut/`, `overlay.rs`, `tray.rs`, `tray_i18n.rs`, `clipboard.rs`, `input.rs`, `audio_feedback.rs`, `apple_intelligence.rs`, `audio_toolkit/audio/recorder.rs`, `PushToTalk.tsx`, `AudioFeedback.tsx`, `AccessibilityPermissions.tsx`, `HandyKeysShortcutInput.tsx`, `GeneralSettings.tsx` and all its sub-components, `KeyboardImplementationSelector.tsx`.
+
+### VAD reintroduced (R-002 / R-003 / R-004)
+
+`audio_toolkit/vad/*` was pruned in the Handy-era cleanup but has been
+**reintroduced** for three strictly file-based editor use cases defined in
+`features/reintroduce-silero-vad/PRD.md`:
+
+- **R-002** — ASR silence pre-filter (`managers::transcription::prefilter`
+  consumes `audio_toolkit::vad::prefilter`).
+- **R-003** — splice-boundary refinement (`managers::splice::boundaries::snap_to_vad_valley`).
+- **R-004** — acoustic classification of long pauses (`managers::filler::classify_gap`).
+
+The microphone / push-to-talk path is **not** reintroduced — no recorder, no
+overlay, no streaming mode. The VAD module operates only on already-decoded
+`f32` PCM from a file. Do **not** extend the VAD module in the direction of
+microphone dictation; that scope is permanently retired.
 
 ## Gate Function
 

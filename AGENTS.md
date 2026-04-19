@@ -65,6 +65,8 @@ src-tauri/src/        Rust backend
   managers/           business logic domains (captions/cleanup/editor/export/filler/llm/media/model/project/splice/transcription)
   commands/           Tauri command handlers (thin IPC wrappers)
   audio_toolkit/      lower-level audio/forced-alignment/text helpers
+                      (incl. `vad/` — reintroduced per R-002/R-003/R-004,
+                      see `features/reintroduce-silero-vad/`)
 ```
 
 Full tree: [`docs/repo-layout.md`](docs/repo-layout.md).
