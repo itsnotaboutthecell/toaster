@@ -15,6 +15,7 @@ import {
   Volume2,
 } from "lucide-react";
 import { SettingsGroup } from "@/components/ui/SettingsGroup";
+import { Button } from "@/components/ui/Button";
 import { commands, type ExportFormat, type Result, type AllowedExportFormat, type AudioExportFormat } from "@/bindings";
 import { useEditorStore } from "@/stores/editorStore";
 import { usePlayerStore } from "@/stores/playerStore";
@@ -485,15 +486,29 @@ const EditorView: React.FC = () => {
       <SettingsGroup title={t("editor.sections.media")}>
         <div className="px-4 py-3 space-y-3">
           {!mediaUrl ? (
-            <div
-              className="border-2 border-dashed border-mid-gray/30 rounded-xl p-8 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-accent/50 transition-colors"
-              onClick={handleImportMedia}
-            >
-              <Upload size={40} className="text-mid-gray/50" />
-              <p className="text-sm text-mid-gray">{t("editor.importMedia")}</p>
-              <p className="text-xs text-mid-gray/60">
-                {t("editor.supportedFormats")}
-              </p>
+            <div className="space-y-3">
+              <div
+                className="border-2 border-dashed border-mid-gray/30 rounded-xl p-8 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-accent/50 transition-colors"
+                onClick={handleImportMedia}
+              >
+                <Upload size={40} className="text-mid-gray/50" />
+                <p className="text-sm text-mid-gray">{t("editor.importMedia")}</p>
+                <p className="text-xs text-mid-gray/60">
+                  {t("editor.supportedFormats")}
+                </p>
+              </div>
+              <div className="flex justify-center">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleLoadProject}
+                  title={t("editor.loadProject")}
+                  className="inline-flex items-center gap-1.5"
+                >
+                  <FolderOpen size={14} />
+                  {t("editor.loadProject")}
+                </Button>
+              </div>
             </div>
           ) : (
             <>
@@ -562,47 +577,34 @@ const EditorView: React.FC = () => {
         </div>
       </SettingsGroup>
 
-      {/* Project section — only visible when no media loaded */}
-      {!mediaUrl && (
-        <SettingsGroup title={t("editor.sections.project")}>
-          <div className="px-4 py-3">
-            <button
-              onClick={handleLoadProject}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-background border border-mid-gray/20 rounded-lg text-xs hover:bg-mid-gray/10 transition-colors"
-              title={t("editor.loadProject")}
-            >
-              <FolderOpen size={14} />
-              {t("editor.open")}
-            </button>
-          </div>
-        </SettingsGroup>
+      {/* Project + Transcription sections collapsed per KISS pass 1 —
+          the Open button now lives in the empty-state above, and the
+          transcribe CTA / editor render bare without SettingsGroup
+          framing. See features/editor-kiss/plan.md K3, K6. */}
+      {mediaUrl && words.length === 0 && (
+        <div className="flex flex-col items-center gap-2 py-6">
+          <Button
+            variant="brand"
+            size="md"
+            onClick={handleTranscribe}
+            disabled={isTranscribing}
+            className="inline-flex items-center gap-2"
+          >
+            <FileText size={16} />
+            {isTranscribing
+              ? t("editor.transcribing")
+              : t("editor.transcribe")}
+          </Button>
+          {modelMissing && (
+            <p className="text-xs text-amber-400">
+              {t("editor.modelNotLoaded")}
+            </p>
+          )}
+        </div>
       )}
 
-      {/* Transcription section — only visible when media is loaded */}
-      {mediaUrl && (
-        <SettingsGroup title={t("editor.sections.transcription")}>
-          {words.length === 0 ? (
-            <div className="px-4 py-3 space-y-3">
-              <button
-                onClick={handleTranscribe}
-                disabled={isTranscribing}
-                className="flex items-center gap-2 px-4 py-2 bg-logo-primary text-black rounded-lg text-sm font-medium hover:bg-logo-primary/90 transition-colors disabled:opacity-50"
-              >
-                <FileText size={16} />
-                {isTranscribing
-                  ? t("editor.transcribing")
-                  : t("editor.transcribe")}
-              </button>
-              {modelMissing && (
-                <p className="text-xs text-amber-400">
-                  {t("editor.modelNotLoaded")}
-                </p>
-              )}
-            </div>
-          ) : (
-            <TranscriptEditor onWordClick={handleWordClick} />
-          )}
-        </SettingsGroup>
+      {mediaUrl && words.length > 0 && (
+        <TranscriptEditor onWordClick={handleWordClick} />
       )}
 
       {/* AI cleanup prompt drawer — only visible when Expert mode is on
