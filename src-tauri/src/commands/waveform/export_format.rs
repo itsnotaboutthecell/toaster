@@ -112,6 +112,60 @@ pub fn export_format_codec_map(format: AudioExportFormat) -> Option<CodecSpec> {
     }
 }
 
+/// Video source file extensions that produce a preserved video stream
+/// on export. Mirrors the `has_video` detection in
+/// `export_edited_media` (`commands.rs:416`) — keep the two lists in
+/// sync.
+const VIDEO_SOURCE_EXTENSIONS: &[&str] = &["mp4", "mkv", "mov", "avi", "webm", "flv"];
+
+/// Formats that make sense for a given source media type. Returns
+/// `[Mp4, Mp3, Wav, M4a, Opus]` for video sources, and the same list
+/// minus `Mp4` for audio-only sources.
+///
+/// Single source of truth for the source-type → allowed-format rule
+/// (PRD R-004 / AC-004-a, AC-004-b); frontend consumes this via the
+/// `list_allowed_export_formats` Tauri command and never duplicates
+/// the video-extension set.
+pub fn allowed_formats_for_source(ext: &str) -> Vec<AudioExportFormat> {
+    let normalized = ext.trim().trim_start_matches('.').to_lowercase();
+    let is_video = VIDEO_SOURCE_EXTENSIONS.iter().any(|v| *v == normalized);
+    if is_video {
+        vec![
+            AudioExportFormat::Mp4,
+            AudioExportFormat::Mp3,
+            AudioExportFormat::Wav,
+            AudioExportFormat::M4a,
+            AudioExportFormat::Opus,
+        ]
+    } else {
+        vec![
+            AudioExportFormat::Mp3,
+            AudioExportFormat::Wav,
+            AudioExportFormat::M4a,
+            AudioExportFormat::Opus,
+        ]
+    }
+}
+
+/// A single row in the allowed-formats payload returned to the
+/// frontend. `extension` carries the leading dot (e.g. `.mp4`) to
+/// match `AudioExportFormat::extension()`; frontend code substrings
+/// the leading dot off before passing to save-dialog filters.
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Type)]
+pub struct AllowedExportFormat {
+    pub format: AudioExportFormat,
+    pub extension: String,
+}
+
+impl From<AudioExportFormat> for AllowedExportFormat {
+    fn from(format: AudioExportFormat) -> Self {
+        AllowedExportFormat {
+            format,
+            extension: format.extension().to_string(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -185,5 +239,50 @@ mod tests {
         assert_eq!(mp3.bitrate_flag().as_deref(), Some("192k"));
         let wav = export_format_codec_map(AudioExportFormat::Wav).unwrap();
         assert_eq!(wav.bitrate_flag(), None);
+    }
+
+    // AC-004-a: video sources offer Mp4 first, then the four audio-only
+    // formats, in a fixed order.
+    #[test]
+    fn allowed_formats_video_source_lists_mp4_then_audio_only() {
+        let expected = vec![
+            AudioExportFormat::Mp4,
+            AudioExportFormat::Mp3,
+            AudioExportFormat::Wav,
+            AudioExportFormat::M4a,
+            AudioExportFormat::Opus,
+        ];
+        for video_ext in ["mp4", "mkv", "mov", "avi", "webm", "flv"] {
+            assert_eq!(allowed_formats_for_source(video_ext), expected, "ext={video_ext}");
+            // Uppercase + leading-dot normalization.
+            assert_eq!(
+                allowed_formats_for_source(&format!(".{}", video_ext.to_uppercase())),
+                expected,
+                "ext=.{}",
+                video_ext.to_uppercase(),
+            );
+        }
+    }
+
+    // AC-004-b: audio-only sources never surface Mp4 in the picker.
+    #[test]
+    fn allowed_formats_audio_source_omits_mp4() {
+        let expected = vec![
+            AudioExportFormat::Mp3,
+            AudioExportFormat::Wav,
+            AudioExportFormat::M4a,
+            AudioExportFormat::Opus,
+        ];
+        for audio_ext in ["mp3", "wav", "m4a", "opus", "flac", "ogg", ""] {
+            assert_eq!(allowed_formats_for_source(audio_ext), expected, "ext={audio_ext}");
+        }
+    }
+
+    // Payload shape for the Tauri command response.
+    #[test]
+    fn allowed_export_format_carries_extension_with_leading_dot() {
+        let row: AllowedExportFormat = AudioExportFormat::Mp3.into();
+        assert_eq!(row.format, AudioExportFormat::Mp3);
+        assert_eq!(row.extension, ".mp3");
     }
 }

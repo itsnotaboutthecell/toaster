@@ -292,6 +292,7 @@ pub fn run(cli_args: CliArgs) {
             commands::waveform::invalidate_temp_preview_cache,
             commands::waveform::render_temp_preview_audio,
             commands::waveform::export_edited_media,
+            commands::waveform::list_allowed_export_formats,
             commands::waveform::loudness_preflight,
             commands::filler::analyze_fillers,
             commands::filler::delete_fillers,

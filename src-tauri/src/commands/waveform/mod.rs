@@ -10,7 +10,10 @@ use crate::managers::splice::loudness::{build_loudnorm_filter, LoudnessTarget};
 
 mod preview_cache;
 mod export_format;
-pub use export_format::{export_format_codec_map, CodecSpec, AudioExportFormat};
+pub use export_format::{
+    allowed_formats_for_source, export_format_codec_map, AllowedExportFormat, AudioExportFormat,
+    CodecSpec,
+};
 use preview_cache::{
     edit_version_token, preview_generation_token, preview_output_path, source_media_fingerprint,
     urlencoding,

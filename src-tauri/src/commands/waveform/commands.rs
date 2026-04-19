@@ -381,6 +381,12 @@ pub async fn render_temp_preview_audio(
 ///
 /// Uses the keep-segments from the editor to produce an output file
 /// with deleted segments removed. Supports both audio-only and video+audio.
+///
+/// `format_override`, when `Some`, wins over `settings.export_format`
+/// for this invocation only (PRD R-001 / AC-001-b). `None` preserves
+/// today's behavior of consuming `settings.export_format`
+/// (AC-001-c / AC-002-b). Default authority still lives in Settings →
+/// Advanced → Export.
 #[tauri::command]
 #[specta::specta]
 pub async fn export_edited_media(
@@ -389,6 +395,7 @@ pub async fn export_edited_media(
     input_path: String,
     output_path: String,
     burn_captions: Option<bool>,
+    format_override: Option<AudioExportFormat>,
 ) -> Result<String, String> {
     let (segments, words, silenced_ranges) = {
         let state = crate::lock_recovery::try_lock(store.0.lock()).map_err(|e| e.to_string())?;
@@ -427,9 +434,12 @@ pub async fn export_edited_media(
     });
 
     let settings = crate::settings::get_settings(&app);
+    // Per-invocation override wins over settings (PRD R-001); falls
+    // back to the settings default when the frontend passes None.
+    let export_format = format_override.unwrap_or(settings.export_format);
     let ass_temp_path = if burn_captions.unwrap_or(false)
         && has_video
-        && !settings.export_format.is_audio_only()
+        && !export_format.is_audio_only()
     {
         let blocks = crate::commands::export::build_caption_blocks_for_export(
             &words, &segments, &settings, frame_size,
@@ -452,7 +462,6 @@ pub async fn export_edited_media(
         fade_out_ms: settings.export_fade_out_ms.min(30_000),
     };
 
-    let export_format = settings.export_format;
     // Audio-only formats drop the video stream regardless of source.
     let effective_has_video = has_video && !export_format.is_audio_only();
 
@@ -532,6 +541,26 @@ pub async fn export_edited_media(
     let stdout = String::from_utf8_lossy(&output.stdout);
     log::info!("FFmpeg export complete: {}", output_path_str);
     Ok(format!("Export complete: {}\n{}", output_path_str, stdout))
+}
+
+/// List the export formats that make sense for a given source file
+/// extension.
+///
+/// Frontend calls this when the Editor loads a project so the export
+/// format picker can render source-type-aware options without
+/// duplicating the video-extension set (PRD R-004 / AC-004-a,
+/// AC-004-b). The payload carries each format's canonical extension
+/// (with leading dot) so the save-dialog filter and suggested
+/// filename stay aligned with backend `AudioExportFormat::extension()`
+/// (AC-005-a, AC-005-b). Backend is the single source of truth
+/// (AC-003-a).
+#[tauri::command]
+#[specta::specta]
+pub fn list_allowed_export_formats(source_extension: String) -> Vec<AllowedExportFormat> {
+    allowed_formats_for_source(&source_extension)
+        .into_iter()
+        .map(AllowedExportFormat::from)
+        .collect()
 }
 
 use crate::managers::splice::loudness::{compute_loudness_preflight, LoudnessPreflight};
