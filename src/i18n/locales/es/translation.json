@@ -309,6 +309,24 @@
           "title": "Whisper.cpp",
           "description": "Inferencia de alto rendimiento del modelo de reconocimiento automático de voz Whisper de OpenAI",
           "details": "Toaster usa Whisper.cpp para procesamiento de voz a texto rápido y local. Gracias al increíble trabajo de Georgi Gerganov y colaboradores."
+        },
+        "tauri": {
+          "title": "Tauri",
+          "description": "Rust-native app framework.",
+          "details": "Keeps the Toaster bundle small and the runtime fast. Every desktop surface — windows, system tray, file dialogs, plugin bridge — lives on Tauri.",
+          "button": "Open tauri.app"
+        },
+        "whisperCpp": {
+          "title": "whisper.cpp & ggml",
+          "description": "Cross-platform local speech-to-text inference.",
+          "details": "The whisper.cpp runtime and the ggml tensor library provide Toaster's on-device transcription with GPU / CPU acceleration on every supported platform.",
+          "button": "Open whisper.cpp on GitHub"
+        },
+        "ffmpeg": {
+          "title": "FFmpeg",
+          "description": "Media processing toolkit.",
+          "details": "Every export, re-encode, audio splice, and loudness measurement goes through FFmpeg. Toaster bundles FFmpeg 7 under LGPL.",
+          "button": "Open ffmpeg.org"
         }
       }
     },

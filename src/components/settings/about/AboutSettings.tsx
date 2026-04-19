@@ -91,6 +91,25 @@ export const AboutSettings: React.FC = () => {
         </SettingContainer>
 
         <SettingContainer
+          title={t("settings.about.acknowledgments.tauri.title")}
+          description={t("settings.about.acknowledgments.tauri.description")}
+          grouped={true}
+          layout="stacked"
+        >
+          <div className="text-sm text-mid-gray">
+            {t("settings.about.acknowledgments.tauri.details")}
+          </div>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="mt-2"
+            onClick={() => openUrl("https://tauri.app/")}
+          >
+            {t("settings.about.acknowledgments.tauri.button")}
+          </Button>
+        </SettingContainer>
+
+        <SettingContainer
           title={t("settings.about.acknowledgments.whisper.title")}
           description={t("settings.about.acknowledgments.whisper.description")}
           grouped={true}
@@ -99,6 +118,46 @@ export const AboutSettings: React.FC = () => {
           <div className="text-sm text-mid-gray">
             {t("settings.about.acknowledgments.whisper.details")}
           </div>
+        </SettingContainer>
+
+        <SettingContainer
+          title={t("settings.about.acknowledgments.whisperCpp.title")}
+          description={t(
+            "settings.about.acknowledgments.whisperCpp.description",
+          )}
+          grouped={true}
+          layout="stacked"
+        >
+          <div className="text-sm text-mid-gray">
+            {t("settings.about.acknowledgments.whisperCpp.details")}
+          </div>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="mt-2"
+            onClick={() => openUrl("https://github.com/ggerganov/whisper.cpp")}
+          >
+            {t("settings.about.acknowledgments.whisperCpp.button")}
+          </Button>
+        </SettingContainer>
+
+        <SettingContainer
+          title={t("settings.about.acknowledgments.ffmpeg.title")}
+          description={t("settings.about.acknowledgments.ffmpeg.description")}
+          grouped={true}
+          layout="stacked"
+        >
+          <div className="text-sm text-mid-gray">
+            {t("settings.about.acknowledgments.ffmpeg.details")}
+          </div>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="mt-2"
+            onClick={() => openUrl("https://ffmpeg.org/")}
+          >
+            {t("settings.about.acknowledgments.ffmpeg.button")}
+          </Button>
         </SettingContainer>
       </SettingsGroup>
     </div>
