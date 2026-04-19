@@ -280,6 +280,7 @@
     },
     "about": {
       "title": "حول",
+      "description": "معلومات التطبيق والأذونات ومجلدات التخزين.",
       "version": {
         "title": "الإصدار",
         "description": "الإصدار الحالي من Toaster"

@@ -280,6 +280,7 @@
     },
     "about": {
       "title": "Giới thiệu",
+      "description": "Thông tin ứng dụng, lời cảm ơn và đường dẫn lưu trữ.",
       "version": {
         "title": "Phiên bản",
         "description": "Phiên bản hiện tại của Toaster"

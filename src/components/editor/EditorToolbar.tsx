@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { SettingsGroup } from "@/components/ui/SettingsGroup";
 import ExportFormatPicker from "@/components/editor/ExportFormatPicker";
+import { ExportGroup } from "@/components/settings/advanced/ExportGroup";
 import type {
   AllowedExportFormat,
   AudioExportFormat,
@@ -100,6 +101,12 @@ const EditorToolbar: React.FC<EditorToolbarProps> = React.memo(({
               {t("editor.ffmpegShortLabel")}
             </button>
           </div>
+        </div>
+
+        {/* Export audio/video settings (loudness, preflight) —
+            relocated from Advanced per round-3 QC. */}
+        <div className="pt-2 border-t border-mid-gray/10">
+          <ExportGroup />
         </div>
       </div>
     </SettingsGroup>

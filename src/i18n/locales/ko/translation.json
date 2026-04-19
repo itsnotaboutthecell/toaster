@@ -280,6 +280,7 @@
     },
     "about": {
       "title": "정보",
+      "description": "앱 정보, 감사의 글, 저장 경로.",
       "version": {
         "title": "버전",
         "description": "Toaster의 현재 버전"

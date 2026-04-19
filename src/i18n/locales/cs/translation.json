@@ -280,6 +280,7 @@
     },
     "about": {
       "title": "O aplikaci",
+      "description": "Informace o aplikaci, poděkování a cesty úložiště.",
       "version": {
         "title": "Verze",
         "description": "Aktuální verze Toaster"

@@ -5,6 +5,7 @@ import type {
   AppSettings as Settings,
   AudioDevice,
   CaptionFontFamily,
+  CaptionProfileSet,
   LogLevel,
   LoudnessTarget,
   WhisperAcceleratorSetting,
@@ -135,6 +136,19 @@ const settingUpdaters: {
     commands.changeCaptionPaddingYPxSetting(value as number),
   caption_max_width_percent: (value) =>
     commands.changeCaptionMaxWidthPercentSetting(value as number),
+  // QC round-3 bug fix: Advanced > Captions edits write to
+  // `caption_profiles`, but this map previously had no entry for it,
+  // so `updateSetting("caption_profiles", …)` logged
+  // "No handler for setting: caption_profiles" and the backend
+  // `settings.caption_profiles` never moved. The video preview kept
+  // serving stale layout from `get_caption_blocks`. Fan out to both
+  // orientations here; `updateSetting`'s pendingUpdates dedup keeps
+  // live-drag sliders from flooding IPC.
+  caption_profiles: async (value) => {
+    const set = value as CaptionProfileSet;
+    await commands.setCaptionProfile("Desktop", set.desktop, "App");
+    await commands.setCaptionProfile("Mobile", set.mobile, "App");
+  },
 };
 
 // Tracks pending values for keys that are currently mid-update (race dedup)

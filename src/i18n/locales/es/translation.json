@@ -280,6 +280,7 @@
     },
     "about": {
       "title": "Acerca de",
+      "description": "Información de la app, agradecimientos y rutas de almacenamiento.",
       "version": {
         "title": "Versión",
         "description": "Versión actual de Toaster"

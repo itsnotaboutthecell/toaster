@@ -280,6 +280,7 @@
     },
     "about": {
       "title": "关于",
+      "description": "应用信息、致谢和存储路径。",
       "version": {
         "title": "版本",
         "description": "Toaster 的当前版本"

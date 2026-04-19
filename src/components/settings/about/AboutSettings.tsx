@@ -29,7 +29,15 @@ export const AboutSettings: React.FC = () => {
 
   return (
     <div className="max-w-5xl w-full mx-auto space-y-6" data-testid="settings-outer">
-      <SettingsGroup title={t("settings.about.title")}>
+      <div className="mb-4">
+        <h1 className="text-xl font-semibold mb-2">
+          {t("settings.about.title")}
+        </h1>
+        <p className="text-sm text-text/60">
+          {t("settings.about.description")}
+        </p>
+      </div>
+      <SettingsGroup>
         <AppLanguageSelector descriptionMode="tooltip" grouped={true} />
         <SettingContainer
           title={t("settings.about.version.title")}

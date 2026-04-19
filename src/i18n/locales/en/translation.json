@@ -280,6 +280,7 @@
     },
     "about": {
       "title": "About",
+      "description": "App info, acknowledgments, and storage paths.",
       "version": {
         "title": "Version",
         "description": "Current version of Toaster"

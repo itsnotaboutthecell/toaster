@@ -280,6 +280,7 @@
     },
     "about": {
       "title": "概要",
+      "description": "アプリ情報、謝辞、保存先。",
       "version": {
         "title": "バージョン",
         "description": "Toasterの現在のバージョン"

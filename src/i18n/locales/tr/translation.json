@@ -280,6 +280,7 @@
     },
     "about": {
       "title": "Hakkında",
+      "description": "Uygulama bilgisi, teşekkürler ve depolama yolları.",
       "version": {
         "title": "Sürüm",
         "description": "Toaster'nin mevcut sürümü"

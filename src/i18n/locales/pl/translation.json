@@ -280,6 +280,7 @@
     },
     "about": {
       "title": "O programie",
+      "description": "Informacje o aplikacji, podziękowania i ścieżki zapisu.",
       "version": {
         "title": "Wersja",
         "description": "Aktualna wersja Toaster"

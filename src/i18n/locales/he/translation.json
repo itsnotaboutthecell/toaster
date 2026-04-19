@@ -280,6 +280,7 @@
     },
     "about": {
       "title": "אודות",
+      "description": "מידע על האפליקציה, תודות ונתיבי אחסון.",
       "version": {
         "title": "גרסה",
         "description": "הגרסה הנוכחית של Toaster"

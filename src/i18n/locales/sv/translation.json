@@ -280,6 +280,7 @@
     },
     "about": {
       "title": "Om",
+      "description": "Appinformation, tack och lagringssökvägar.",
       "version": {
         "title": "Version",
         "description": "Nuvarande version av Toaster"
