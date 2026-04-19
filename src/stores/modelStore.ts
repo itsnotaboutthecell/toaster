@@ -181,7 +181,7 @@ export const useModelStore = create<ModelsStore>()(
             };
           }),
         );
-        const result = await commands.downloadModel(modelId);
+        const result = await commands.downloadModel(modelId, null);
         if (result.status !== "ok") {
           // Fallback cleanup in case the model-download-failed event was not received
           // (e.g. listener not yet registered). The event handler is a no-op if it

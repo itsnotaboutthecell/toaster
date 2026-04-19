@@ -398,6 +398,19 @@ async getAvailableModels() : Promise<Result<ModelInfo[], string>> {
     else return { status: "error", error: e as string };
 }
 },
+/**
+ * Category-aware model list. Returns every entry when `category` is
+ * `None`, or just the matching slice when specified. Used by the
+ * unified models page + the deprecated `list_llm_models` shim.
+ */
+async getModels(category: ModelCategory | null) : Promise<Result<ModelInfo[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_models", { category }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e as string };
+}
+},
 async getModelInfo(modelId: string) : Promise<Result<ModelInfo | null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("get_model_info", { modelId }) };
@@ -406,9 +419,9 @@ async getModelInfo(modelId: string) : Promise<Result<ModelInfo | null, string>> 
     else return { status: "error", error: e as string };
 }
 },
-async downloadModel(modelId: string) : Promise<Result<null, string>> {
+async downloadModel(modelId: string, category: ModelCategory | null) : Promise<Result<null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("download_model", { modelId }) };
+    return { status: "ok", data: await TAURI_INVOKE("download_model", { modelId, category }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e as string };
@@ -1054,7 +1067,8 @@ caption_profiles?: CaptionProfileSet;
  */
 caption_profiles_was_migrated?: boolean; settings_version?: number; 
 /**
- * ID of the catalog entry (see `managers::llm::catalog`) the user
+ * ID of the catalog entry (see
+ * `managers::model::catalog::post_processor`) the user
  * selected for the in-process local-GGUF cleanup path. `None` means
  * no local model has been chosen yet; the dispatcher falls back to
  * the HTTP provider when this is unset, regardless of the provider
@@ -1202,9 +1216,13 @@ export type GpuDeviceOption = { id: number; name: string; total_vram_mb: number 
  */
 export type KeepSegment = { start_us: number; end_us: number }
 export type LLMPrompt = { id: string; name: string; prompt: string }
+export type LlmMetadata = { quantization: string; context_length: number; recommended_ram_gb: number; prompt_template_id: string | null }
 /**
- * Runtime view of a catalog entry + download status. Shape mirrors
- * `managers::model::ModelInfo` for UX parity per PRD R-002.
+ * Runtime view of a post-processor catalog entry + download status.
+ * 
+ * Retained for the deprecated `list_llm_models` Tauri shim (see
+ * `commands::llm_models`). New code should consume `ModelInfo` directly
+ * via `commands::models::get_models(Some(PostProcessor))`.
  */
 export type LlmModelInfo = { id: string; display_name: string; description: string; filename: string; download_url: string; sha256: string; quantization: string; size_bytes: number; context_length: number; recommended_ram_gb: number; is_recommended_default: boolean; is_downloaded: boolean; is_downloading: boolean; partial_size: number }
 export type LocalLlmApplyResponse = { projection: EditorProjection; apply_result: LocalLlmApplyResult }
@@ -1298,7 +1316,17 @@ media_type: MediaType;
 extension: string }
 export type MediaType = "Video" | "Audio"
 export type ModelCategory = "Transcription" | "PostProcessor" | "System"
-export type ModelInfo = { id: string; name: string; description: string; filename: string; url: string | null; sha256: string | null; size_mb: number; is_downloaded: boolean; is_downloading: boolean; partial_size: number; is_directory: boolean; engine_type: EngineType; accuracy_score: number; speed_score: number; supports_translation: boolean; is_recommended: boolean; supported_languages: string[]; supports_language_selection: boolean; is_custom: boolean; category?: ModelCategory }
+export type ModelInfo = { id: string; name: string; description: string; filename: string; url: string | null; sha256: string | null; size_mb: number; is_downloaded: boolean; is_downloading: boolean; partial_size: number; is_directory: boolean; engine_type: EngineType; accuracy_score: number; speed_score: number; supports_translation: boolean; is_recommended: boolean; supported_languages: string[]; supports_language_selection: boolean; is_custom: boolean; category?: ModelCategory; 
+/**
+ * Optional transcription-specific metadata block (PostProcessor entries leave None).
+ * Legacy JSON without this field deserializes as None.
+ */
+transcription_metadata?: TranscriptionMetadata | null; 
+/**
+ * Optional LLM/post-processor metadata block (Transcription entries leave None).
+ * Legacy JSON without this field deserializes as None.
+ */
+llm_metadata?: LlmMetadata | null }
 export type ModelLoadStatus = { is_loaded: boolean; current_model: string | null }
 export type ModelUnloadTimeout = "never" | "immediately" | "min_2" | "min_5" | "min_10" | "min_15" | "hour_1" | "sec_15"
 /**
@@ -1398,6 +1426,7 @@ warning: string | null }
  * A keep-segment represented in microseconds.
  */
 export type TimingSegment = { start_us: number; end_us: number }
+export type TranscriptionMetadata = { engine_type: EngineType; accuracy_score: number; speed_score: number; supports_translation: boolean; supports_language_selection: boolean; supported_languages: string[] }
 /**
  * Video dimensions in pixels. Input to `compute_caption_layout`.
  */
