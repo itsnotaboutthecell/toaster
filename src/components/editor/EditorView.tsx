@@ -325,7 +325,7 @@ const EditorView: React.FC = () => {
     let cancelled = false;
     (async () => {
       try {
-        const result = unwrapResult(await commands.listAllowedExportFormats(ext));
+        const result = await commands.listAllowedExportFormats(ext);
         if (!cancelled) {
           setAllowedFormats(result);
           setFormatOverride(null);

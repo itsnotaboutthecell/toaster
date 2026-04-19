@@ -124,7 +124,6 @@ export const ExportGroup: React.FC = () => {
       <SettingContainer
         title={t("settings.export.format.label")}
         description={t("settings.export.format.description")}
-        descriptionMode="inline"
         grouped
         layout="horizontal"
       >
@@ -138,7 +137,6 @@ export const ExportGroup: React.FC = () => {
       <SettingContainer
         title={t("settings.export.loudness.title")}
         description={t("settings.export.loudness.description")}
-        descriptionMode="inline"
         grouped
         layout="horizontal"
       >
@@ -152,7 +150,6 @@ export const ExportGroup: React.FC = () => {
       <SettingContainer
         title={t("settings.export.loudness.preflight.title")}
         description={t("settings.export.loudness.preflight.description")}
-        descriptionMode="inline"
         grouped
         layout="horizontal"
       >

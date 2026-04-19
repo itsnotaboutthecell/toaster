@@ -33,23 +33,14 @@ export const ExperimentalGroup: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      <SettingContainer
-        title={t("settings.advanced.experimentalMaster.title")}
+      <ToggleSwitch
+        checked={masterEnabled}
+        onChange={(value) => updateSetting("experimental_enabled", value)}
+        isUpdating={isUpdating("experimental_enabled")}
+        label={t("settings.advanced.experimentalMaster.title")}
         description={t("settings.advanced.experimentalMaster.description")}
-        descriptionMode="inline"
         grouped
-        layout="stacked"
-      >
-        <ToggleSwitch
-          checked={masterEnabled}
-          onChange={(value) => updateSetting("experimental_enabled", value)}
-          isUpdating={isUpdating("experimental_enabled")}
-          label={t("settings.advanced.experimentalMaster.title")}
-          description={t("settings.advanced.experimentalMaster.description")}
-          descriptionMode="tooltip"
-          grouped
-        />
-      </SettingContainer>
+      />
 
       {masterEnabled && (
         <>
