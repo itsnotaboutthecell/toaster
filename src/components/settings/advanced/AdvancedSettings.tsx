@@ -8,6 +8,7 @@ import { ModelUnloadTimeoutSetting } from "../ModelUnloadTimeout";
 import { CaptionSettings } from "../captions/CaptionSettings";
 import { ExportGroup } from "./ExportGroup";
 import { ExperimentalGroup } from "./ExperimentalGroup";
+import { LLMConnectionGroup } from "./LLMConnectionGroup";
 import { useSettings } from "../../../hooks/useSettings";
 
 export const AdvancedSettings: React.FC = () => {
@@ -32,6 +33,15 @@ export const AdvancedSettings: React.FC = () => {
           grouped
         />
       </SettingsGroup>
+
+      {expertModeEnabled && (
+        <SettingsGroup
+          title={t("settings.advanced.groups.llmConnection.title")}
+          description={t("settings.advanced.groups.llmConnection.description")}
+        >
+          <LLMConnectionGroup />
+        </SettingsGroup>
+      )}
 
       <SettingsGroup
         title={t("settings.advanced.groups.words.title")}

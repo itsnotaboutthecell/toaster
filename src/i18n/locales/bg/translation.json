@@ -505,6 +505,10 @@
         "expertMode": {
           "title": "Expert mode",
           "description": "Reveals the AI-cleanup connection settings and the Editor's prompt drawer. This is a UI visibility gate only — whether cleanup actually runs is controlled by the separate 'Run AI cleanup at transcription' toggle."
+        },
+        "llmConnection": {
+          "title": "AI cleanup (LLM connection)",
+          "description": "Configure the LLM endpoint that Toaster uses for transcript cleanup after transcription. Local GGUF runs in-process via a downloaded model; custom endpoints point at your own Ollama / LocalAI / self-hosted inference server."
         }
       },
       "experimentalMaster": {
