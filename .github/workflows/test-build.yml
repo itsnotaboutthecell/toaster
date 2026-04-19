@@ -1,11 +1,20 @@
-name: "PR Test Build"
+name: "Test Build"
+
+# Manually-dispatched cross-platform bundle build for testing. Replaces the
+# old `build-test.yml` (no PR) and `pr-test-build.yml` (with PR) — the only
+# difference between them was asset-prefix + ref, now collapsed into a
+# single `pr_number` input.
+#
+# Leave `pr_number` empty for a plain test build against the current ref.
+# Provide a PR number to build the merge ref and post an artifact-link
+# comment back to the PR.
 
 on:
   workflow_dispatch:
     inputs:
       pr_number:
-        description: "PR number to build"
-        required: true
+        description: "PR number to build (optional; leave blank for a plain test build)"
+        required: false
         type: string
 
 jobs:
@@ -28,7 +37,7 @@ jobs:
           - platform: "ubuntu-24.04"
             args: "--bundles appimage,rpm"
             target: "x86_64-unknown-linux-gnu"
-          - platform: "ubuntu-24.04-arm" # Build for ARM64 Linux
+          - platform: "ubuntu-24.04-arm"
             args: "--bundles appimage,deb,rpm"
             target: "aarch64-unknown-linux-gnu"
           - platform: "windows-latest"
@@ -44,14 +53,15 @@ jobs:
       target: ${{ matrix.target }}
       build-args: ${{ matrix.args }}
       sign-binaries: true
-      asset-prefix: "handy-pr-${{ inputs.pr_number }}"
       upload-artifacts: true
       is-debug-build: ${{ contains(matrix.args, '--debug') }}
-      ref: ${{ format('refs/pull/{0}/merge', inputs.pr_number) }}
+      asset-prefix: ${{ inputs.pr_number && format('toaster-pr-{0}', inputs.pr_number) || 'toaster-test' }}
+      ref: ${{ inputs.pr_number && format('refs/pull/{0}/merge', inputs.pr_number) || '' }}
     secrets: inherit
 
   comment-on-pr:
     needs: build-test
+    if: inputs.pr_number != ''
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write

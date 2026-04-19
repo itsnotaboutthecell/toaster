@@ -32,6 +32,33 @@ export default defineConfig(async () => ({
       input: {
         main: resolve(__dirname, "index.html"),
       },
+      output: {
+        // Split vendor libs off the main chunk so the app shell loads
+        // independently of heavy dependency trees. Rough sizes at the
+        // time of writing: react ~150 kB, icons ~120 kB, tauri ~30 kB.
+        manualChunks: (id) => {
+          if (!id.includes("node_modules")) return undefined;
+          if (id.includes("/react") || id.includes("/react-dom") || id.includes("/scheduler")) {
+            return "vendor-react";
+          }
+          if (id.includes("/lucide-react")) {
+            return "vendor-icons";
+          }
+          if (id.includes("/@tauri-apps/")) {
+            return "vendor-tauri";
+          }
+          if (
+            id.includes("/zustand") ||
+            id.includes("/immer") ||
+            id.includes("/sonner") ||
+            id.includes("/i18next") ||
+            id.includes("/react-i18next")
+          ) {
+            return "vendor-state";
+          }
+          return "vendor";
+        },
+      },
     },
   },
 

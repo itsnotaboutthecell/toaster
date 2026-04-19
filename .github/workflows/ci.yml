@@ -6,7 +6,7 @@ name: "CI"
 #
 # Cross-platform Tauri bundle builds are intentionally NOT part of this
 # workflow — they live in the reusable `build.yml` and its callers
-# (`main-build.yml`, `build-test.yml`, `pr-test-build.yml`, `release.yml`),
+# (`main-build.yml`, `test-build.yml`, `release.yml`),
 # which have distinct triggers and artifact/signing semantics.
 
 on:
