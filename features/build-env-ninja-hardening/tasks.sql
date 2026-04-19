@@ -18,13 +18,13 @@ INSERT INTO todos (id, title, description, status) VALUES
    'pending'),
 
   ('build-env-ninja-hardening-smoke',
-   'Create scripts/check-cmake-ninja-env.ps1 smoke script (R-004)',
-   'New file scripts/check-cmake-ninja-env.ps1. Writes a trivial CMakeLists.txt (cmake_minimum_required(VERSION 3.13) + project(toaster_smoke C)) to a temp dir, runs cmake -G Ninja -S <tmp> -B <tmp>/build, captures exit code, surfaces any "Ninja does not support" / "instance specification" line on failure. Cleans up in a finally block. Wall-clock budget < 5s. Verifier: AC-004-a, AC-004-b per coverage.json.',
+   'Create scripts/gate/check-cmake-ninja-env.ps1 smoke script (R-004)',
+   'New file scripts/gate/check-cmake-ninja-env.ps1. Writes a trivial CMakeLists.txt (cmake_minimum_required(VERSION 3.13) + project(toaster_smoke C)) to a temp dir, runs cmake -G Ninja -S <tmp> -B <tmp>/build, captures exit code, surfaces any "Ninja does not support" / "instance specification" line on failure. Cleans up in a finally block. Wall-clock budget < 5s. Verifier: AC-004-a, AC-004-b per coverage.json.',
    'pending'),
 
   ('build-env-ninja-hardening-launcher-hook',
    'Hook smoke script + preflight status into launch-toaster-monitored.ps1',
-   'After dot-sourcing setup-env.ps1 and before invoking cargo tauri dev, check $global:ToasterEnvPreflightOk and run pwsh scripts/check-cmake-ninja-env.ps1. On either failure, set launch_status=failed_to_launch, surface the diagnostic in launch_logs_stderr, and return without starting cargo. Verifier: AC-002-b, AC-004-c per coverage.json.',
+   'After dot-sourcing setup-env.ps1 and before invoking cargo tauri dev, check $global:ToasterEnvPreflightOk and run pwsh scripts/gate/check-cmake-ninja-env.ps1. On either failure, set launch_status=failed_to_launch, surface the diagnostic in launch_logs_stderr, and return without starting cargo. Verifier: AC-002-b, AC-004-c per coverage.json.',
    'pending'),
 
   ('build-env-ninja-hardening-docs',

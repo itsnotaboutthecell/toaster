@@ -25,7 +25,7 @@ future regression, and document the pattern.
   `scripts/setup-env.ps1` immediately after vcvars sourcing.
 - Extend the existing preflight in `scripts/setup-env.ps1` so that any
   future leak in the curated set fails loudly when `CMAKE_GENERATOR=Ninja`.
-- A new `scripts/check-cmake-ninja-env.ps1` smoke script that runs
+- A new `scripts/gate/check-cmake-ninja-env.ps1` smoke script that runs
   `cmake -G Ninja` against a trivial `CMakeLists.txt` and exits 0/non-0.
 - Hook the smoke script into `scripts/launch-toaster-monitored.ps1` as
   a fast preflight before `cargo tauri dev`.
@@ -63,7 +63,7 @@ future regression, and document the pattern.
     "not present" (`Test-Path Env:<NAME>` is `$false`), while
     `CMAKE_GENERATOR` is still `Ninja` and `INCLUDE` / `LIB` / `LIBPATH`
     are still populated.
-  - AC-001-b — `scripts/check-cmake-ninja-env.ps1` exits 0 against the
+  - AC-001-b — `scripts/gate/check-cmake-ninja-env.ps1` exits 0 against the
     curated trivial `CMakeLists.txt` immediately after `setup-env.ps1`,
     confirming cmake actually accepts the env (not just a pattern
     match).
@@ -96,7 +96,7 @@ future regression, and document the pattern.
   every env var in the curated list, the symptom each one produces when
   it leaks ("Generator Ninja does not support … specification, but …
   was specified"), and the one-line fix (`Remove-Item Env:<NAME>` plus
-  `scripts/clean-whisper-cache.ps1` to clear the now-stale CMakeCache).
+  `scripts/dev/clean-whisper-cache.ps1` to clear the now-stale CMakeCache).
 - Rationale: A future contributor hitting a fourth leak should find the
   pattern in docs in under a minute, not re-discover it.
 - Acceptance Criteria
@@ -109,7 +109,7 @@ future regression, and document the pattern.
 
 ### R-004 — Sub-5-second cmake/Ninja smoke test script
 
-- Description: Create `scripts/check-cmake-ninja-env.ps1` that writes a
+- Description: Create `scripts/gate/check-cmake-ninja-env.ps1` that writes a
   trivial `CMakeLists.txt` (a single `project(toaster_smoke C)` call)
   to a temp dir, runs `cmake -G Ninja -S <tmp> -B <tmp>/build`, asserts
   exit 0, and returns non-zero with a diagnostic message on failure.
@@ -120,10 +120,10 @@ future regression, and document the pattern.
   gate on it cheaply.
 - Acceptance Criteria
   - AC-004-a — On a workstation where `setup-env.ps1` has just run
-    cleanly, `pwsh scripts/check-cmake-ninja-env.ps1` exits 0 in under
+    cleanly, `pwsh scripts/gate/check-cmake-ninja-env.ps1` exits 0 in under
     5 seconds (wall-clock, measured by `Measure-Command`).
   - AC-004-b — On a shell where any single var from the curated R-001
-    list is artificially set, `pwsh scripts/check-cmake-ninja-env.ps1`
+    list is artificially set, `pwsh scripts/gate/check-cmake-ninja-env.ps1`
     exits non-zero and prints a diagnostic naming the offending env
     var.
   - AC-004-c — A `cargo tauri dev` launched via

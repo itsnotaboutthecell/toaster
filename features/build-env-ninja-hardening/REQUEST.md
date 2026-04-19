@@ -63,7 +63,7 @@ to merge.
 - `scripts/setup-env.ps1` strip block (extending lines 41-51 pattern).
 - `scripts/setup-env.ps1` preflight block (extending lines 112-121).
 - `docs/build.md` "Build environment gotchas" section.
-- A new `scripts/check-cmake-ninja-env.ps1` smoke script.
+- A new `scripts/gate/check-cmake-ninja-env.ps1` smoke script.
 - Wiring the smoke script into `scripts/launch-toaster-monitored.ps1`
   as a fast-fail preflight before `cargo tauri dev` starts.
 

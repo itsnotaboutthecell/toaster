@@ -4,49 +4,49 @@
     "AC-001-a": {
       "verifier": "verify-build-env-ninja-hardening.ps1",
       "kind": "script",
-      "command": "pwsh scripts/verify-build-env-ninja-hardening.ps1 -Ac AC-001-a",
+      "command": "pwsh scripts/gate/verify-build-env-ninja-hardening.ps1 -Ac AC-001-a",
       "task": "build-env-ninja-hardening-qc"
     },
     "AC-001-b": {
       "verifier": "verify-build-env-ninja-hardening.ps1",
       "kind": "script",
-      "command": "pwsh scripts/verify-build-env-ninja-hardening.ps1 -Ac AC-001-b",
+      "command": "pwsh scripts/gate/verify-build-env-ninja-hardening.ps1 -Ac AC-001-b",
       "task": "build-env-ninja-hardening-qc"
     },
     "AC-002-a": {
       "verifier": "verify-build-env-ninja-hardening.ps1",
       "kind": "script",
-      "command": "pwsh scripts/verify-build-env-ninja-hardening.ps1 -Ac AC-002-a",
+      "command": "pwsh scripts/gate/verify-build-env-ninja-hardening.ps1 -Ac AC-002-a",
       "task": "build-env-ninja-hardening-qc"
     },
     "AC-002-b": {
       "verifier": "verify-build-env-ninja-hardening.ps1",
       "kind": "script",
-      "command": "pwsh scripts/verify-build-env-ninja-hardening.ps1 -Ac AC-002-b",
+      "command": "pwsh scripts/gate/verify-build-env-ninja-hardening.ps1 -Ac AC-002-b",
       "task": "build-env-ninja-hardening-qc"
     },
     "AC-003-a": {
       "verifier": "verify-build-env-ninja-hardening.ps1",
       "kind": "script",
-      "command": "pwsh scripts/verify-build-env-ninja-hardening.ps1 -Ac AC-003-a",
+      "command": "pwsh scripts/gate/verify-build-env-ninja-hardening.ps1 -Ac AC-003-a",
       "task": "build-env-ninja-hardening-qc"
     },
     "AC-003-b": {
       "verifier": "verify-build-env-ninja-hardening.ps1",
       "kind": "script",
-      "command": "pwsh scripts/verify-build-env-ninja-hardening.ps1 -Ac AC-003-b",
+      "command": "pwsh scripts/gate/verify-build-env-ninja-hardening.ps1 -Ac AC-003-b",
       "task": "build-env-ninja-hardening-qc"
     },
     "AC-004-a": {
       "verifier": "verify-build-env-ninja-hardening.ps1",
       "kind": "script",
-      "command": "pwsh scripts/verify-build-env-ninja-hardening.ps1 -Ac AC-004-a",
+      "command": "pwsh scripts/gate/verify-build-env-ninja-hardening.ps1 -Ac AC-004-a",
       "task": "build-env-ninja-hardening-qc"
     },
     "AC-004-b": {
       "verifier": "verify-build-env-ninja-hardening.ps1",
       "kind": "script",
-      "command": "pwsh scripts/verify-build-env-ninja-hardening.ps1 -Ac AC-004-b",
+      "command": "pwsh scripts/gate/verify-build-env-ninja-hardening.ps1 -Ac AC-004-b",
       "task": "build-env-ninja-hardening-qc"
     },
     "AC-004-c": {
@@ -55,7 +55,7 @@
       "command": "pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 300",
       "task": "build-env-ninja-hardening-qc",
       "steps": [
-        "Run scripts/clean-whisper-cache.ps1 to remove any stale CMakeCache from previous failed runs.",
+        "Run scripts/dev/clean-whisper-cache.ps1 to remove any stale CMakeCache from previous failed runs.",
         "Open a fresh PowerShell window.",
         "Run: pwsh scripts/launch-toaster-monitored.ps1 -ObservationSeconds 300",
         "Confirm launch_status=launched_ok.",

@@ -204,7 +204,7 @@ try {
         exit 1
     }
 
-    $smokeScript = Join-Path $PSScriptRoot "check-cmake-ninja-env.ps1"
+    $smokeScript = Join-Path $PSScriptRoot "gate\check-cmake-ninja-env.ps1"
     if (Test-Path $smokeScript) {
         Write-Host "[monitor] Running CMake/Ninja env smoke (auto-wipes stale whisper-rs-sys caches)" -ForegroundColor Cyan
         & $smokeScript -WipeStaleCaches

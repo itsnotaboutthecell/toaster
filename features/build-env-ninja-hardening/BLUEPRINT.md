@@ -44,9 +44,9 @@
   before invoking `cargo tauri dev`. This keeps the existing dot-source
   contract intact while still aborting the launcher path.
 
-- **R-004 smoke script location: `scripts/check-cmake-ninja-env.ps1`.**
+- **R-004 smoke script location: `scripts/gate/check-cmake-ninja-env.ps1`.**
   Same convention as `scripts/check-translations.ts` and
-  `scripts/check-feature-coverage.ps1` (`check-*` = fast gate).
+  `scripts/feature/check-feature-coverage.ps1` (`check-*` = fast gate).
 
 - **R-004 smoke script implementation: `New-TemporaryFile`-style temp
   dir, write `cmake_minimum_required(VERSION 3.13)` +
@@ -57,7 +57,7 @@
 
 - **R-004 launcher hook:
   `scripts/launch-toaster-monitored.ps1` calls
-  `pwsh scripts/check-cmake-ninja-env.ps1` AFTER sourcing
+  `pwsh scripts/gate/check-cmake-ninja-env.ps1` AFTER sourcing
   `setup-env.ps1` and BEFORE invoking `cargo tauri dev`.** On non-zero
   exit, the launcher prints the diagnostic, sets
   `launch_status=failed_to_launch`, and returns without ever starting
@@ -78,7 +78,7 @@
 | File | Change kind | Notes |
 |------|-------------|-------|
 | `scripts/setup-env.ps1` | Edit (strip + preflight) | Extend lines 41-51 and lines 112-121; introduce one `$script:NinjaHostileVars` constant. |
-| `scripts/check-cmake-ninja-env.ps1` | New | New gate script per R-004. |
+| `scripts/gate/check-cmake-ninja-env.ps1` | New | New gate script per R-004. |
 | `scripts/launch-toaster-monitored.ps1` | Edit (hook) | Insert smoke-script call between setup sourcing and cargo invocation; respect `$global:ToasterEnvPreflightOk`. |
 | `docs/build.md` | Edit (docs) | New subsection + new troubleshooting row. |
 | `.github/workflows/*.yml` (Windows job, if present) | Optional edit | Add a CI step calling the smoke script; deferred to implementation if a Windows runner exists. |
@@ -110,7 +110,7 @@
     v
 [ launch-toaster-monitored.ps1 ]
     + if $global:ToasterEnvPreflightOk -eq $false => abort, status=failed_to_launch
-    + else: pwsh scripts/check-cmake-ninja-env.ps1
+    + else: pwsh scripts/gate/check-cmake-ninja-env.ps1
        - exit 0 => proceed to cargo tauri dev
        - exit !=0 => abort, status=failed_to_launch, surface diagnostic
     |
@@ -126,7 +126,7 @@
   feature is invisible on a healthy machine.
 - Existing developers who already have `target/` populated with a
   failed `whisper-rs-sys-<hash>` directory must run
-  `scripts/clean-whisper-cache.ps1` once after pulling. Call that out
+  `scripts/dev/clean-whisper-cache.ps1` once after pulling. Call that out
   in the journal entry promoting STATE.
 - Dot-source contract for `setup-env.ps1` is preserved (no `exit` in
   preflight; status via `$global:` variable instead).

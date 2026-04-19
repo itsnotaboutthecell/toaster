@@ -172,7 +172,7 @@ For full details see the
 | `link.exe not found` | MSVC env not loaded | Run `scripts/setup-env.ps1` in current shell |
 | `ort does not provide prebuilt binaries for gnu` | Wrong target | Use `stable-x86_64-pc-windows-msvc` |
 | `Generator Ninja does not support platform specification, but platform x64 was specified` | `Platform=x64` (set by `vcvars64.bat`) leaked into the env alongside `CMAKE_GENERATOR=Ninja`. CMake on Windows reads `Platform` as the implicit default for `CMAKE_GENERATOR_PLATFORM`. | `setup-env.ps1` strips it after sourcing vcvars; if you bypass that script, `Remove-Item Env:Platform` before invoking cargo. Stale `target/debug/build/whisper-rs-sys-*/CMakeCache.txt` remembers the bad generator — delete those dirs once after the fix. |
-| `Generator Ninja does not support instance specification, but instance C:/Program Files (x86)/...` | Stale `CMakeCache.txt` from a prior VS-generator build of `whisper-rs-sys` has `CMAKE_GENERATOR_INSTANCE:INTERNAL=...` baked in. When cmake re-runs with `CMAKE_GENERATOR=Ninja`, the cached internal conflicts with Ninja. | `scripts/check-cmake-ninja-env.ps1 -WipeStaleCaches` (auto-invoked by `launch-toaster-monitored.ps1`), or `cargo clean -p whisper-rs-sys --manifest-path src-tauri\Cargo.toml`. |
+| `Generator Ninja does not support instance specification, but instance C:/Program Files (x86)/...` | Stale `CMakeCache.txt` from a prior VS-generator build of `whisper-rs-sys` has `CMAKE_GENERATOR_INSTANCE:INTERNAL=...` baked in. When cmake re-runs with `CMAKE_GENERATOR=Ninja`, the cached internal conflicts with Ninja. | `scripts/gate/check-cmake-ninja-env.ps1 -WipeStaleCaches` (auto-invoked by `launch-toaster-monitored.ps1`), or `cargo clean -p whisper-rs-sys --manifest-path src-tauri\Cargo.toml`. |
 
 ## Build environment gotchas
 
@@ -227,7 +227,7 @@ single source of truth.
 The same shape can also surface from a stale `CMakeCache.txt` even when
 the live env is clean — the `_INSTANCE` / `_PLATFORM` / `_TOOLSET`
 values are persisted as `INTERNAL` cache entries from a prior failed
-configure. `scripts/check-cmake-ninja-env.ps1` scans for those and (with
+configure. `scripts/gate/check-cmake-ninja-env.ps1` scans for those and (with
 `-WipeStaleCaches`) deletes them. The monitored launcher invokes it
 with `-WipeStaleCaches` before every `cargo tauri dev`.
 
