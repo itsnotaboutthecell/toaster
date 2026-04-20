@@ -1,16 +1,46 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import { useTranslation } from "react-i18next";
 import { Info, Cpu, Scissors, SlidersHorizontal, Bug } from "lucide-react";
 import toasterLogo from "../assets/toaster_text.svg";
-import {
-  AboutSettings,
-  ModelsSettings,
-  AdvancedSettings,
-  DebugSettings,
-} from "./settings";
 import EditorView from "./editor/EditorView";
 import { useSettings } from "../hooks/useSettings";
 import type { AppSettings } from "@/bindings";
+
+// Non-editor settings tabs are lazy-loaded so the initial app shell
+// only pays for the editor surface. Users typically land in the editor
+// and only open settings on-demand, so the extra network fetch is paid
+// at the moment the user navigates there (Suspense fallback hides the
+// latency). Net bundle win of ~150+ kB gzipped main chunk.
+const ModelsSettings = lazy(() =>
+  import("./settings").then((m) => ({ default: m.ModelsSettings })),
+);
+const AdvancedSettings = lazy(() =>
+  import("./settings").then((m) => ({ default: m.AdvancedSettings })),
+);
+const AboutSettings = lazy(() =>
+  import("./settings").then((m) => ({ default: m.AboutSettings })),
+);
+const DebugSettings = lazy(() =>
+  import("./settings").then((m) => ({ default: m.DebugSettings })),
+);
+
+/** Minimal fallback for lazy settings tabs — avoids layout shift. */
+const SettingsTabFallback: React.FC = () => (
+  <div className="p-4 text-sm text-mid-gray/60" aria-busy="true">…</div>
+);
+
+/** Wrap a lazy settings tab in its own Suspense boundary. */
+function withSuspense<P extends object>(
+  Component: React.ComponentType<P>,
+): React.ComponentType<P> {
+  const Wrapped: React.FC<P> = (props) => (
+    <Suspense fallback={<SettingsTabFallback />}>
+      <Component {...props} />
+    </Suspense>
+  );
+  Wrapped.displayName = `withSuspense(${Component.displayName ?? "Lazy"})`;
+  return Wrapped;
+}
 
 export type SidebarSection = keyof typeof SECTIONS_CONFIG;
 
@@ -35,25 +65,25 @@ export const SECTIONS_CONFIG = {
   models: {
     labelKey: "sidebar.models",
     icon: Cpu,
-    component: ModelsSettings,
+    component: withSuspense(ModelsSettings),
     enabled: () => true,
   },
   advanced: {
     labelKey: "sidebar.advanced",
     icon: SlidersHorizontal,
-    component: AdvancedSettings,
+    component: withSuspense(AdvancedSettings),
     enabled: () => true,
   },
   about: {
     labelKey: "sidebar.about",
     icon: Info,
-    component: AboutSettings,
+    component: withSuspense(AboutSettings),
     enabled: () => true,
   },
   debug: {
     labelKey: "sidebar.debug",
     icon: Bug,
-    component: DebugSettings,
+    component: withSuspense(DebugSettings),
     enabled: (settings) => settings?.debug_mode === true,
   },
 } as const satisfies Record<string, SectionConfig>;

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { invoke } from "@tauri-apps/api/core";
+import { useShallow } from "zustand/react/shallow";
 import { useEditorStore } from "@/stores/editorStore";
 import TranscriptContextMenu, { type ContextMenuState } from "./TranscriptContextMenu";
 import FindReplaceBar from "./FindReplaceBar";
@@ -42,6 +43,11 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
   onWordClick,
 }) => {
   const { t } = useTranslation();
+  // useShallow is mandatory here: `useEditorStore()` with no selector
+  // returns a new object every store update and re-renders the whole
+  // word list (10k+ spans) on every keystroke. With useShallow the
+  // subscription only triggers when one of the picked fields actually
+  // changes by reference / value. Key perf fix per audit finding F3.
   const {
     words,
     selectedIndex,
@@ -60,7 +66,27 @@ const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
     setSelectionRange,
     refreshFromBackend,
     clearHighlights,
-  } = useEditorStore();
+  } = useEditorStore(
+    useShallow((s) => ({
+      words: s.words,
+      selectedIndex: s.selectedIndex,
+      selectionRange: s.selectionRange,
+      highlightedIndices: s.highlightedIndices,
+      highlightType: s.highlightType,
+      deleteWord: s.deleteWord,
+      restoreWord: s.restoreWord,
+      silenceWord: s.silenceWord,
+      splitWord: s.splitWord,
+      deleteRange: s.deleteRange,
+      restoreAll: s.restoreAll,
+      undo: s.undo,
+      redo: s.redo,
+      selectWord: s.selectWord,
+      setSelectionRange: s.setSelectionRange,
+      refreshFromBackend: s.refreshFromBackend,
+      clearHighlights: s.clearHighlights,
+    })),
+  );
 
   const containerRef = useRef<HTMLDivElement>(null);
   const findInputRef = useRef<HTMLInputElement>(null);

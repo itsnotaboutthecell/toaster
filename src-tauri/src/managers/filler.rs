@@ -236,21 +236,25 @@ pub fn detect_fillers(words: &[Word], config: &FillerConfig) -> Vec<usize> {
         .max()
         .unwrap_or(0);
 
-    // Build a set of normalized filler phrases for fast lookup.
-    // For single-word fillers, also store a fuzzy-normalized form.
-    let filler_set: Vec<(String, String, usize)> = config
-        .filler_words
-        .iter()
-        .map(|f| {
-            let lower = f.to_lowercase();
-            let fuzzy = if f.split_whitespace().count() == 1 {
-                normalize_filler(&lower)
-            } else {
-                lower.clone()
-            };
-            (lower, fuzzy, f.split_whitespace().count())
-        })
-        .collect();
+    // Build fast-lookup sets keyed by token count for O(1) membership
+    // checks. `exact_by_len[k]` holds exact lowercase k-token phrases.
+    // `fuzzy_single` holds fuzzy-normalized single-word fillers.
+    // Previously this was a single Vec scanned linearly for every window
+    // at every word — the inner loop is hot on long transcripts.
+    use std::collections::HashSet;
+    let mut exact_by_len: Vec<HashSet<String>> = vec![HashSet::new(); max_filler_tokens + 1];
+    let mut fuzzy_single: HashSet<String> = HashSet::new();
+    for f in &config.filler_words {
+        let lower = f.to_lowercase();
+        let len = f.split_whitespace().count();
+        if len == 0 || len > max_filler_tokens {
+            continue;
+        }
+        if len == 1 {
+            fuzzy_single.insert(normalize_filler(&lower));
+        }
+        exact_by_len[len].insert(lower);
+    }
 
     // Collect indices of non-deleted words so we can walk them in order.
     let active: Vec<usize> = words
@@ -278,20 +282,9 @@ pub fn detect_fillers(words: &[Word], config: &FillerConfig) -> Vec<usize> {
                 .collect::<Vec<_>>()
                 .join(" ");
 
-            if filler_set.iter().any(|(exact, fuzzy, len)| {
-                if *len != window {
-                    return false;
-                }
-                if *exact == phrase {
-                    return true;
-                }
-                // Fuzzy match for single-word fillers
-                if window == 1 {
-                    let norm_phrase = normalize_filler(&phrase);
-                    return *fuzzy == norm_phrase;
-                }
-                false
-            }) {
+            let hit = exact_by_len[window].contains(&phrase)
+                || (window == 1 && fuzzy_single.contains(&normalize_filler(&phrase)));
+            if hit {
                 for offset in 0..window {
                     indices.push(active[ai + offset]);
                 }
@@ -306,9 +299,11 @@ pub fn detect_fillers(words: &[Word], config: &FillerConfig) -> Vec<usize> {
             // explicit for clarity).
             let norm = normalize(&words[wi].text);
             let fuzzy_norm = normalize_filler(&norm);
-            if filler_set
-                .iter()
-                .any(|(exact, fuzzy, len)| *len == 1 && (*exact == norm || *fuzzy == fuzzy_norm))
+            if exact_by_len
+                .get(1)
+                .map(|s| s.contains(&norm))
+                .unwrap_or(false)
+                || fuzzy_single.contains(&fuzzy_norm)
             {
                 indices.push(wi);
             }

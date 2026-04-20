@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { ask, open, save } from "@tauri-apps/plugin-dialog";
 import { convertFileSrc } from "@tauri-apps/api/core";
+import { useShallow } from "zustand/react/shallow";
 import {
   FileVideo,
   Upload,
@@ -49,12 +50,36 @@ import { useEditorExports } from "@/components/editor/hooks/useEditorExports";
  */
 const EditorView: React.FC = () => {
   const { t } = useTranslation();
-  const { words, setWords, deleteWord, silenceWord, splitWord, undo, redo, deleteRange, selectWord, setSelectionRange, clearHighlights, refreshFromBackend } = useEditorStore();
+  // useShallow mandatory here — otherwise every keystroke triggers a
+  // full EditorView re-render, which cascades into TranscriptEditor
+  // rendering 10k+ word spans. Audit finding F3.
+  const { words, setWords, deleteWord, silenceWord, splitWord, undo, redo, deleteRange, selectWord, setSelectionRange, clearHighlights, refreshFromBackend } = useEditorStore(
+    useShallow((s) => ({
+      words: s.words,
+      setWords: s.setWords,
+      deleteWord: s.deleteWord,
+      silenceWord: s.silenceWord,
+      splitWord: s.splitWord,
+      undo: s.undo,
+      redo: s.redo,
+      deleteRange: s.deleteRange,
+      selectWord: s.selectWord,
+      setSelectionRange: s.setSelectionRange,
+      clearHighlights: s.clearHighlights,
+      refreshFromBackend: s.refreshFromBackend,
+    })),
+  );
   const selectedIndex = useEditorStore((s) => s.selectedIndex);
   const burnCaptions = useEditorStore((s) => s.burnCaptions);
   const setBurnCaptions = useEditorStore((s) => s.setBurnCaptions);
-  const { mediaUrl, currentTime, duration, setMedia } =
-    usePlayerStore();
+  const { mediaUrl, currentTime, duration, setMedia } = usePlayerStore(
+    useShallow((s) => ({
+      mediaUrl: s.mediaUrl,
+      currentTime: s.currentTime,
+      duration: s.duration,
+      setMedia: s.setMedia,
+    })),
+  );
   const mediaInfo = usePlayerStore((s) => s.mediaInfo);
   const setMediaInfo = usePlayerStore((s) => s.setMediaInfo);
   const clearMedia = usePlayerStore((s) => s.clearMedia);
