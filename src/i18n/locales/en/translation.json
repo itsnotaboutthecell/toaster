@@ -173,6 +173,12 @@
       "groups": {
         "performance": "Performance",
         "captions": "Captions"
+      },
+      "recommendation": {
+        "heading": "Recommended for your machine",
+        "fastest": "Fastest — quick transcription",
+        "balanced": "Balanced — good speed and accuracy",
+        "highestAccuracy": "Highest accuracy — slower, best results"
       }
     },
     "debug": {

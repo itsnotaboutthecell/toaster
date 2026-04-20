@@ -1,3 +1,5 @@
+use crate::managers::model::hardware_profile::HardwareProfile;
+use crate::managers::model::recommendation::ModelRecommendation;
 use crate::managers::model::{ModelCategory, ModelInfo, ModelManager};
 use crate::managers::transcription::{ModelStateEvent, TranscriptionManager};
 use crate::settings::{get_settings, write_settings, ModelUnloadTimeout};
@@ -248,4 +250,26 @@ pub async fn cancel_download(
     model_manager
         .cancel_download(&model_id)
         .map_err(|e| e.to_string())
+}
+
+/// Cached hardware probe for the current machine. Populated once at
+/// `ModelManager::new` time; cheap to call repeatedly (returns a
+/// clone of the cached struct, no probe re-run).
+#[tauri::command]
+#[specta::specta]
+pub async fn get_hardware_profile(
+    model_manager: State<'_, Arc<ModelManager>>,
+) -> Result<HardwareProfile, String> {
+    Ok(model_manager.hardware_profile().clone())
+}
+
+/// Backend-authored model recommendation for the current machine.
+/// Pure scoring over the cached hardware profile and the model
+/// catalog snapshot — see `managers::model::recommendation`.
+#[tauri::command]
+#[specta::specta]
+pub async fn get_recommended_model(
+    model_manager: State<'_, Arc<ModelManager>>,
+) -> Result<ModelRecommendation, String> {
+    Ok(model_manager.recommend_model())
 }
