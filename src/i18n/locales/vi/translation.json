@@ -594,5 +594,36 @@
   },
   "experiments": {
     "feedbackLink": "Send feedback"
+  },
+  "shortcuts": {
+    "title": "Keyboard shortcuts",
+    "close": "Close",
+    "or": "or",
+    "openButton": "Keyboard shortcuts",
+    "footer": "Press ? or F1 any time to open this panel.",
+    "groups": {
+      "playback": "Playback",
+      "editing": "Editing",
+      "selection": "Selection",
+      "history": "History",
+      "general": "General"
+    },
+    "actions": {
+      "playPause": "Play / Pause",
+      "jogPlayPause": "Play / Pause (J/K/L mode)",
+      "jogBack": "Jog back 10s (pauses)",
+      "jogForward": "Jog forward 10s (pauses)",
+      "seekBack": "Seek back 5s",
+      "seekForward": "Seek forward 5s",
+      "deleteWord": "Delete word or selection",
+      "silenceWord": "Silence word",
+      "splitWord": "Split word",
+      "selectAll": "Select all words",
+      "deselect": "Clear selection",
+      "undo": "Undo",
+      "redo": "Redo",
+      "openHelp": "Show this help",
+      "toggleDebug": "Toggle debug mode"
+    }
   }
 }

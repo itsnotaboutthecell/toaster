@@ -14,6 +14,7 @@ import {
   AudioLines,
   RotateCcw,
   Scissors,
+  Keyboard,
 } from "lucide-react";
 import { SettingsGroup } from "@/components/ui/SettingsGroup";
 import { Button } from "@/components/ui/Button";
@@ -26,6 +27,7 @@ import MediaPlayer from "@/components/player/MediaPlayer";
 import Waveform from "@/components/player/Waveform";
 import EditorToolbar from "@/components/editor/EditorToolbar";
 import ExportMenu from "@/components/editor/ExportMenu";
+import KeyboardShortcutsDialog from "@/components/editor/KeyboardShortcutsDialog";
 import { unwrapResult } from "@/components/editor/EditorView.util";
 import { useEditorExports } from "@/components/editor/hooks/useEditorExports";
 
@@ -53,7 +55,20 @@ const EditorView: React.FC = () => {
   // useShallow mandatory here — otherwise every keystroke triggers a
   // full EditorView re-render, which cascades into TranscriptEditor
   // rendering 10k+ word spans. Audit finding F3.
-  const { words, setWords, deleteWord, silenceWord, splitWord, undo, redo, deleteRange, selectWord, setSelectionRange, clearHighlights, refreshFromBackend } = useEditorStore(
+  const {
+    words,
+    setWords,
+    deleteWord,
+    silenceWord,
+    splitWord,
+    undo,
+    redo,
+    deleteRange,
+    selectWord,
+    setSelectionRange,
+    clearHighlights,
+    refreshFromBackend,
+  } = useEditorStore(
     useShallow((s) => ({
       words: s.words,
       setWords: s.setWords,
@@ -91,6 +106,7 @@ const EditorView: React.FC = () => {
   const [isCleaningUp, setIsCleaningUp] = useState(false);
   const [modelMissing, setModelMissing] = useState(false);
   const [lastSavedPath, setLastSavedPath] = useState<string | null>(null);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const {
     handleExport,
     handleFFmpegScript,
@@ -122,26 +138,62 @@ const EditorView: React.FC = () => {
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
 
       const { setPlaying, isPlaying } = usePlayerStore.getState();
-      const { selectedIndex: selIdx, selectionRange: selRange, highlightedIndices: hlIndices, highlightType: hlType } = useEditorStore.getState();
+      const {
+        selectedIndex: selIdx,
+        selectionRange: selRange,
+        highlightedIndices: hlIndices,
+        highlightType: hlType,
+      } = useEditorStore.getState();
+
+      // Help overlay: "?" (Shift+/) or F1, plus Escape-to-close is owned by the dialog.
+      if ((e.key === "?" || e.key === "F1") && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        setShortcutsOpen((v) => !v);
+        return;
+      }
 
       if (e.key === " " && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         setPlaying(!isPlaying);
-      } else if ((e.key === "Delete" || e.key === "Backspace") && !e.ctrlKey && !e.metaKey) {
+      } else if (e.key === "k" && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+        // J/K/L transport — standard video-editor muscle memory. K toggles play
+        // like Space; J/L jog by 10 s and force-pause so the user lands on a
+        // precise frame. We pause on jog to keep behaviour predictable — users
+        // can press K / Space to resume.
+        e.preventDefault();
+        setPlaying(!isPlaying);
+      } else if (e.key === "j" && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+        e.preventDefault();
+        const store = usePlayerStore.getState();
+        store.setPlaying(false);
+        store.seekTo(Math.max(0, store.currentTime - 10));
+      } else if (e.key === "l" && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+        e.preventDefault();
+        const store = usePlayerStore.getState();
+        store.setPlaying(false);
+        store.seekTo(Math.min(store.duration, store.currentTime + 10));
+      } else if (
+        (e.key === "Delete" || e.key === "Backspace") &&
+        !e.ctrlKey &&
+        !e.metaKey
+      ) {
         e.preventDefault();
         if (hlIndices.length > 0) {
           // Bulk-delete highlighted words (fillers or pause-adjacent)
           if (hlType === "filler") {
-            commands.deleteFillers().then(async (result) => {
-              const count = unwrapResult(result);
-              if (count > 0) {
-                await refreshFromBackend();
-              }
-              clearHighlights();
-            }).catch((err) => {
-              console.error("Failed to delete fillers:", err);
-              clearHighlights();
-            });
+            commands
+              .deleteFillers()
+              .then(async (result) => {
+                const count = unwrapResult(result);
+                if (count > 0) {
+                  await refreshFromBackend();
+                }
+                clearHighlights();
+              })
+              .catch((err) => {
+                console.error("Failed to delete fillers:", err);
+                clearHighlights();
+              });
           } else {
             (async () => {
               for (const idx of hlIndices) {
@@ -162,7 +214,9 @@ const EditorView: React.FC = () => {
       } else if (e.key === "ArrowRight" && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         const store = usePlayerStore.getState();
-        usePlayerStore.getState().seekTo(Math.min(store.duration, store.currentTime + 5));
+        usePlayerStore
+          .getState()
+          .seekTo(Math.min(store.duration, store.currentTime + 5));
       } else if (e.key === "d" && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
         if (selRange) {
@@ -205,14 +259,27 @@ const EditorView: React.FC = () => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [deleteWord, deleteRange, silenceWord, splitWord, undo, redo, selectWord, setSelectionRange, clearHighlights, refreshFromBackend]);
+  }, [
+    deleteWord,
+    deleteRange,
+    silenceWord,
+    splitWord,
+    undo,
+    redo,
+    selectWord,
+    setSelectionRange,
+    clearHighlights,
+    refreshFromBackend,
+  ]);
 
   const handleTranscribe = useCallback(async () => {
     if (!mediaInfo) return;
     setIsTranscribing(true);
     setModelMissing(false);
     try {
-      const result = unwrapResult(await commands.transcribeMediaFile(mediaInfo.path));
+      const result = unwrapResult(
+        await commands.transcribeMediaFile(mediaInfo.path),
+      );
       await setWords(result);
     } catch (err) {
       const errStr = String(err);
@@ -247,8 +314,22 @@ const EditorView: React.FC = () => {
           {
             name: t("editor.mediaFiles"),
             extensions: [
-              "mp4", "mkv", "webm", "avi", "mov", "wmv", "flv", "m4v",
-              "mp3", "wav", "flac", "ogg", "aac", "m4a", "wma", "opus",
+              "mp4",
+              "mkv",
+              "webm",
+              "avi",
+              "mov",
+              "wmv",
+              "flv",
+              "m4v",
+              "mp3",
+              "wav",
+              "flac",
+              "ogg",
+              "aac",
+              "m4a",
+              "wma",
+              "opus",
             ],
           },
         ],
@@ -271,7 +352,9 @@ const EditorView: React.FC = () => {
           if (storeInfo) {
             setIsTranscribing(true);
             setModelMissing(false);
-            const result = unwrapResult(await commands.transcribeMediaFile(storeInfo.path));
+            const result = unwrapResult(
+              await commands.transcribeMediaFile(storeInfo.path),
+            );
             await setWords(result);
             setIsTranscribing(false);
           }
@@ -441,7 +524,9 @@ const EditorView: React.FC = () => {
                 onClick={handleImportMedia}
               >
                 <Upload size={40} className="text-mid-gray/50" />
-                <p className="text-sm text-mid-gray">{t("editor.importMedia")}</p>
+                <p className="text-sm text-mid-gray">
+                  {t("editor.importMedia")}
+                </p>
                 <p className="text-xs text-mid-gray/60">
                   {t("editor.supportedFormats")}
                 </p>
@@ -544,9 +629,7 @@ const EditorView: React.FC = () => {
             className="inline-flex items-center gap-2"
           >
             <FileText size={16} />
-            {isTranscribing
-              ? t("editor.transcribing")
-              : t("editor.transcribe")}
+            {isTranscribing ? t("editor.transcribing") : t("editor.transcribe")}
           </Button>
           {modelMissing && (
             <p className="text-xs text-amber-400">
@@ -615,6 +698,29 @@ const EditorView: React.FC = () => {
         onBurnCaptionsChange={setBurnCaptions}
         normalizeAudio={normalizeAudio}
         onNormalizeAudioToggle={handleNormalizeToggle}
+      />
+
+      {/* Floating help button — always visible, keyboard-first users open via
+          "?" / F1 (wired in the global key handler). Bottom-right to stay out
+          of the way of editor content. Uses <Button> so the button-variant
+          gate (R-007) stays green. */}
+      <div className="fixed bottom-16 right-4 z-40">
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={() => setShortcutsOpen(true)}
+          aria-label={t("shortcuts.openButton")}
+          title={t("shortcuts.openButton")}
+          className="!rounded-full p-2 shadow-lg"
+        >
+          <Keyboard size={16} />
+        </Button>
+      </div>
+
+      <KeyboardShortcutsDialog
+        open={shortcutsOpen}
+        onClose={() => setShortcutsOpen(false)}
       />
     </div>
   );
