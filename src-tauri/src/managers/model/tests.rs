@@ -180,10 +180,14 @@ fn test_verify_sha256_fails_and_deletes_partial_when_file_missing() {
 
 #[test]
 fn model_category_variants() {
-    let variants = [ModelCategory::Transcription];
+    let variants = [
+        ModelCategory::Transcription,
+        ModelCategory::VoiceActivityDetection,
+    ];
     for v in variants {
         let classified = match v {
             ModelCategory::Transcription => "transcription",
+            ModelCategory::VoiceActivityDetection => "voice-activity-detection",
         };
         assert!(!classified.is_empty());
     }

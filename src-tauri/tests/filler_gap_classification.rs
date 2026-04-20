@@ -42,7 +42,7 @@ fn true_silence_when_mean_below_silence_threshold() {
     assert_eq!(class, GapClassification::TrueSilence);
     // Threshold constant is a public gate — make sure the band we
     // asserted above is actually below it.
-    assert!(0.05 < GAP_SILENCE_THRESHOLD);
+    const _: () = assert!(0.05 < GAP_SILENCE_THRESHOLD);
 }
 
 #[test]
@@ -50,7 +50,7 @@ fn non_speech_acoustic_when_mean_in_middle_band() {
     let curve = vec![0.3f32; 32];
     let class = classify_gap(0, 900_000, &curve);
     assert_eq!(class, GapClassification::NonSpeechAcoustic);
-    assert!(0.3 >= GAP_SILENCE_THRESHOLD && 0.3 < GAP_SPEECH_THRESHOLD);
+    const _: () = assert!(0.3 >= GAP_SILENCE_THRESHOLD && 0.3 < GAP_SPEECH_THRESHOLD);
 }
 
 #[test]
@@ -58,5 +58,5 @@ fn missed_speech_when_mean_above_speech_threshold() {
     let curve = vec![0.9f32; 32];
     let class = classify_gap(0, 900_000, &curve);
     assert_eq!(class, GapClassification::MissedSpeech);
-    assert!(0.9 >= GAP_SPEECH_THRESHOLD);
+    const _: () = assert!(0.9 >= GAP_SPEECH_THRESHOLD);
 }

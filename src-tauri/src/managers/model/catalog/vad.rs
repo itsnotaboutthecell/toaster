@@ -4,21 +4,19 @@
 //! file-based analyzer consumed by
 //! [`managers::transcription::prefilter`] (R-002),
 //! [`managers::splice::boundaries`] (R-003), and
-//! [`managers::filler`] (R-004). It therefore does not go through the
-//! `ModelInfo` / `EngineType::*` catalog surface that users see for
-//! picking an ASR model — it has its own tiny metadata block here and
-//! reuses the existing download / SHA-256 verification primitives in
-//! the parent `managers::model` module.
+//! [`managers::filler`] (R-004). Phase 4 wires it through the same
+//! `ModelManager` download / SHA-256 / cancel / delete pipeline used
+//! for ASR models, differentiated by
+//! [`ModelCategory::VoiceActivityDetection`] so the ASR model picker
+//! filters it out.
 //!
 //! All three consumers must call [`silero_vad_model_path`] to discover
 //! the ONNX location, and must treat absence as a graceful-fallback
 //! signal per BLUEPRINT AD-8.
-//!
-//! The URL and SHA-256 placeholders below are deliberate and gate
-//! STATE.md promotion to `implemented`. Populate them with the pinned
-//! snakers4/silero-vad release that ships the v4 ONNX before merging.
 
 use std::path::{Path, PathBuf};
+
+use super::super::{EngineType, ModelCategory, ModelInfo};
 
 /// On-disk filename for the Silero VAD ONNX. Kept short and
 /// versionless so future model swaps are a one-line catalog change.
@@ -33,32 +31,53 @@ pub const SILERO_VAD_MODEL_ID: &str = "silero-vad";
 /// downloader verifies by SHA-256, not size.
 pub const SILERO_VAD_APPROX_SIZE_BYTES: u64 = 1_807_522;
 
-/// Upstream download URL for the pinned Silero v4 ONNX. `None` means
-/// the catalog entry has not been populated yet — callers must treat
-/// absence as "feature not downloadable in this build" and surface a
-/// clear message rather than silently 404. Populated before STATE.md
-/// advances to `implemented` per features/reintroduce-silero-vad.
-#[allow(dead_code)] // wired by Phase 2 downloader plumbing.
-pub const SILERO_VAD_URL: Option<&str> =
-    Some("https://github.com/snakers4/silero-vad/raw/v4.0/files/silero_vad.onnx");
+/// Upstream download URL for the pinned Silero v4 ONNX.
+pub const SILERO_VAD_URL: &str =
+    "https://github.com/snakers4/silero-vad/raw/v4.0/files/silero_vad.onnx";
 
-/// Expected SHA-256 of [`SILERO_VAD_URL`]'s payload. `None` until the
-/// URL is pinned; the downloader refuses to activate prefilter /
-/// boundary / filler features when the hash is missing so a
-/// silently-bad model file cannot bypass verification.
-///
-/// Pinned to the snakers4/silero-vad v4.0 release tag (1,807,522 bytes);
-/// verified 2026-04-19 via `Invoke-WebRequest` + `Get-FileHash -Algorithm SHA256`.
-#[allow(dead_code)] // wired by Phase 2 downloader plumbing.
-pub const SILERO_VAD_SHA256: Option<&str> =
-    Some("a35ebf52fd3ce5f1469b2a36158dba761bc47b973ea3382b3186ca15b1f5af28");
+/// Expected SHA-256 of [`SILERO_VAD_URL`]'s payload. Pinned to the
+/// snakers4/silero-vad v4.0 release tag (1,807,522 bytes); verified
+/// 2026-04-19 via `Invoke-WebRequest` + `Get-FileHash -Algorithm SHA256`.
+pub const SILERO_VAD_SHA256: &str =
+    "a35ebf52fd3ce5f1469b2a36158dba761bc47b973ea3382b3186ca15b1f5af28";
 
 /// Resolve the on-disk location of the Silero VAD ONNX inside
 /// `models_dir`. The file may or may not exist — callers must
 /// `Path::exists()` before handing to `SileroVad::new`. This is the
 /// single source of truth for the filesystem path; do not duplicate
 /// the `models_dir.join(SILERO_VAD_FILENAME)` expression elsewhere.
-#[allow(dead_code)] // wired by Phase 2 consumers (R-002 / R-003 / R-004).
 pub fn silero_vad_model_path(models_dir: &Path) -> PathBuf {
     models_dir.join(SILERO_VAD_FILENAME)
+}
+
+/// ModelInfo entries exposed to the catalog aggregator.
+/// Currently a single Silero entry; future VAD backends would append here.
+pub(super) fn entries() -> Vec<ModelInfo> {
+    vec![ModelInfo {
+        id: SILERO_VAD_MODEL_ID.to_string(),
+        name: "Silero VAD".to_string(),
+        description: "Voice activity detector used to pre-filter silence before transcription \
+                      and to refine splice boundaries. ~1.8 MB, runs locally."
+            .to_string(),
+        filename: SILERO_VAD_FILENAME.to_string(),
+        url: Some(SILERO_VAD_URL.to_string()),
+        sha256: Some(SILERO_VAD_SHA256.to_string()),
+        // `size_mb` is UI-display only. Silero is < 2 MB; round up so the
+        // download card reads "2 MB" rather than "0 MB" (integer division).
+        size_mb: SILERO_VAD_APPROX_SIZE_BYTES.div_ceil(1024 * 1024),
+        is_downloaded: false,
+        is_downloading: false,
+        partial_size: 0,
+        is_directory: false,
+        engine_type: EngineType::default(),
+        accuracy_score: 0.0,
+        speed_score: 0.0,
+        supports_translation: false,
+        is_recommended: false,
+        supported_languages: vec![],
+        supports_language_selection: false,
+        is_custom: false,
+        category: ModelCategory::VoiceActivityDetection,
+        transcription_metadata: None,
+    }]
 }

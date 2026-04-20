@@ -323,6 +323,13 @@
       "vadRefineBoundaries": {
         "label": "Refine Splice Boundaries (VAD)",
         "description": "Use the per-frame speech probability curve as an extra bias when snapping splice boundaries. Leaves boundaries unchanged where the pre-feature zero-crossing and energy-valley snap already lands on silence. Defaults off; enable for tricky overlapping phoneme seams."
+      },
+      "vadModel": {
+        "required": "Silero VAD model is required for these features to run.",
+        "download": "Download Silero VAD (~{{sizeMb}} MB)",
+        "downloading": "Downloading Silero VAD... {{percent}}%",
+        "verifying": "Verifying Silero VAD checksum...",
+        "ready": "Silero VAD model is ready."
       }
     },
     "captions": {
@@ -388,6 +395,10 @@
         "experimental": {
           "title": "Experimental",
           "description": "Opt-in features that may change or be removed. Gated by the master toggle below."
+        },
+        "vad": {
+          "title": "Voice activity detection",
+          "description": "Opt-in Silero VAD consumers: ASR pre-filter and splice-boundary refinement. Requires a one-time ~2 MB model download."
         }
       },
       "experimentalMaster": {

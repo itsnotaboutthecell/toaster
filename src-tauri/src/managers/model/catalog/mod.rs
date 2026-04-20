@@ -24,6 +24,9 @@ pub(super) fn build_static_catalog() -> HashMap<String, ModelInfo> {
     for entry in transcription::entries() {
         out.insert(entry.id.clone(), entry);
     }
+    for entry in vad::entries() {
+        out.insert(entry.id.clone(), entry);
+    }
     out
 }
 
