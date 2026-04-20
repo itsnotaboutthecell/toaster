@@ -141,6 +141,14 @@ async changeNormalizeAudioSetting(enabled: boolean) : Promise<Result<null, strin
     else return { status: "error", error: e as string };
 }
 },
+/**
+ * R-006 — master toggle for the Silero VAD pre-filter ASR path.
+ * See features/reintroduce-silero-vad/PRD.md R-006 / AC-006-a.
+ * When true, the transcription manager slices audio into detected
+ * speech windows before calling the ASR; when false, the legacy
+ * whole-file path runs. The setting is read once per transcription
+ * job — flipping it mid-job has no effect on the in-flight job.
+ */
 async changeVadPrefilterEnabledSetting(enabled: boolean) : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("change_vad_prefilter_enabled_setting", { enabled }) };
@@ -149,6 +157,14 @@ async changeVadPrefilterEnabledSetting(enabled: boolean) : Promise<Result<null, 
     else return { status: "error", error: e as string };
 }
 },
+/**
+ * R-006 — opt-in toggle for VAD-biased splice-boundary refinement.
+ * See features/reintroduce-silero-vad/PRD.md R-006 / AC-006-b.
+ * When false (default) preview + export keep the existing
+ * zero-crossing + energy-valley snap byte-identical to pre-feature
+ * behaviour (AC-003-d). When true the P(speech) curve is consulted
+ * as an additional bias at snap time.
+ */
 async changeVadRefineBoundariesSetting(enabled: boolean) : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("change_vad_refine_boundaries_setting", { enabled }) };
@@ -197,6 +213,11 @@ async changeExportFadeOutMsSetting(fadeOutMs: number) : Promise<Result<null, str
     else return { status: "error", error: e as string };
 }
 },
+/**
+ * Update the default export format used when the source media carries
+ * a video stream (Round-6 Phase D). Frontend sends the enum; backend
+ * owns codec/extension mapping via `export_format_codec_map`.
+ */
 async changeAppLanguageSetting(language: string) : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("change_app_language_setting", { language }) };
@@ -952,7 +973,26 @@ export type AppSettings = { bindings?: Partial<{ [key in string]: ShortcutBindin
  * stored values are preserved across master toggle flips so a
  * user's prior opt-in comes back when they re-enable the master.
  */
-experimental_enabled?: boolean; lazy_stream_close?: boolean; custom_filler_words?: string[] | null; whisper_accelerator?: WhisperAcceleratorSetting; ort_accelerator?: OrtAcceleratorSetting; whisper_gpu_device?: number; normalize_audio_on_export?: boolean; vad_prefilter_enabled?: boolean; vad_refine_boundaries?: boolean; 
+experimental_enabled?: boolean; lazy_stream_close?: boolean; custom_filler_words?: string[] | null; whisper_accelerator?: WhisperAcceleratorSetting; ort_accelerator?: OrtAcceleratorSetting; whisper_gpu_device?: number; normalize_audio_on_export?: boolean; 
+/**
+ * **R-006 (Silero VAD reintroduction)** — when true, the
+ * transcription manager runs Silero over the decoded file audio
+ * before any `transcribe-rs` pass and hands only the speech
+ * windows to the ASR. Falls back silently to the full-file path
+ * when the Silero ONNX is not on disk or ORT init fails
+ * (BLUEPRINT AD-8). Default `true` because the happy path is a
+ * wall-time + hallucination-rate win per R-002.
+ */
+vad_prefilter_enabled?: boolean; 
+/**
+ * **R-006 (Silero VAD reintroduction)** — when true, the splice
+ * boundary snap in `managers::splice::boundaries` consults a
+ * P(speech) curve within the existing zero-crossing / energy
+ * radii. Default `false` pending the eval-win gate in R-003;
+ * with it off, the code path is byte-identical to pre-feature
+ * (AC-003-d).
+ */
+vad_refine_boundaries?: boolean; 
 /**
  * Loudness normalization target for export. Single source of truth
  * for the `loudnorm` filter — see
@@ -962,7 +1002,16 @@ experimental_enabled?: boolean; lazy_stream_close?: boolean; custom_filler_words
  * `normalize_audio_on_export` migrates to `PodcastMinus16` via
  * `settings::migrate_loudness_setting`.
  */
-loudness_target?: LoudnessTarget; export_volume_db?: number; export_fade_in_ms?: number; export_fade_out_ms?: number; caption_font_size?: number; caption_bg_color?: string; caption_text_color?: string; caption_position?: number; caption_font_family?: CaptionFontFamily; caption_radius_px?: number; caption_padding_x_px?: number; caption_padding_y_px?: number; caption_max_width_percent?: number; 
+loudness_target?: LoudnessTarget; export_volume_db?: number; export_fade_in_ms?: number; export_fade_out_ms?: number; 
+/**
+ * Consumed by `export_edited_media` when no per-invocation override
+ * is supplied (Round-8: the user-facing format picker moved from
+ * Settings → Advanced → Export into the Editor's per-project
+ * ExportMenu; the two persisted settings fields were removed and
+ * hard-coded defaults now fall back to Mp4 for video sources and
+ * Wav for audio-only sources inside `export_edited_media`).
+ */
+caption_font_size?: number; caption_bg_color?: string; caption_text_color?: string; caption_position?: number; caption_font_family?: CaptionFontFamily; caption_radius_px?: number; caption_padding_x_px?: number; caption_padding_y_px?: number; caption_max_width_percent?: number; 
 /**
  * Per-orientation caption profiles. Slice B single-source-of-truth
  * for caption geometry — preview and export both read through
@@ -985,7 +1034,11 @@ export type AudioDevice = { index: string; name: string; is_default: boolean }
  * codec / bitrate listed in `export_format_codec_map`.
  * 
  * Serialized lowercase per PRD R-001 / data model:
- * `"mp4" | "mp3" | "wav" | "m4a" | "opus"`.
+ * `"mp4" | "mov" | "mkv" | "mp3" | "wav" | "m4a" | "opus"`. Round-8
+ * added the `Mov` and `Mkv` video variants so the editor format
+ * picker can offer real alternatives to MP4 for video projects; both
+ * re-use FFmpeg's container-default codecs (H.264 + AAC) so no extra
+ * codec-map entries are required.
  */
 export type AudioExportFormat = "mp4" | "mov" | "mkv" | "mp3" | "wav" | "m4a" | "opus"
 export type AvailableAccelerators = { whisper: string[]; ort: string[]; gpu_devices: GpuDeviceOption[] }
@@ -1193,7 +1246,15 @@ media_type: MediaType;
  */
 extension: string }
 export type MediaType = "Video" | "Audio"
-export type ModelCategory = "Transcription" | "System" | "VoiceActivityDetection"
+export type ModelCategory = "Transcription" | 
+/**
+ * File-based analyzer models that are not transcription engines —
+ * currently only the Silero VAD ONNX consumed by
+ * `managers::transcription::prefilter`,
+ * `managers::splice::boundaries`, and `managers::filler`.
+ * Filtered out of the ASR model picker.
+ */
+"VoiceActivityDetection"
 export type ModelInfo = { id: string; name: string; description: string; filename: string; url: string | null; sha256: string | null; size_mb: number; is_downloaded: boolean; is_downloading: boolean; partial_size: number; is_directory: boolean; engine_type: EngineType; accuracy_score: number; speed_score: number; supports_translation: boolean; is_recommended: boolean; supported_languages: string[]; supports_language_selection: boolean; is_custom: boolean; category?: ModelCategory; 
 /**
  * Optional transcription-specific metadata block.
@@ -1212,7 +1273,7 @@ export type OrtAcceleratorSetting = "auto" | "cpu" | "cuda" | "directml" | "rocm
 export type PauseInfo = { after_word_index: number; gap_duration_us: number }
 export type PermissionAccess = "allowed" | "denied" | "unknown"
 export type PlaybackAudioContract = { selected_output_device: string; selected_output_device_available: boolean; preferred_output_sample_rate: number; detected_output_sample_rate: number | null; normalized_output_sample_rate: number; mismatch_detected: boolean }
-export type PreviewRenderMetadata= { status: PreviewRenderStatus; preview_file_path: string | null; preview_url_safe_path: string | null; source_media_fingerprint: string | null; edit_version: string; generation_token: string; cache_hit: boolean }
+export type PreviewRenderMetadata = { status: PreviewRenderStatus; preview_file_path: string | null; preview_url_safe_path: string | null; source_media_fingerprint: string | null; edit_version: string; generation_token: string; cache_hit: boolean }
 export type PreviewRenderStatus = "ready" | "no_segments" | "missing_media"
 /**
  * Scope for `set_caption_profile` — whether the write lands on
@@ -1221,7 +1282,6 @@ export type PreviewRenderStatus = "ready" | "no_segments" | "missing_media"
  */
 export type ProfileScope = "App" | "Project"
 export type Rgba = { r: number; g: number; b: number; a: number }
-export type SecretMap = Partial<{ [key in string]: string }>
 export type ShortcutBinding = { id: string; name: string; description: string; default_binding: string; current_binding: string }
 export type SmartCleanupResult = { groups_collapsed: number; words_deleted: number; decisions: SmartGroupDecision[]; 
 /**

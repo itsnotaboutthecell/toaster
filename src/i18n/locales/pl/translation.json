@@ -122,6 +122,11 @@
       "languageOnly": "Tylko {{language}}",
       "translation": "Może tłumaczyć na angielski",
       "translate": "Tłumacz na angielski"
+    },
+    "vad": {
+      "active": "Silero VAD",
+      "downloading": "Silero VAD · {{percent}}%",
+      "verifying": "Silero VAD · Verifying…"
     }
   },
   "settings": {
@@ -323,13 +328,6 @@
       "vadRefineBoundaries": {
         "label": "Refine Splice Boundaries (VAD)",
         "description": "Use the per-frame speech probability curve as an extra bias when snapping splice boundaries. Leaves boundaries unchanged where the pre-feature zero-crossing and energy-valley snap already lands on silence. Defaults off; enable for tricky overlapping phoneme seams."
-      },
-      "vadModel": {
-        "required": "Silero VAD model is required for these features to run.",
-        "download": "Download Silero VAD (~{{sizeMb}} MB)",
-        "downloading": "Downloading Silero VAD... {{percent}}%",
-        "verifying": "Verifying Silero VAD checksum...",
-        "ready": "Silero VAD model is ready."
       }
     },
     "captions": {

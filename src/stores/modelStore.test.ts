@@ -14,6 +14,9 @@ vi.mock("@tauri-apps/api/event", () => ({
 
 vi.mock("@tauri-apps/api/core", () => ({
   invoke: vi.fn(),
+  Channel: class {
+    onmessage: (() => void) | null = null;
+  },
 }));
 
 vi.mock("sonner", () => ({
@@ -147,18 +150,21 @@ describe("modelStore", () => {
   });
 
   describe("loadModels", () => {
-    it("loads and filters out System category models", async () => {
-      const userModel = makeModel({ id: "user-1", category: "Transcription" });
-      const systemModel = makeModel({ id: "sys-1", category: "System" });
+    it("loads all catalog models into the store", async () => {
+      const asrModel = makeModel({ id: "user-1", category: "Transcription" });
+      const vadModel = makeModel({
+        id: "silero-vad",
+        category: "VoiceActivityDetection",
+      });
       mockCommands.getAvailableModels.mockResolvedValue({
         status: "ok",
-        data: [userModel, systemModel],
+        data: [asrModel, vadModel],
       });
 
       await getStore().loadModels();
 
       expect(mockCommands.getAvailableModels).toHaveBeenCalled();
-      expect(getStore().models).toEqual([userModel]);
+      expect(getStore().models).toEqual([asrModel, vadModel]);
       expect(getStore().error).toBeNull();
       expect(getStore().loading).toBe(false);
     });

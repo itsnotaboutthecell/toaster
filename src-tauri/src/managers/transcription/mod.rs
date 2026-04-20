@@ -1,4 +1,4 @@
-use crate::managers::model::{EngineType, ModelManager};
+use crate::managers::model::{EngineType, ModelCategory, ModelManager};
 use crate::settings::{get_settings, ModelUnloadTimeout};
 use anyhow::Result;
 use log::{debug, error, info, warn};
@@ -262,6 +262,26 @@ impl TranscriptionManager {
             .model_manager
             .get_model_info(model_id)
             .ok_or_else(|| anyhow::anyhow!("Model not found: {}", model_id))?;
+
+        // Defense-in-depth: only Transcription-category models are valid inputs
+        // to the transcription engine. VAD / System categories must never reach
+        // the Whisper/Parakeet/etc. adapters (see P1 in the Silero reintro PR).
+        if !matches!(model_info.category, ModelCategory::Transcription) {
+            let error_msg = format!(
+                "Model '{}' is not a transcription model (category={:?})",
+                model_id, model_info.category
+            );
+            let _ = self.app_handle.emit(
+                "model-state-changed",
+                ModelStateEvent {
+                    event_type: "loading_failed".to_string(),
+                    model_id: Some(model_id.to_string()),
+                    model_name: Some(model_info.name.clone()),
+                    error: Some(error_msg.clone()),
+                },
+            );
+            return Err(anyhow::anyhow!(error_msg));
+        }
 
         if !model_info.is_downloaded {
             let error_msg = "Model not downloaded";
