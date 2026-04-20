@@ -13,6 +13,8 @@ use tauri::{AppHandle, Emitter, Manager};
 pub mod catalog;
 mod download;
 mod hash;
+pub mod hardware_profile;
+pub mod recommendation;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type, Default)]
 pub enum EngineType {
@@ -162,6 +164,11 @@ pub struct ModelManager {
     available_models: Mutex<HashMap<String, ModelInfo>>,
     cancel_flags: Arc<Mutex<HashMap<String, Arc<AtomicBool>>>>,
     extracting_models: Arc<Mutex<HashSet<String>>>,
+    /// Cached hardware probe. Populated once in `new()`; read-only
+    /// afterwards. See `hardware_profile::probe` — the probe is
+    /// local-only and non-fatal, so this is always `Some` after
+    /// `new()` even on weird hardware.
+    hardware_profile: hardware_profile::HardwareProfile,
 }
 
 impl ModelManager {
@@ -184,10 +191,11 @@ impl ModelManager {
 
         let manager = Self {
             app_handle: app_handle.clone(),
-            models_dir,
+            models_dir: models_dir.clone(),
             available_models: Mutex::new(available_models),
             cancel_flags: Arc::new(Mutex::new(HashMap::new())),
             extracting_models: Arc::new(Mutex::new(HashSet::new())),
+            hardware_profile: hardware_profile::probe(&models_dir),
         };
 
         // Migrate any bundled models to user directory
@@ -213,6 +221,19 @@ impl ModelManager {
     pub fn get_model_info(&self, model_id: &str) -> Option<ModelInfo> {
         let models = crate::lock_recovery::recover_lock(self.available_models.lock());
         models.get(model_id).cloned()
+    }
+
+    /// Read-only view of the cached hardware probe. Computed once in
+    /// `new()`; safe to call from any thread.
+    pub fn hardware_profile(&self) -> &hardware_profile::HardwareProfile {
+        &self.hardware_profile
+    }
+
+    /// Convenience wrapper: run the pure `recommend_model` function
+    /// against the cached profile and the current catalog snapshot.
+    pub fn recommend_model(&self) -> recommendation::ModelRecommendation {
+        let catalog = self.get_available_models();
+        recommendation::recommend_model(&self.hardware_profile, &catalog)
     }
 
     /// On-disk root for a category. Transcription models live under

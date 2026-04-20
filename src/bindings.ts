@@ -432,6 +432,32 @@ async hasAnyModelsOrDownloads() : Promise<Result<boolean, string>> {
     else return { status: "error", error: e as string };
 }
 },
+/**
+ * Cached hardware probe for the current machine. Populated once at
+ * `ModelManager::new` time; cheap to call repeatedly (returns a
+ * clone of the cached struct, no probe re-run).
+ */
+async getHardwareProfile() : Promise<Result<HardwareProfile, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_hardware_profile") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e as string };
+}
+},
+/**
+ * Backend-authored model recommendation for the current machine.
+ * Pure scoring over the cached hardware profile and the model
+ * catalog snapshot — see `managers::model::recommendation`.
+ */
+async getRecommendedModel() : Promise<Result<ModelRecommendation, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_recommended_model") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e as string };
+}
+},
 async getWindowsMicrophonePermissionStatus() : Promise<WindowsMicrophonePermissionStatus> {
     return await TAURI_INVOKE("get_windows_microphone_permission_status");
 },
@@ -820,6 +846,18 @@ async tightenGaps(targetGapUs: number | null) : Promise<Result<number, string>> 
     else return { status: "error", error: e as string };
 }
 },
+/**
+ * Remove silence: collapse inter-word gaps ≥ 750 ms to 0 ms.
+ * 
+ * Word-gap based (no VAD / RMS) — reuses whisper's existing per-word
+ * timings. Delegates the actual shift to `filler::trim_pauses` so
+ * preview and export stay on the single source of truth (the same
+ * time-map shift the trim-pauses path already uses).
+ * 
+ * Returns the number of gaps collapsed. When `0`, the call is a no-op
+ * (no undo snapshot, no revision bump) so the UI can surface a subtle
+ * "no dead-air found" notice without polluting the undo stack.
+ */
 async removeSilence() : Promise<Result<number, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("remove_silence") };
@@ -948,6 +986,13 @@ async unloadModelManually() : Promise<Result<null, string>> {
 
 /** user-defined types **/
 
+/**
+ * GPU / CPU accelerator class used for scoring. Detection is
+ * compile-time only; the variants exist for forward compatibility
+ * (`Cuda` / `DirectMl`) even though today's whisper feature set wires
+ * Windows + Linux to Vulkan and macOS to Metal.
+ */
+export type Accelerator = "Cpu" | "Cuda" | "Metal" | "Vulkan" | "DirectMl"
 /**
  * A single row in the allowed-formats payload returned to the
  * frontend. `extension` carries the leading dot (e.g. `.mp4`) to
@@ -1149,6 +1194,12 @@ pauses: PauseInfo[]; filler_count: number; pause_count: number;
 duplicate_indices: number[]; duplicate_count: number }
 export type GpuDeviceOption = { id: number; name: string; total_vram_mb: number }
 /**
+ * Cached view of the user's machine capability. Every field is
+ * cheap to compute (< 50 ms total on a cold start) and read-only
+ * after probe.
+ */
+export type HardwareProfile = { cpu_cores: number; total_ram_mb: number; accelerator: Accelerator; models_dir_free_mb: number }
+/**
  * A keep-segment: contiguous non-deleted region of the source media.
  */
 export type KeepSegment = { start_us: number; end_us: number }
@@ -1243,6 +1294,12 @@ export type ModelInfo = { id: string; name: string; description: string; filenam
  */
 transcription_metadata?: TranscriptionMetadata | null }
 export type ModelLoadStatus = { is_loaded: boolean; current_model: string | null }
+/**
+ * Backend-authored recommendation. `tradeoff_key` is an i18next key
+ * (per `AGENTS.md > Critical rules`), never a rendered string. The
+ * frontend does `t(rec.tradeoff_key)` to localize.
+ */
+export type ModelRecommendation = { model_id: string; tier: RecommendationTier; tradeoff_key: string; insufficient_disk: boolean }
 export type ModelUnloadTimeout = "never" | "immediately" | "min_2" | "min_5" | "min_10" | "min_15" | "hour_1" | "sec_15"
 /**
  * Orientation selector for caption commands. Auto-detection happens
@@ -1262,6 +1319,12 @@ export type PreviewRenderStatus = "ready" | "no_segments" | "missing_media"
  * (per-project override).
  */
 export type ProfileScope = "App" | "Project"
+/**
+ * Tier label rendered to the user ("Fastest" / "Balanced" /
+ * "Highest accuracy"). UI reads this to pick an i18n key from the
+ * `settings.models.recommendation.*` namespace.
+ */
+export type RecommendationTier = "Fastest" | "Balanced" | "HighestAccuracy"
 export type Rgba = { r: number; g: number; b: number; a: number }
 export type ShortcutBinding = { id: string; name: string; description: string; default_binding: string; current_binding: string }
 export type SmartCleanupResult = { groups_collapsed: number; words_deleted: number; decisions: SmartGroupDecision[]; 

@@ -70,6 +70,11 @@ specta-typescript = "0.0.9"
 tauri-specta = { version = "=2.0.0-rc.21", features = ["derive", "typescript"] }
 tauri-plugin-dialog = "2.6"
 fontdue = "0.9"
+# System probe for hardware-aware-model-picker: CPU / RAM / disk.
+# Cross-platform, local-only (no network), MIT/Apache-licensed. Pulled in
+# by `managers::model::hardware_profile`. When upgrading, confirm
+# `System::new_all` + `Disks::new_with_refreshed_list` remain offline.
+sysinfo = { version = "0.32", default-features = false, features = ["system", "disk"] }
 
 [features]
 default = []

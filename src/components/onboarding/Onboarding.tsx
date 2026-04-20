@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import type { ModelInfo } from "@/bindings";
+import { commands, type ModelInfo } from "@/bindings";
 import type { ModelCardStatus } from "./ModelCard";
 import ModelCard from "./ModelCard";
 import toasterLogo from "../../assets/toaster_text.svg";
@@ -25,6 +25,34 @@ const Onboarding: React.FC<OnboardingProps> = ({ onModelSelected }) => {
     downloadStats,
   } = useModelStore();
   const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
+  // Backend-authored recommendation: pure scoring over the cached
+  // hardware profile and the current catalog. Falls back to the legacy
+  // `is_recommended` flag if the probe fails (AC-001-b fallback). We
+  // load once on mount — the profile is cached inside ModelManager
+  // and won't change for the lifetime of the app.
+  const [recommendedModelId, setRecommendedModelId] = useState<string | null>(
+    null,
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    commands
+      .getRecommendedModel()
+      .then((res) => {
+        if (cancelled) return;
+        if (res.status === "ok" && res.data.model_id) {
+          setRecommendedModelId(res.data.model_id);
+        }
+      })
+      .catch((err) => {
+        // Probe failure degrades gracefully to the catalog's
+        // `is_recommended` flag — no toast, no blocker.
+        console.warn("getRecommendedModel failed:", err);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const isDownloading = selectedModelId !== null;
 
@@ -44,18 +72,20 @@ const Onboarding: React.FC<OnboardingProps> = ({ onModelSelected }) => {
       !stillExtracting
     ) {
       // Model is ready — select it and transition
-      selectModel(selectedModelId).then((success) => {
-        if (success) {
-          onModelSelected();
-        } else {
+      selectModel(selectedModelId)
+        .then((success) => {
+          if (success) {
+            onModelSelected();
+          } else {
+            toast.error(t("onboarding.errors.selectModel"));
+            setSelectedModelId(null);
+          }
+        })
+        .catch((error) => {
+          console.error("Model selection failed:", error);
           toast.error(t("onboarding.errors.selectModel"));
           setSelectedModelId(null);
-        }
-      }).catch((error) => {
-        console.error("Model selection failed:", error);
-        toast.error(t("onboarding.errors.selectModel"));
-        setSelectedModelId(null);
-      });
+        });
     }
   }, [
     selectedModelId,
@@ -106,7 +136,11 @@ const Onboarding: React.FC<OnboardingProps> = ({ onModelSelected }) => {
         <div className="flex flex-col gap-4 pb-6">
           {models
             .filter((m: ModelInfo) => !m.is_downloaded)
-            .filter((model: ModelInfo) => model.is_recommended)
+            .filter((model: ModelInfo) =>
+              recommendedModelId
+                ? model.id === recommendedModelId
+                : model.is_recommended,
+            )
             .map((model: ModelInfo) => (
               <ModelCard
                 key={model.id}
@@ -123,7 +157,11 @@ const Onboarding: React.FC<OnboardingProps> = ({ onModelSelected }) => {
 
           {models
             .filter((m: ModelInfo) => !m.is_downloaded)
-            .filter((model: ModelInfo) => !model.is_recommended)
+            .filter((model: ModelInfo) =>
+              recommendedModelId
+                ? model.id !== recommendedModelId
+                : !model.is_recommended,
+            )
             .sort(
               (a: ModelInfo, b: ModelInfo) =>
                 Number(a.size_mb) - Number(b.size_mb),
