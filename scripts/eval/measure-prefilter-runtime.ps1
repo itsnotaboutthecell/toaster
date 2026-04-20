@@ -54,7 +54,7 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 $RepoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')
-$SettingsPath = Join-Path $env:APPDATA 'com.toaster.app\settings.json'
+$SettingsPath = Join-Path $env:APPDATA 'com.toaster.app\settings_store.json'
 $Launcher = Join-Path $RepoRoot 'scripts\launch-toaster-monitored.ps1'
 
 if (-not (Test-Path $SettingsPath)) {
@@ -68,19 +68,36 @@ $utc = (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ')
 $outDir = Join-Path $RepoRoot "eval\output\vad\runtime-delta\$utc"
 New-Item -ItemType Directory -Path $outDir -Force | Out-Null
 
+# settings_store.json is the Tauri-store wrapper:
+#   { "settings": { ...AppSettings... } }
+# All edits go through the inner ``.settings`` object.
 function Read-Settings { Get-Content -Raw -Path $SettingsPath | ConvertFrom-Json }
 
 function Save-Settings([psobject]$obj) {
     ($obj | ConvertTo-Json -Depth 50) | Set-Content -Path $SettingsPath -Encoding UTF8
 }
 
+function Get-Inner([psobject]$root) { $root.settings }
+
 $snapshot = Read-Settings
-$origPrefilter = $snapshot.vad_prefilter_enabled
-$origRefine    = $snapshot.vad_refine_boundaries
+$inner = Get-Inner $snapshot
+# Older snapshots may pre-date the VAD toggles; treat absent as the
+# Rust-side default (false for prefilter, true for boundary refine).
+$origPrefilter = if ($inner.PSObject.Properties.Match('vad_prefilter_enabled').Count) {
+    [bool]$inner.vad_prefilter_enabled
+} else { $false }
+$origRefine = if ($inner.PSObject.Properties.Match('vad_refine_boundaries').Count) {
+    [bool]$inner.vad_refine_boundaries
+} else { $true }
 
 function Set-Prefilter([bool]$enabled) {
     $s = Read-Settings
-    $s.vad_prefilter_enabled = $enabled
+    $inner = Get-Inner $s
+    if ($inner.PSObject.Properties.Match('vad_prefilter_enabled').Count) {
+        $inner.vad_prefilter_enabled = $enabled
+    } else {
+        $inner | Add-Member -NotePropertyName 'vad_prefilter_enabled' -NotePropertyValue $enabled -Force
+    }
     Save-Settings $s
 }
 
@@ -124,8 +141,17 @@ finally {
     # deliberately in `finally` so an aborted run doesn't strand the
     # operator with an unexpected toggle position.
     $s = Read-Settings
-    $s.vad_prefilter_enabled  = $origPrefilter
-    $s.vad_refine_boundaries  = $origRefine
+    $inner = Get-Inner $s
+    if ($inner.PSObject.Properties.Match('vad_prefilter_enabled').Count) {
+        $inner.vad_prefilter_enabled = $origPrefilter
+    } else {
+        $inner | Add-Member -NotePropertyName 'vad_prefilter_enabled' -NotePropertyValue $origPrefilter -Force
+    }
+    if ($inner.PSObject.Properties.Match('vad_refine_boundaries').Count) {
+        $inner.vad_refine_boundaries = $origRefine
+    } else {
+        $inner | Add-Member -NotePropertyName 'vad_refine_boundaries' -NotePropertyValue $origRefine -Force
+    }
     Save-Settings $s
     Write-Host ""
     Write-Host "Restored vad_prefilter_enabled=$origPrefilter, vad_refine_boundaries=$origRefine"
